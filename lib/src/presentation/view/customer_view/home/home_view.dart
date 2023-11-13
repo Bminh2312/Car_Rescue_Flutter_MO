@@ -13,6 +13,7 @@ import 'package:CarRescue/src/providers/google_map_provider.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -51,11 +52,15 @@ class HomeViewState extends State<HomeView> {
   String formattedDistance = "0";
   Position? position;
   BitmapDescriptor? destinationIcon;
+  BitmapDescriptor? departureIcon;
+  List<LatLng> routesLatLng = [];
+  int _distance = 0;
   bool _isMounted = false;
   bool isPickingPickupLocation = false;
   late Future<List<LocationInfo>> predictions;
   late Future<PlacesAutocompleteResponse> predictionsPlaces;
-  bool _showPlaceDirection = false;
+
+  // bool _showPlaceDirection = false;
   static const CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(10.762622, 106.660172),
     zoom: 10,
@@ -75,6 +80,7 @@ class HomeViewState extends State<HomeView> {
     startListeningToLocationUpdates();
   }
 
+  Set<Polyline> polylines = {};
   Set<Marker> markers = {};
   // static const CameraPosition _kLake = CameraPosition(
   //   bearing: 192.8334901395799,
@@ -93,29 +99,67 @@ class HomeViewState extends State<HomeView> {
         .asUint8List();
   }
 
+  Future setSourceAndDepartureIcons() async {
+    final Uint8List icon1 =
+        await getBytesFromAsset('assets/images/driver_marker.png', 150);
+
+    departureIcon = BitmapDescriptor.fromBytes(icon1);
+  }
+
   Future setSourceAndDestinationIcons() async {
     final Uint8List icon1 =
-        await getBytesFromAsset('assets/images/driver_marker.png', 240);
+        await getBytesFromAsset('assets/images/placeholder.png', 150);
 
     destinationIcon = BitmapDescriptor.fromBytes(icon1);
   }
 
   // Cập nhật Marker dựa trên vị trí hiện tại
-  void updateMarker(LatLng latLng) {
-    markers.clear();
-    if (position != null && destinationIcon != null) {
-      markers.addAll([
-        Marker(
-            markerId: const MarkerId('2'),
-            position: latLng,
-            icon: destinationIcon!),
-        // Polyline(polylineId: )
-      ]);
+  void updateMarker(LatLng latLng, bool isDeparture) {
+    markers.removeWhere(
+      (marker) =>
+          marker.markerId ==
+          MarkerId(isDeparture ? 'departure' : 'destination'),
+    );
+    if (position != null &&
+        (isDeparture ? departureIcon != null : destinationIcon != null)) {
       print("Position: $position");
+      print("Icon: ${isDeparture ? departureIcon : destinationIcon}");
+      markers.add(
+        Marker(
+          markerId: MarkerId(isDeparture ? 'departure' : 'destination'),
+          position: latLng,
+          icon: isDeparture ? departureIcon! : destinationIcon!,
+        ),
+      );
     }
   }
 
-  void _updateCameraPosition(LatLng latLng) async {
+  List<LatLng> decodePolyline(String encoded) {
+  var polylinePoints = PolylinePoints();
+  List<PointLatLng> result = polylinePoints.decodePolyline(encoded);
+  return result.map((PointLatLng point) {
+    return LatLng(point.latitude, point.longitude);
+  }).toList();
+}
+
+   void updatePolyline() async {
+    polylines.clear();
+    await fetchPolyline();
+    if (_latLng != LatLng(0,0) && _latLngDrop != LatLng(0,0)) {
+      Polyline polyline = Polyline(
+        polylineId: PolylineId("route"),
+        color: Colors.blue,
+        points: routesLatLng, // Add your polyline points here
+        width: 5,
+      );
+
+      setState(() {
+        polylines.add(polyline);
+      });
+    }
+  }
+
+  void _updateCameraPosition(LatLng latLng, bool isDeparture) async {
     controller = await _controller.future;
     controller.animateCamera(
       CameraUpdate.newCameraPosition(
@@ -125,7 +169,7 @@ class HomeViewState extends State<HomeView> {
         ),
       ),
     );
-    updateMarker(latLng);
+    updateMarker(latLng, isDeparture);
   }
 
   void getCurrentLocation() async {
@@ -158,7 +202,7 @@ class HomeViewState extends State<HomeView> {
         position = currentPosition;
         _latLng = LatLng(position!.latitude, position!.longitude);
       });
-      updateMarker(_latLng);
+      updateMarker(_latLng, true);
     }
   }
 
@@ -170,25 +214,25 @@ class HomeViewState extends State<HomeView> {
           setState(() {
             position = event;
             _latLng = LatLng(position!.latitude, position!.longitude);
-            updateMarker(_latLng);
+            updateMarker(_latLng, true);
           });
         }
       }
     });
   }
 
-  void searchAndMoveCamera(String searchText) async {
-    try {
-      LatLng newPosition = await service.searchPlaces(searchText);
-      setState(() {
-        _latLng = newPosition;
-      });
-      _updateCameraPosition(_latLng);
-    } catch (e) {
-      // Xử lý lỗi ở đây
-      print('Error: $e');
-    }
-  }
+  // void searchAndMoveCamera(String searchText) async {
+  //   try {
+  //     LatLng newPosition = await service.searchPlaces(searchText);
+  //     setState(() {
+  //       _latLng = newPosition;
+  //     });
+  //     _updateCameraPosition(_latLng);
+  //   } catch (e) {
+  //     // Xử lý lỗi ở đây
+  //     print('Error: $e');
+  //   }
+  // }
 
   void stopListeningToLocationUpdates() {
     _positionStreamSubscription?.cancel();
@@ -216,6 +260,7 @@ class HomeViewState extends State<HomeView> {
         PlacesAutocompleteResponse(predictions: [], status: 'INIT'));
     requestLocationPermission();
     setSourceAndDestinationIcons();
+    setSourceAndDepartureIcons();
     // Timer(
     //   const Duration(seconds: 5),
     //   () => piUpLocationBottomSheet(context),
@@ -248,6 +293,7 @@ class HomeViewState extends State<HomeView> {
             mapType: MapType.normal,
             mapToolbarEnabled: false,
             markers: markers,
+            polylines: polylines,
             initialCameraPosition: _kGooglePlex,
             onMapCreated: (GoogleMapController controller) {
               _controller.complete(controller);
@@ -263,10 +309,12 @@ class HomeViewState extends State<HomeView> {
                 onPressed: () {
                   getCurrentLocation();
                   startListeningToLocationUpdates();
-                  _updateCameraPosition(LatLng(
-                    position!.latitude,
-                    position!.longitude,
-                  ));
+                  _updateCameraPosition(
+                      LatLng(
+                        position!.latitude,
+                        position!.longitude,
+                      ),
+                      true);
                 },
                 child: Icon(Icons.my_location),
               ),
@@ -307,7 +355,7 @@ class HomeViewState extends State<HomeView> {
                           return Text('Error: ${snapshot.error}');
                         } else {
                           if (snapshot.hasData) {
-                            double distance = snapshot.data! / 1000;
+                            double distance = _distance / 1000;
                             formattedDistance = distance.toStringAsFixed(1);
                             return Column(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -370,6 +418,7 @@ class HomeViewState extends State<HomeView> {
                       inputType: TextInputType.text,
                       onTextChanged: getListPredictions,
                     ),
+
                   FutureBuilder<PlacesAutocompleteResponse>(
                     future: predictionsPlaces,
                     builder: (context, snapshot) {
@@ -380,63 +429,69 @@ class HomeViewState extends State<HomeView> {
                       } else {
                         if (snapshot.hasData) {
                           final predictions = snapshot.data!.predictions;
-
-                          return Expanded(
-                            child: Card(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                child: Column(
-                                  children: [
-                                    predictions.isNotEmpty
-                                        ? Expanded(
-                                            child: ListView.builder(
-                                              itemCount: predictions.length,
-                                              itemBuilder: (context, index) {
-                                                final prediction =
-                                                    predictions[index];
-                                                return ListTile(
-                                                  title: Text(
-                                                      prediction.description!),
-                                                  onTap: () {
-                                                    if (isPickingPickupLocation) {
-                                                      _pickUpController.text =
-                                                          prediction
-                                                              .description!;
-                                                      getLatLngByPlaceDetails(
-                                                          prediction.placeId!,
-                                                          true);
-                                                      // Di chuyển camera đến _latLng
-                                                    } else {
-                                                      _dropLocationController
-                                                              .text =
-                                                          prediction
-                                                              .description!;
-                                                      getLatLngByPlaceDetails(
-                                                          prediction.placeId!,
-                                                          false);
-                                                      // Di chuyển camera đến _latLngDrop
-                                                    }
-                                                  },
-                                                  tileColor: Colors.transparent,
-                                                  contentPadding:
-                                                      EdgeInsets.zero,
-                                                  shape: UnderlineInputBorder(
-                                                    borderSide: BorderSide(
-                                                      color: Colors.black,
-                                                      width: .5,
+                          if (predictions.isNotEmpty) {
+                            return Expanded(
+                              child: Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  child: Column(
+                                    children: [
+                                      predictions.isNotEmpty
+                                          ? Expanded(
+                                              child: ListView.builder(
+                                                itemCount: predictions.length,
+                                                itemBuilder: (context, index) {
+                                                  final prediction =
+                                                      predictions[index];
+                                                  return ListTile(
+                                                    title: Text(prediction
+                                                        .description!),
+                                                    onTap: () {
+                                                      if (isPickingPickupLocation) {
+                                                        _pickUpController.text =
+                                                            prediction
+                                                                .description!;
+                                                        getLatLngByPlaceDetails(
+                                                            prediction.placeId!,
+                                                            true);
+                                                        // Di chuyển camera đến _latLng
+                                                      } else {
+                                                        _dropLocationController
+                                                                .text =
+                                                            prediction
+                                                                .description!;
+                                                        getLatLngByPlaceDetails(
+                                                            prediction.placeId!,
+                                                            false);
+                                                        // Di chuyển camera đến _latLngDrop
+                                                      }
+                                                    },
+                                                    tileColor:
+                                                        Colors.transparent,
+                                                    contentPadding:
+                                                        EdgeInsets.zero,
+                                                    shape: UnderlineInputBorder(
+                                                      borderSide: BorderSide(
+                                                        color: Colors.black,
+                                                        width: .5,
+                                                      ),
                                                     ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          )
-                                        : Container()
-                                  ],
+                                                  );
+                                                },
+                                              ),
+                                            )
+                                          : Container()
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
+                            );
+                          } else {
+                            return SizedBox(
+                              height: 10,
+                            );
+                          }
                         } else {
                           return Text('');
                         }
@@ -510,7 +565,10 @@ class HomeViewState extends State<HomeView> {
         } else {
           _latLngDrop = newLatLng;
         }
-        _updateCameraPosition(newLatLng);
+        _updateCameraPosition(newLatLng, type);
+        if(_latLng != LatLng(0,0) && _latLngDrop != LatLng(0,0)){
+          updatePolyline();
+        }
         clearPredictions();
       });
     } catch (e) {
@@ -518,25 +576,40 @@ class HomeViewState extends State<HomeView> {
     }
   }
 
-  void getLatLng(String query, bool type) async {
-    final response = await service.searchPlaces(query);
-    if (type) {
-      setState(() {
-        _latLng = LatLng(response.latitude, response.longitude);
-        _updateCameraPosition(_latLng);
-      });
-    } else {
-      setState(() {
-        _latLngDrop = LatLng(response.latitude, response.longitude);
-        _updateCameraPosition(_latLngDrop);
-      });
-    }
-  }
+  // void getLatLng(String query, bool type) async {
+  //   final response = await service.searchPlaces(query);
+  //   if (type) {
+  //     setState(() {
+  //       _latLng = LatLng(response.latitude, response.longitude);
+  //       _updateCameraPosition(_latLng);
+  //     });
+  //   } else {
+  //     setState(() {
+  //       _latLngDrop = LatLng(response.latitude, response.longitude);
+  //       _updateCameraPosition(_latLngDrop);
+  //     });
+  //   }
+  // }
 
   void clearPredictions() {
     setState(() {
       predictionsPlaces = Future.value(
           PlacesAutocompleteResponse(predictions: [], status: 'CLEAR'));
     });
+  }
+
+  Future<void> fetchPolyline() async {
+    final locationProvider = LocationProvider();
+    try{
+    final routes = await locationProvider.fetchRoutes(_latLng, _latLngDrop);
+    String encodedPolyline = routes.routes[0].polyline.encodedPolyline;
+    int distance = routes.routes[0].distanceMeters;
+    setState(() {
+      routesLatLng = decodePolyline(encodedPolyline);
+      _distance = distance;
+    });
+    }catch(e){
+      print(e);
+    }
   }
 }
