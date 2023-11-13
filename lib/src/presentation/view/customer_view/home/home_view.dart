@@ -55,7 +55,7 @@ class HomeViewState extends State<HomeView> {
   bool isPickingPickupLocation = false;
   late Future<List<LocationInfo>> predictions;
   late Future<PlacesAutocompleteResponse> predictionsPlaces;
-  bool _showPlaceDirection = false;
+  // bool _showPlaceDirection = false;
   static const CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(10.762622, 106.660172),
     zoom: 10,
