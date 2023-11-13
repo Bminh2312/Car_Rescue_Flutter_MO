@@ -1,10 +1,12 @@
 import 'package:CarRescue/src/enviroment/env.dart';
 import 'package:CarRescue/src/models/location_info.dart';
+import 'package:CarRescue/src/models/routes.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:google_api_headers/google_api_headers.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
+import 'package:intl/intl.dart';
 
 class LocationProvider {
   final String key = Environment.API_KEY_MAPS;
@@ -229,6 +231,71 @@ class LocationProvider {
   } else {
     // Xử lý lỗi nếu có lỗi kết nối
     return "Connection Error";
+  }
+}
+
+Future<RouteResponse> fetchRoutes(LatLng latLngDep, LatLng latLngDes) async {
+
+  final String apiUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
+
+  final Map<String, dynamic> requestData = {
+    "origin": {
+      "location": {
+        "latLng": {
+          "latitude": latLngDep.latitude,
+          "longitude": latLngDep.longitude
+        }
+      }
+    },
+    "destination": {
+      "location": {
+        "latLng": {
+          "latitude": latLngDes.latitude,
+          "longitude": latLngDes.longitude
+        }
+      }
+    },
+    "travelMode": "DRIVE",
+    "routingPreference": "TRAFFIC_AWARE",
+    "departureTime": DateFormat("yyyy-MM-ddTHH:mm:ss.SSSSSSSSS'Z'").format(DateTime.now().toUtc()),
+    "computeAlternativeRoutes": false,
+    "routeModifiers": {
+      "avoidTolls": false,
+      "avoidHighways": false,
+      "avoidFerries": false
+    },
+    "languageCode": "en-US",
+    "units": "IMPERIAL"
+  };
+
+  final Map<String, String> headers = {
+    'Content-Type': 'application/json',
+    'X-Goog-Api-Key': key,
+    'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline',
+  };
+
+  try {
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: headers,
+      body: convert.jsonEncode(requestData),
+    );
+
+    if (response.statusCode == 200) {
+      // Handle the successful response here
+      final Map<String, dynamic> responseData = convert.jsonDecode(response.body);
+      // Extract and use the relevant data from responseData
+      print(responseData);
+      return RouteResponse.fromJson(responseData);
+    } else {
+      // Handle the error response here
+      print('Error: ${response.statusCode}, ${response.body}');
+      throw Exception('Failed to fetch routes');
+    }
+  } catch (e) {
+    // Handle exceptions here
+    print('Exception: $e');
+    throw Exception('Failed to fetch routes');
   }
 }
 
