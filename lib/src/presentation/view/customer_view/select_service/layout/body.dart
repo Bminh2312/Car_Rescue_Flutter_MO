@@ -1,18 +1,14 @@
 import 'dart:async';
 
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
-import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/quick_access_buttons.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/car_view/car_view.dart';
-import 'package:CarRescue/src/presentation/view/customer_view/chat_with_driver/chat_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/orders/orders_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/animated_indicator.dart';
-import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/selection_location_widget.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/popup_service_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/service_category.dart';
-import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/customer.dart';
@@ -21,9 +17,7 @@ import 'package:CarRescue/src/presentation/view/customer_view/home/home_view.dar
 import 'package:CarRescue/src/providers/order_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:slider_button/slider_button.dart';
 import 'package:CarRescue/src/providers/google_map_provider.dart';
-import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 class ServiceBody extends StatefulWidget {
   const ServiceBody({super.key});
@@ -50,6 +44,7 @@ class _ServiceBodyState extends State<ServiceBody> {
   int _currentPage = 0;
   int _selectedIndex = 0;
   bool hasInProgressBooking = true;
+  int selectedOption = -1;
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -132,7 +127,7 @@ class _ServiceBodyState extends State<ServiceBody> {
             children: [
               QuickAccessButton(
                 label: 'Xe của tôi',
-                icon: Icons.fire_truck,
+                icon: CupertinoIcons.car_detailed,
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -144,18 +139,18 @@ class _ServiceBodyState extends State<ServiceBody> {
                   );
                 },
               ),
-              QuickAccessButton(
-                label: 'Đơn của tôi',
-                icon: CupertinoIcons.book_solid,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => OrderView(),
-                    ),
-                  ).then((value) => {});
-                },
-              ),
+              // QuickAccessButton(
+              //   label: 'Cứu hộ',
+              //   icon: CupertinoIcons.book_solid,
+              //   onPressed: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(
+              //         builder: (context) => OrderView(),
+              //       ),
+              //     ).then((value) => {});
+              //   },
+              // ),
               QuickAccessButton(
                 label: 'Thông báo',
                 icon: Icons.notifications,
@@ -180,140 +175,102 @@ class _ServiceBodyState extends State<ServiceBody> {
   }
 
   Widget buildQuickRegister() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: const Color.fromARGB(86, 0, 0, 0),
-            width: 0.5,
-          ),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            // Loại dịch vụ 1
-            GestureDetector(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (context) => HomeView(
-                            services: "Towing",
-                          )),
+    return GestureDetector(
+        onTap: () {
+          showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return PopupButton(
+                  onOptionSelected: (selectedOption) {
+                    // Handle navigation logic here
+                    if (selectedOption.title == 'Kéo xe cứu hộ') {
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => HomeView(services: "Towing")));
+                    } else if (selectedOption.title == 'Cứu hộ tại chỗ') {
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) =>
+                              HomeView(services: "OnSiteRescue")));
+                    } else if (selectedOption.title == 'Dịch vụ khác') {
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) =>
+                              HomeView(services: "OtherServices")));
+                    }
+                    // Add more conditions as necessary
+                  },
+                  onConfirm: (selectedOption) {
+                    Navigator.pop(context);
+                    try {
+                      print(
+                          "Handling confirmation for: ${selectedOption.title}");
+                      if (selectedOption.title == 'Kéo xe cứu hộ') {
+                        // Navigate to a specific page or with specific parameters
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  HomeView(services: "Towing")),
+                        );
+                      } else if (selectedOption.title == 'Cứu hộ tại chỗ') {
+                        // Navigate differently based on the option
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  HomeView(services: "Fixing")),
+                        );
+                      } else if (selectedOption.title == 'Dịch vụ khác') {
+                        // Another navigation logic
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  HomeView(services: "Towing")),
+                        );
+                      }
+                      // Add more conditions as necessary
+                    } catch (e) {
+                      print("Error during navigation: $e");
+                    }
+                  },
                 );
-              },
-              child: Container(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.directions_car,
-                      size: 24,
-                      color: Colors.black, // Màu biểu tượng
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    CustomText(
-                      text: 'Kéo xe',
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18, // Màu văn bản
-                    ),
-                  ],
+              });
+        },
+        child: Container(
+            margin: EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(
+                  color: const Color.fromARGB(86, 0, 0, 0),
+                  width: 0.5,
                 ),
               ),
             ),
-            // Loại dịch vụ 2
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  // Loại dịch vụ 1
 
-            GestureDetector(
-              onTap: () {
-                //  Navigator.of(context).pushReplacement(
-                //   MaterialPageRoute(
-                //       builder: (context) => HomeView(services: "repair",)),
-                // );
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (context) => HomeView(
-                            services: "Fixing",
-                          )),
-                );
-              },
-              child: Container(
-                // Độ cao của loại dịch vụ
-                decoration: BoxDecoration(
-                  // Màu nền trắng
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.build,
-                      size: 24,
-                      color: Colors.black, // Màu biểu tượng
+                  Container(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Image.asset(
+                            height: 25, width: 25, 'assets/icons/rescue.png'),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        CustomText(
+                          text: 'Cứu hộ ngay',
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18, // Màu văn bản
+                        ),
+                      ],
                     ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    CustomText(
-                      text: 'Sửa chữa',
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18, // Màu văn bản
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ),
-            GestureDetector(
-              onTap: () {
-                //  Navigator.of(context).pushReplacement(
-                //   MaterialPageRoute(
-                //       builder: (context) => HomeView(services: "repair",)),
-                // );
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (context) => HomeView(
-                            services: "Fixing",
-                          )),
-                );
-              },
-              child: Container(
-                // Độ cao của loại dịch vụ
-                decoration: BoxDecoration(
-                  // Màu nền trắng
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.question_answer,
-                      size: 24,
-                      color: Colors.black, // Màu biểu tượng
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    CustomText(
-                      text: 'Hỗ trợ',
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18, // Màu văn bản
-                    ),
-                  ],
-                ),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
+            )));
   }
 
   Widget buildSliderBanner() {
@@ -623,7 +580,7 @@ class _ServiceBodyState extends State<ServiceBody> {
                       ],
                     ),
 
-                    buildService(),
+                    // buildService(),
 
                     // ... Add more widgets as needed
                   ],
@@ -688,6 +645,45 @@ class _ServiceBodyState extends State<ServiceBody> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildOption(int index) {
+    bool isSelected = index == selectedOption;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          selectedOption = index;
+        });
+      },
+      child: Center(
+        child: Container(
+          margin: EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: isSelected
+                ? Border.all(color: Colors.blue, width: 2)
+                : Border.all(color: Colors.transparent),
+          ),
+          child: Column(
+            children: [
+              Image.asset(
+                'assets/images/towtruck-service2.png',
+                height: 120,
+                width: 120,
+              ),
+              Text(
+                'Kéo xe cứu hộ',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Trường hợp khẩn cấp. Hệ thống của chúng tôi sẽ kết nối với những chủ xe cứu hộ để kéo xe của bạn về địa điểm tiếp nhận xe',
+              ),
+            ],
+          ),
         ),
       ),
     );

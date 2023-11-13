@@ -7,6 +7,8 @@ import 'package:CarRescue/src/presentation/elements/app_button.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/home/layout/home_selection_widget.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/order_status/order_processing.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
 import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
 import 'package:CarRescue/src/providers/service_provider.dart';
@@ -143,11 +145,10 @@ class _TowBodyState extends State<TowBody> {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
-              builder: (context) => BottomNavBarView(page: 0),
+              builder: (context) => OrderProcessingScreen(),
             ),
             (route) => false, // Loại bỏ tất cả các màn hình khỏi ngăn xếp
           );
-          notifier.showToast("Tạo đơn thành công");
         } else if (status == 500) {
           notifier.showToast("External error");
         } else if (status == 201) {
@@ -168,406 +169,470 @@ class _TowBodyState extends State<TowBody> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(
-                height: 12,
-              ),
-              Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      CustomText(
-                        text: 'Khoảng cách',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                      CustomText(
-                        text: '${widget.distance} Km',
-                        fontSize: 16,
-                      )
-                    ],
-                  ),
-                  Divider(
-                    color: FrontendConfigs.kIconColor,
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Container(
-                    padding:
-                        EdgeInsets.only(top: 12, right: 0, bottom: 12, left: 7),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: Color.fromARGB(34, 158, 158, 158),
-                    ),
-                    child: Column(
+      child: Container(
+        decoration: BoxDecoration(color: FrontendConfigs.kBackgrColor),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  height: 12,
+                ),
+                Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        HomeSelectionWidget(
-                            icon: 'assets/svg/pickup_icon.svg',
-                            title: 'Điểm bắt đầu',
-                            body: widget.address,
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            }),
-                        Divider(),
-                        const SizedBox(
-                          height: 10,
+                        CustomText(
+                          text: 'Khoảng cách',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
                         ),
-                        HomeSelectionWidget(
-                            icon: 'assets/svg/setting_location.svg',
-                            title: 'Điểm kết thúc',
-                            body: widget.addressDrop,
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            }),
+                        CustomText(
+                          text: '${widget.distance} Km',
+                          fontSize: 16,
+                        )
                       ],
                     ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(
-                height: 10,
-              ),
-              CustomText(
-                  text: 'Khu vực hỗ trợ gần bạn',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18),
-              Column(
-                children: [
-                  Wrap(
-                    spacing: 32.0, // Horizontal space between chips.
-                    runSpacing: 8.0, // Vertical space between lines.
-                    children: dropdownItems.map((item) {
-                      return ChoiceChip(
-                        labelPadding: EdgeInsets.symmetric(
-                          horizontal: 20.0,
-                        ), // Add padding inside the chip.
-                        label: Text(
-                          item["name"],
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16, // Increase the font size.
+                    Divider(
+                      color: FrontendConfigs.kIconColor,
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Container(
+                      padding: EdgeInsets.only(
+                          top: 12, right: 0, bottom: 12, left: 7),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: Color.fromARGB(34, 158, 158, 158),
+                      ),
+                      child: Column(
+                        children: [
+                          HomeSelectionWidget(
+                              icon: 'assets/svg/pickup_icon.svg',
+                              title: 'Điểm bắt đầu',
+                              body: widget.address,
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              }),
+                          Divider(),
+                          const SizedBox(
+                            height: 10,
                           ),
-                        ),
-                        selected: selectedDropdownItem == item,
-                        onSelected: (bool selected) {
-                          setState(() {
-                            if (selected) {
-                              selectedDropdownItem = item;
-                            }
-                          });
-                        },
-                        selectedColor: FrontendConfigs
-                            .kActiveColor, // Optional: Changes the color when selected.
-                        backgroundColor: FrontendConfigs.kIconColor,
-                        shape:
-                            StadiumBorder(), // Optional: Creates a stadium-shaped border.
-                      );
-                    }).toList(),
-                  ),
-                  SizedBox(width: 16.0),
-                ],
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              CustomText(
-                  text: 'Hình ảnh hiện trường (nếu có)',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18),
-              ElevatedButton(
-                onPressed: () async {
-                  if (!isImageLoading) {
-                    setState(() {
-                      isImageLoading = true;
-                    });
-                  }
-                  // Xử lý khi người dùng nhấp vào biểu tượng '+'
-                  // Chuyển qua camera ở đây
-                  captureImage();
-                },
-                style: ButtonStyle(
-                  padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  ),
-                  backgroundColor: MaterialStateProperty.all<Color>(
-                    FrontendConfigs.kIconColor, // Màu nền của nút
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add_box), // Biểu tượng dấu '+'
-                    SizedBox(
-                        width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
-                    Text(
-                      'Thêm', // Văn bản bên cạnh biểu tượng
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16, // Kích thước văn bản
+                          HomeSelectionWidget(
+                              icon: 'assets/svg/setting_location.svg',
+                              title: 'Điểm kết thúc',
+                              body: widget.addressDrop,
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              }),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              if (urlImages!.isNotEmpty)
-                Container(
-                  height: 100, // Điều chỉnh chiều cao tùy ý
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal, // Đặt hướng cuộn là ngang
-                    itemCount: urlImages!.length,
-                    itemBuilder: (context, index) {
-                      return Container(
-                        margin: EdgeInsets.all(
-                            8.0), // Thêm khoảng cách giữa các hình ảnh
-                        child: Image.network(
-                          urlImages![index],
-                          width:
-                              100, // Điều chỉnh kích thước của hình ảnh tùy ý
-                          height: 100,
-                          fit: BoxFit.cover,
+
+                const SizedBox(
+                  height: 10,
+                ),
+                CustomText(
+                    text: 'Khu vực hỗ trợ gần bạn',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18),
+                Column(
+                  children: [
+                    Wrap(
+                      spacing: 32.0, // Horizontal space between chips.
+                      runSpacing: 8.0, // Vertical space between lines.
+                      children: dropdownItems.map((item) {
+                        return ChoiceChip(
+                          labelPadding: EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                          ), // Add padding inside the chip.
+                          label: Text(
+                            item["name"],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16, // Increase the font size.
+                            ),
+                          ),
+                          selected: selectedDropdownItem == item,
+                          onSelected: (bool selected) {
+                            setState(() {
+                              if (selected) {
+                                selectedDropdownItem = item;
+                              }
+                            });
+                          },
+                          selectedColor: FrontendConfigs
+                              .kActiveColor, // Optional: Changes the color when selected.
+                          backgroundColor: FrontendConfigs.kIconColor,
+                          shape:
+                              StadiumBorder(), // Optional: Creates a stadium-shaped border.
+                        );
+                      }).toList(),
+                    ),
+                    SizedBox(width: 16.0),
+                  ],
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                CustomText(
+                    text: 'Hình ảnh hiện trường (nếu có)',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (!isImageLoading) {
+                      setState(() {
+                        isImageLoading = true;
+                      });
+                    }
+                    // Xử lý khi người dùng nhấp vào biểu tượng '+'
+                    // Chuyển qua camera ở đây
+                    captureImage();
+                  },
+                  style: ButtonStyle(
+                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    ),
+                    backgroundColor: MaterialStateProperty.all<Color>(
+                      FrontendConfigs.kIconColor, // Màu nền của nút
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_box), // Biểu tượng dấu '+'
+                      SizedBox(
+                          width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
+                      Text(
+                        'Thêm', // Văn bản bên cạnh biểu tượng
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16, // Kích thước văn bản
                         ),
-                      );
-                    },
+                      ),
+                    ],
                   ),
                 ),
-              const SizedBox(
-                height: 10,
-              ),
-              // Tôi cần 1 cái drop dow các dịch vụ và chọn được nhìu lần
-              FutureBuilder<List<Service>>(
-                future:
-                    availableServices, // Thay bằng hàm lấy dữ liệu thích hợp
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else {
-                    if (snapshot.hasData) {
-                      List<Service> availableServices = snapshot.data!;
-                      return buildServiceList(availableServices);
-                    } else {
-                      return Text('Không có dữ liệu.');
-                    }
-                  }
-                },
-              ),
-
-              const SizedBox(
-                height: 10,
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Ghi chú', // Nhãn cho ô nhập liệu
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18.0,
+                if (urlImages!.isNotEmpty)
+                  Container(
+                    height: 100, // Điều chỉnh chiều cao tùy ý
+                    child: ListView.builder(
+                      scrollDirection:
+                          Axis.horizontal, // Đặt hướng cuộn là ngang
+                      itemCount: urlImages!.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          margin: EdgeInsets.all(
+                              8.0), // Thêm khoảng cách giữa các hình ảnh
+                          child: Image.network(
+                            urlImages![index],
+                            width:
+                                100, // Điều chỉnh kích thước của hình ảnh tùy ý
+                            height: 100,
+                            fit: BoxFit.cover,
+                          ),
+                        );
+                      },
                     ),
                   ),
-                  SizedBox(height: 8.0), // Khoảng cách giữa nhãn và ô nhập liệu
-                  TextFormField(
-                    controller: customerNoteController,
-                    maxLines: 3,
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return 'Hãy ghi chú';
+                const SizedBox(
+                  height: 10,
+                ),
+                buildServiceList(),
+                // Tôi cần 1 cái drop dow các dịch vụ và chọn được nhìu lần
+                // FutureBuilder<List<Service>>(
+                //   future:
+                //       availableServices, // Thay bằng hàm lấy dữ liệu thích hợp
+                //   builder: (context, snapshot) {
+                //     if (snapshot.connectionState == ConnectionState.waiting) {
+                //       return CircularProgressIndicator();
+                //     } else if (snapshot.hasError) {
+                //       return Text('Error: ${snapshot.error}');
+                //     } else {
+                //       if (snapshot.hasData) {
+                //         List<Service> availableServices = snapshot.data!;
+                //         return buildServiceList(availableServices);
+                //       } else {
+                //         return Text('Không có dữ liệu.');
+                //       }
+                //     }
+                //   },
+                // ),
+
+                const SizedBox(
+                  height: 10,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ghi chú', // Nhãn cho ô nhập liệu
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18.0,
+                      ),
+                    ),
+                    SizedBox(
+                        height: 8.0), // Khoảng cách giữa nhãn và ô nhập liệu
+                    TextFormField(
+                      controller: customerNoteController,
+                      maxLines: 3,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Hãy ghi chú';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        hintText:
+                            'Nhập ghi chú của bạn', // Gợi ý cho ô nhập liệu
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                              8.0), // Định dạng bo tròn viền ô nhập liệu
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                CustomText(
+                  text: 'Phương thức thanh toán',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      isMomoSelected = !isMomoSelected;
+                      if (isMomoSelected) {
+                        isCashSelected = false;
                       }
-                      return null;
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Nhập ghi chú của bạn', // Gợi ý cho ô nhập liệu
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                            8.0), // Định dạng bo tròn viền ô nhập liệu
-                      ),
+                    });
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      border: isMomoSelected
+                          ? Border.all(
+                              color: FrontendConfigs.kActiveColor,
+                              width: 2.0,
+                            )
+                          : null, // Loại bỏ viền khi không được chọn
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    child: Row(
+                      children: [
+                        Image.asset('assets/images/momo.png'),
+                        SizedBox(width: 10.0),
+                        CustomText(
+                          text: "Momo",
+                          fontWeight: isMomoSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          fontSize: 18,
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              CustomText(
-                text: 'Phương thức thanh toán',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    isMomoSelected = !isMomoSelected;
-                    if (isMomoSelected) {
-                      isCashSelected = false;
-                    }
-                  });
-                },
-                child: Container(
-                  padding: EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    border: isMomoSelected
-                        ? Border.all(
-                            color: FrontendConfigs.kActiveColor,
-                            width: 2.0,
-                          )
-                        : null, // Loại bỏ viền khi không được chọn
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  child: Row(
-                    children: [
-                      Image.asset('assets/images/momo.png'),
-                      SizedBox(width: 10.0),
-                      CustomText(
-                        text: "Momo",
-                        fontWeight: isMomoSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        fontSize: 18,
-                      ),
-                    ],
+                ),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      isCashSelected = !isCashSelected;
+                      if (isCashSelected) {
+                        isMomoSelected = false;
+                      }
+                    });
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      border: isCashSelected
+                          ? Border.all(
+                              color: FrontendConfigs.kActiveColor,
+                              width: 2.0,
+                            )
+                          : null, // Loại bỏ viền khi không được chọn
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    child: Row(
+                      children: [
+                        Image.asset('assets/images/money.png'),
+                        SizedBox(width: 10.0),
+                        CustomText(
+                          text: "Tiền mặt",
+                          fontWeight: isCashSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          fontSize: 18,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    isCashSelected = !isCashSelected;
-                    if (isCashSelected) {
-                      isMomoSelected = false;
-                    }
-                  });
-                },
-                child: Container(
-                  padding: EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    border: isCashSelected
-                        ? Border.all(
-                            color: FrontendConfigs.kActiveColor,
-                            width: 2.0,
-                          )
-                        : null, // Loại bỏ viền khi không được chọn
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  child: Row(
-                    children: [
-                      Image.asset('assets/images/money.png'),
-                      SizedBox(width: 10.0),
-                      CustomText(
-                        text: "Tiền mặt",
-                        fontWeight: isCashSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        fontSize: 18,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
 
-              const SizedBox(
-                height: 10,
-              ),
-              AppButton(
-                onPressed: () => createOrder(),
-                btnLabel: isLoading
-                    ? 'Đang tạo đơn hàng...'
-                    : "Đặt cứu hộ (Giá ${totalPrice})",
-              ),
-            ],
+                const SizedBox(
+                  height: 10,
+                ),
+
+                Container(
+                  color: Colors.white,
+                  padding:
+                      EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 10),
+                  width: double.infinity,
+                  child: Column(
+                    mainAxisSize: MainAxisSize
+                        .min, // Đặt cột để không chiếm quá nhiều không gian
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Tổng cộng:',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            '0₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                          height: 20), // Khoảng cách giữa tổng cộng tiền và nút
+                      SizedBox(
+                        width: double
+                            .infinity, // Đặt chiều rộng bằng với Container
+                        height: 50, // Đặt chiều cao cố định cho nút
+                        child: ElevatedButton(
+                          child: Text(
+                            isLoading ? 'Đang tạo đơn hàng...' : "Tạo đơn",
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: FrontendConfigs
+                                .kIconColor, // Đảm bảo rằng màu này được định nghĩa trong FrontendConfigs
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                  8), // Góc bo tròn cho nút
+                            ),
+                          ),
+                          onPressed: () {
+                            createOrder();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget buildServiceList(List<Service> availableServices) {
+  Widget buildServiceList() {
     // A map of icons for each service, for example purposes
-    final Map<String, IconData> serviceIcons = {
-      'Thay Bình': Icons.local_gas_station,
-      'Hỗ Trợ Đẩy Xe': Icons.build_circle,
-      'Mainbroad': Icons.compress,
-      'Sạc ắc quy': Icons.battery_charging_full,
-      'Kích bình': Icons.power,
-      'Thay bình': Icons.autorenew,
-      // Add more mappings of service names to icons
-    };
 
     return Container(
-      width: MediaQuery.of(context).size.width,
-      color: Colors.white,
+      color: FrontendConfigs.kBackgrColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: EdgeInsets.symmetric(vertical: 10),
             child: Text(
-              "Chọn dịch vụ", // Title
+              "Dịch vụ ", // Title
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          if (selectedServices?.isEmpty ?? true)
-            Padding(
-              padding: EdgeInsets.only(bottom: 10),
-              child: Text(
-                "Hãy chọn ít nhất 1 dịch vụ",
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+          InkWell(
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ServiceSelectionPage(),
+                )),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add_box), // Biểu tượng dấu '+'
+                SizedBox(width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
+                Text(
+                  'Chọn', // Văn bản bên cạnh biểu tượng
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16, // Kích thước văn bản
+                  ),
                 ),
-              ),
+              ],
             ),
-          Wrap(
-            spacing: 10, // Horizontal space between chips
-            runSpacing: 10, // Vertical space between chips
-            children: availableServices.map((service) {
-              bool isSelected =
-                  selectedServices?.contains(service.name) ?? false;
-              return ChoiceChip(
-                label: Text('${service.name} (${service.price}vnd)'),
-                avatar: Icon(
-                  serviceIcons[service
-                      .name], // Use the corresponding icon for each service
-                  color: isSelected ? Colors.white : Colors.black54,
-                ),
-                selected: isSelected,
-                onSelected: (value) {
-                  setState(() {
-                    if (value) {
-                      selectedServices?.add(service.name);
-                      totalPrice += service.price;
-                    } else {
-                      selectedServices?.remove(service.name);
-                      totalPrice -= service.price;
-                    }
-                  });
-                },
-                backgroundColor: Colors.grey[200],
-                selectedColor: Theme.of(context).primaryColor,
-                labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black,
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              );
-            }).toList(),
-          ),
+          )
+          // if (selectedServices?.isEmpty ?? true)
+          //   Padding(
+          //     padding: EdgeInsets.only(bottom: 10),
+          //     child: Text(
+          //       "Hãy chọn ít nhất 1 dịch vụ",
+          //       style: TextStyle(
+          //         color: Colors.red,
+          //         fontWeight: FontWeight.bold,
+          //         fontSize: 14,
+          //       ),
+          //     ),
+          //   ),
+          // Wrap(
+          //   spacing: 10, // Horizontal space between chips
+          //   runSpacing: 10, // Vertical space between chips
+          //   children: availableServices.map((service) {
+          //     bool isSelected =
+          //         selectedServices?.contains(service.name) ?? false;
+          //     return ChoiceChip(
+          //       label: Text('${service.name} (${service.price}vnd)'),
+          //       avatar: Icon(
+          //         serviceIcons[service
+          //             .name], // Use the corresponding icon for each service
+          //         color: isSelected ? Colors.white : Colors.black54,
+          //       ),
+          //       selected: isSelected,
+          //       onSelected: (value) {
+          //         setState(() {
+          //           if (value) {
+          //             selectedServices?.add(service.name);
+          //             totalPrice += service.price;
+          //           } else {
+          //             selectedServices?.remove(service.name);
+          //             totalPrice -= service.price;
+          //           }
+          //         });
+          //       },
+          //       backgroundColor: Colors.grey[200],
+          //       selectedColor: Theme.of(context).primaryColor,
+          //       labelStyle: TextStyle(
+          //         color: isSelected ? Colors.white : Colors.black,
+          //       ),
+          //       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          //     );
+          //   }).toList(),
+          // ),
         ],
       ),
     );
