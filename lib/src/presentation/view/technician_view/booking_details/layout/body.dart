@@ -274,15 +274,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         }); // Trả về false nếu có lỗi
       }
     }
-    // void startOrder(){
-
-    // }
-
-    // void endOrder(){
-
-    // }
-
-// ...
+    
 
     Widget _slider(bool type) {
       return Container(
