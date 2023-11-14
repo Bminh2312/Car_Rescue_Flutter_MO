@@ -10,19 +10,19 @@ class OrderProvider {
       Environment.API_URL + 'api/Order/CreateFixingOrderForCustomer';
   final String apiUrlCreateTowing =
       Environment.API_URL + 'api/Order/CreateTowingOrderForCustomer';
-  final String apiUrlGetAll =
-      Environment.API_URL + 'api/Order/GetOrdersOfCustomer';
+  final String apiUrlGetOrderDetail =
+      Environment.API_URL + 'api/Order/GetOrder';
   final String apiUrlGetAllOfCustomer =
       Environment.API_URL + 'api/Order/GetOrdersOfCustomer';
   final String apiUrlCancelOrder =
-      Environment.API_URL + '/api/Order/CustomerCancelOrder';
+      Environment.API_URL + 'api/Order/CustomerCancelOrder';
   final String apiUrlGetImage =
-      Environment.API_URL + '/api/Order/GetImagesOfOrder';
+      Environment.API_URL + 'api/Order/GetImagesOfOrder';
   final String apiUrlGetOrderDetails =
-      Environment.API_URL + '/api/OrderDetail/GetDetailsOfOrder';
-  final String apiUrlStartOrder = Environment.API_URL + '/api/Order/StartOrder';
-  final String apiUrlEndOrder = Environment.API_URL + '/api/Order/EndOrder';
-  final String apiUrlUpdateOrderForTech = Environment.API_URL + '/api/Order/UpdateOrderForTeachnician';
+      Environment.API_URL + 'api/OrderDetail/GetDetailsOfOrder';
+  final String apiUrlStartOrder = Environment.API_URL + 'api/Order/StartOrder';
+  final String apiUrlEndOrder = Environment.API_URL + 'api/Order/EndOrder';
+  final String apiUrlUpdateOrderForTech = Environment.API_URL + 'api/Order/UpdateOrderForTeachnician';
 
   Future<int?> createOrderFixing(OrderBookServiceFixing order) async {
     try {
@@ -135,6 +135,33 @@ class OrderProvider {
       throw e;
     }
   }
+
+  Future<Order> getOrderDetail(String id) async {
+  try {
+    final response = await http.get(Uri.parse("${apiUrlGetOrderDetail}?id=${id}"));
+    print(response.body); // Add this line for debugging
+    if (response.statusCode == 200) {
+      final dynamic data = convert.json.decode(response.body);
+      final dynamic orderData = data['data'];
+      print(data);
+      // Assuming Order class exists and you have a factory method to parse data
+      Order order = Order.fromJson(orderData);
+
+      // Check for null values and handle accordingly
+      if (order.id == "") {
+        throw Exception('Order ID is null');
+      }
+
+      return order;
+    } else {
+      throw Exception('Failed to load orders. Status code: ${response.statusCode}');
+    }
+  } catch (e) {
+    // Handle other exceptions or errors
+    print('Error: $e');
+    throw e;
+  }
+}
 
   Future<List<String>> getUrlImages(String orderId) async {
     try {
