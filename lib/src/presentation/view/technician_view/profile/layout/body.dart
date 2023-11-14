@@ -170,7 +170,7 @@ class _ProfileBodyState extends State<ProfileBody> {
                 // Perform logout actions (e.g., clear session, remove tokens, etc.)
                 box.remove("role");
                 // Navigate to the login screen and replace the current screen
-                Navigator.pop(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const TechnicianLogInView(),
