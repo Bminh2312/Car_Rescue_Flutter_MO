@@ -122,9 +122,9 @@ class ServiceCard extends StatelessWidget {
     return SingleChildScrollView(
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8),
           color: Colors.white,
           boxShadow: [
             BoxShadow(
@@ -146,7 +146,8 @@ class ServiceCard extends StatelessWidget {
             currencyFormat.format(service.price),
             style: TextStyle(
                 color: FrontendConfigs.kActiveColor,
-                fontWeight: FontWeight.w600),
+                fontWeight: FontWeight.w600,
+                fontSize: 17),
           ),
           onTap: () {
             // Handle tap event

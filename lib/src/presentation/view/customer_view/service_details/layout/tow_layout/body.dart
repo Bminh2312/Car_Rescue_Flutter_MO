@@ -60,6 +60,7 @@ class _TowBodyState extends State<TowBody> {
   bool isLoading = false;
   bool isMomoSelected = false;
   bool isCashSelected = false;
+  String? selectedPaymentMethod;
   @override
   void initState() {
     selectedDropdownItem = dropdownItems[0];
@@ -67,6 +68,7 @@ class _TowBodyState extends State<TowBody> {
     urlImages = [];
     selectedServices = [];
     availableServices = loadService();
+    selectedPaymentMethod = 'Tiền mặt';
     super.initState();
   }
 
@@ -163,6 +165,17 @@ class _TowBodyState extends State<TowBody> {
           isLoading = false;
         });
       }
+    }
+  }
+
+  String getImageAsset(String value) {
+    switch (value) {
+      case 'Chuyển khoản':
+        return 'assets/images/banking.png';
+      case 'Tiền mặt':
+        return 'assets/images/money.png';
+      default:
+        return 'assets/images/money.png'; // Default image
     }
   }
 
@@ -414,75 +427,43 @@ class _TowBodyState extends State<TowBody> {
                 const SizedBox(
                   height: 10,
                 ),
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      isMomoSelected = !isMomoSelected;
-                      if (isMomoSelected) {
-                        isCashSelected = false;
-                      }
-                    });
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      border: isMomoSelected
-                          ? Border.all(
-                              color: FrontendConfigs.kActiveColor,
-                              width: 2.0,
-                            )
-                          : null, // Loại bỏ viền khi không được chọn
-                      borderRadius: BorderRadius.circular(10.0),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: DropdownButton<String>(
+                        isExpanded: true, // Set this property to true
+                        value: selectedPaymentMethod,
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              selectedPaymentMethod = newValue;
+                            });
+                          }
+                        },
+                        items: <String>['Chuyển khoản', 'Tiền mặt']
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Row(
+                              children: <Widget>[
+                                Image.asset(
+                                  getImageAsset(value),
+                                  width: value == 'Chuyển khoản'
+                                      ? 25
+                                      : 24, // Larger width for banking.png
+                                  height: value == 'Chuyển khoản'
+                                      ? 25
+                                      : 24, // Larger height for banking.png
+                                ),
+                                SizedBox(width: 10),
+                                Text(value),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Image.asset('assets/images/momo.png'),
-                        SizedBox(width: 10.0),
-                        CustomText(
-                          text: "Momo",
-                          fontWeight: isMomoSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          fontSize: 18,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      isCashSelected = !isCashSelected;
-                      if (isCashSelected) {
-                        isMomoSelected = false;
-                      }
-                    });
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      border: isCashSelected
-                          ? Border.all(
-                              color: FrontendConfigs.kActiveColor,
-                              width: 2.0,
-                            )
-                          : null, // Loại bỏ viền khi không được chọn
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    child: Row(
-                      children: [
-                        Image.asset('assets/images/money.png'),
-                        SizedBox(width: 10.0),
-                        CustomText(
-                          text: "Tiền mặt",
-                          fontWeight: isCashSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          fontSize: 18,
-                        ),
-                      ],
-                    ),
-                  ),
+                  ],
                 ),
 
                 const SizedBox(

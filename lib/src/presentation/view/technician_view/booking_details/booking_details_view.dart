@@ -31,7 +31,7 @@ class _BookingDetailsViewState extends State<BookingDetailsView> {
     return Scaffold(
       appBar: customAppBar(
         context,
-        text: 'Booking Details',
+        text: 'Chi tiết đơn hàng',
         showText: true,
       ),
       body: BookingDetailsBody(

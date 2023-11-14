@@ -4,6 +4,7 @@ import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:get_storage/get_storage.dart';
 import 'row_widget.dart';
 
 class ProfileBody extends StatefulWidget {
@@ -28,6 +29,7 @@ class _ProfileBodyState extends State<ProfileBody> {
   String avatar = '';
   AuthService authService = AuthService();
   Map<String, dynamic>? userProfileData;
+  final box = GetStorage();
   @override
   void initState() {
     super.initState();
@@ -165,7 +167,7 @@ class _ProfileBodyState extends State<ProfileBody> {
             InkWell(
               onTap: () async {
                 // Perform logout actions (e.g., clear session, remove tokens, etc.)
-
+                box.remove("role");
                 // Navigate to the login screen and replace the current screen
                 Navigator.pop(
                   context,

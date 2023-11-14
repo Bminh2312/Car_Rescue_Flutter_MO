@@ -17,8 +17,13 @@ import 'package:http/http.dart' as http;
 
 class UpdateCarScreen extends StatefulWidget {
   final String userId;
+  final String accountId;
   Vehicle? vehicle;
-  UpdateCarScreen({super.key, required this.userId, required this.vehicle});
+  UpdateCarScreen(
+      {super.key,
+      required this.userId,
+      required this.vehicle,
+      required this.accountId});
   @override
   _UpdateCarScreenState createState() => _UpdateCarScreenState();
 }
@@ -50,7 +55,6 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
   );
   Future<bool> updateCarApproval({
-    required String id,
     required String rvoid,
     required String licensePlate,
     required String manufacturer,
@@ -78,24 +82,20 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
       'manufacturingYear': manufacturingYear.toString(),
       'status': status
     };
-
-    // Handle images
-    // For local files, you might need to upload them first and get a URL in response
-    // For network URLs, you can directly use them
     payload['carRegistrationFont'] = carRegistrationFontImage != null
         ? await authService.uploadImageToFirebase(
             carRegistrationFontImage, 'RVOvehicle_images/')
-        : carRegistrationFontImageUrl;
+        : widget.vehicle?.carRegistrationFont;
 
     payload['carRegistrationBack'] = carRegistrationBackImage != null
         ? await authService.uploadImageToFirebase(
             carRegistrationBackImage, 'RVOvehicle_images/')
-        : carRegistrationBackImageUrl;
+        : widget.vehicle?.carRegistrationBack;
 
     payload['image'] = vehicleImage != null
         ? await authService.uploadImageToFirebase(
             vehicleImage, 'RVOvehicle_images/')
-        : vehicleImageUrl;
+        : widget.vehicle?.image;
     print(payload);
     // Make the API call
     var response = await http.put(
@@ -123,7 +123,6 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
 
       try {
         bool isSuccess = await updateCarApproval(
-            id: id,
             rvoid: widget.userId,
             licensePlate: _licensePlate,
             manufacturer: _manufacturer,
@@ -139,29 +138,25 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
         if (isSuccess) {
           setState(() {
             _isLoading = false;
-            Navigator.pop(context, true);
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CarListView(
+                    userId: widget.userId,
+                    accountId: widget.userId,
+                  ),
+                ));
           });
 
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text('Thành công',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                content: Text(
-                  'Đã lưu thông tin thành công.Vui lòng chờ quản lí xác nhận',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: Text('Đóng'),
-                  ),
-                ],
-              );
-            },
+// Để hiển thị thông báo Toast
+          Fluttertoast.showToast(
+            msg: 'Hệ thống đã tiếp nhận thông tin.\nVui lòng chờ quản lí duyệt',
+            toastLength: Toast.LENGTH_SHORT, // Độ dài hiển thị
+            gravity: ToastGravity.CENTER, // Vị trí hiển thị
+            timeInSecForIosWeb: 4, // Thời gian hiển thị (tính theo giây)
+            backgroundColor: Colors.green, // Màu nền
+            textColor: Colors.white, // Màu chữ
+            fontSize: 16.0, // Kích thước chữ
           );
         } else {
           // Handle unsuccessful API response, e.g., show a snackbar with an error message.

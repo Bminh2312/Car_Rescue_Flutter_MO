@@ -12,7 +12,6 @@ import 'package:get_storage/get_storage.dart';
 import 'row_widget.dart';
 
 class ProfileBody extends StatefulWidget {
-  
   ProfileBody({Key? key}) : super(key: key);
 
   @override
@@ -35,7 +34,7 @@ class _ProfileBodyState extends State<ProfileBody> {
   String avt = '';
 
   String fullname = '';
-  
+
   String phone = '';
 
   void _handleSignOut() async {
@@ -44,34 +43,32 @@ class _ProfileBodyState extends State<ProfileBody> {
       GetStorage().remove("customer");
     }
     Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SelectCityView(),
-            ),
-            (route) => false, // Loại bỏ tất cả các màn hình khỏi ngăn xếp
-          );
-   
+      context,
+      MaterialPageRoute(
+        builder: (context) => SelectCityView(),
+      ),
+      (route) => false, // Loại bỏ tất cả các màn hình khỏi ngăn xếp
+    );
   }
 
-  void _fetchCustomer(String id)async{
-    try{
-    final fetchData = await CustomerProfileProvider().getCustomerById(id);
-    setState(() {
-      avt = fetchData.avatar;
-      fullname = fetchData.fullname;
-      phone = fetchData.phone;
-    });
-    }catch(e){
+  void _fetchCustomer(String id) async {
+    try {
+      final fetchData = await CustomerProfileProvider().getCustomerById(id);
+      setState(() {
+        avt = fetchData.avatar;
+        fullname = fetchData.fullname;
+        phone = fetchData.phone;
+      });
+    } catch (e) {
       print("Lỗi: ${e}}");
     }
   }
-
-
 
   @override
   void dispose() {
     super.dispose();
   }
+
   @override
   void initState() {
     _fetchCustomer(customer.id);
@@ -98,33 +95,25 @@ class _ProfileBodyState extends State<ProfileBody> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     CircleAvatar(
-                      backgroundColor: Colors.black,
-                      radius: 37,
-                      child: Padding(
-                          padding: const EdgeInsets.all(0.20),
-                          child: CircleAvatar(
-                              radius: 60,
-                              backgroundImage: avt != ''
-                                  ? Image.network(avt).image
-                                       // Sử dụng NetworkImage cho hình ảnh từ mạng
-                                  : AssetImage(
-                                      'assets/images/profile.png'), // Sử dụng AssetImage cho hình ảnh từ tài nguyên cục bộ
-                            ),),
+                      backgroundColor: Color.fromARGB(0, 158, 158, 158),
+                      radius: 64,
+                      backgroundImage: NetworkImage(
+                          avt), // Use 'backgroundImage' to set the image
                     ),
-                    const SizedBox(
+                    SizedBox(
                       height: 18,
                     ),
                     CustomText(
                       text: fullname,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(
-                      height: 7,
+                    SizedBox(
+                      height: 8,
                     ),
                     CustomText(
                       text: phone,
-                      fontSize: 14,
+                      fontSize: 20,
                       fontWeight: FontWeight.w500,
                     )
                   ],
@@ -137,11 +126,14 @@ class _ProfileBodyState extends State<ProfileBody> {
             SettingWidget(
               icon: "assets/svg/user.svg",
               title: "John_wick",
-              name: 'Edit profile',
+              name: 'Chỉnh sửa thông tin',
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                      builder: (context) => EditProfileViewCustomer(id: customer.id, accountId: customer.accountId,)),
+                      builder: (context) => EditProfileViewCustomer(
+                            id: customer.id,
+                            accountId: customer.accountId,
+                          )),
                 );
                 // Navigator.pushNamed(context, "/editProfile");
               },
@@ -150,61 +142,11 @@ class _ProfileBodyState extends State<ProfileBody> {
               height: 24,
             ),
             SettingWidget(
-              icon: "assets/svg/notification_icon.svg",
-              title: "+966 1114141",
-              name: 'Notification',
-              onTap: () {},
-            ),
-            const SizedBox(
-              height: 24,
-            ),
-            SettingWidget(
-              icon: "assets/svg/wallet_icon.svg",
-              title: "Payment",
-              name: 'Payment',
-              height: 16,
-              weight: 16,
-              onTap: () {},
-            ),
-            const SizedBox(
-              height: 24,
-            ),
-            InkWell(
-              onTap: () {},
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  SettingWidget(
-                    icon: "assets/svg/language.svg",
-                    title: "",
-                    name: 'Language',
-                    isShow: true,
-                    onTap: () {},
-                  ),
-                  Row(
-                    children: const [
-                      Text("English (US)",
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w400)),
-                      SizedBox(
-                        width: 3,
-                      ),
-                      Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            ),
-            const SizedBox(
-              height: 24,
-            ),
-            SettingWidget(
               icon: "assets/svg/privacy.svg",
+              height: 30,
+              weight: 30,
               title: "John_wick",
-              name: 'Privacy Policy',
+              name: 'Chính sách riêng tư',
               onTap: () {},
             ),
             const SizedBox(
@@ -213,7 +155,7 @@ class _ProfileBodyState extends State<ProfileBody> {
             SettingWidget(
               icon: "assets/svg/help_center.svg",
               title: "",
-              name: 'Help Center',
+              name: 'Trung tâm hỗ trợ',
               onTap: () {},
             ),
             const SizedBox(
@@ -221,28 +163,32 @@ class _ProfileBodyState extends State<ProfileBody> {
             ),
             InkWell(
               onTap: () {
+                // Perform logout actions (e.g., clear session, remove tokens, etc.)
+
+                // Navigate to the login screen and replace the current screen
                 _handleSignOut();
               },
               child: Row(
                 children: [
                   SvgPicture.asset(
                     "assets/svg/exit.svg",
-                    height: 20,
-                    width: 20,
+                    height: 30,
+                    width: 30,
                   ),
                   const SizedBox(
                     width: 18,
                   ),
                   Text(
-                    "Log out",
+                    "Đăng xuất",
                     style: TextStyle(
-                        color: redColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400),
+                      color: redColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   )
                 ],
               ),
-            ),
+            )
           ],
         ),
       ),

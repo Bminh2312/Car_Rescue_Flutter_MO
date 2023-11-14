@@ -68,7 +68,14 @@ class _AddCarScreenState extends State<AddCarScreen> {
         if (isSuccess) {
           setState(() {
             _isLoading = false;
-            Navigator.pop(context, true);
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CarListView(
+                    userId: widget.userId,
+                    accountId: widget.userId,
+                  ),
+                ));
           });
 
           showDialog(

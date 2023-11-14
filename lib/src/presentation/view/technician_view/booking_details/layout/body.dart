@@ -10,6 +10,7 @@ import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_list/booking_view.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/home/home_view.dart';
+import 'package:CarRescue/src/presentation/view/technician_view/waiting_payment/waiting_payment.dart';
 import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
 import 'package:CarRescue/src/providers/service_provider.dart';
@@ -299,33 +300,30 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               final orderProvider = OrderProvider();
               print("Id: ${widget.booking.id}");
               orderProvider.startOrder(widget.booking.id);
-              Navigator.pushReplacement(context,
-                      MaterialPageRoute(
-                        builder: (context) => BottomNavBarView(
-                          accountId: technicianInfo!.accountId,
-                          userId: technicianInfo!.id,
-                          fullname: technicianInfo!.fullname!,
-                        ),
-                      ),
-                    );
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BottomNavBarView(
+                    accountId: technicianInfo!.accountId,
+                    userId: technicianInfo!.id,
+                  ),
+                ),
+              );
               // Navigator.push(context,
               //       MaterialPageRoute(
               //         builder: (context) => BookingListView(userId:technicianInfo!.id , accountId:technicianInfo!.accountId ,
               //             ),
               //       ),);
-            }else{
+            } else {
               final orderProvider = OrderProvider();
               print("Id: ${widget.booking.id}");
               orderProvider.endOrder(widget.booking.id);
-              Navigator.pushReplacement(context,
-                      MaterialPageRoute(
-                        builder: (context) => BottomNavBarView(
-                          accountId: technicianInfo!.accountId,
-                          userId: technicianInfo!.id,
-                          fullname: technicianInfo!.fullname!,
-                        ),
-                      ),
-                    );
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => WaitingForPaymentScreen()
+                ),
+              );
             }
           },
           label: type
@@ -567,7 +565,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               Text('${total} vnd',
                   style: TextStyle(fontWeight: FontWeight.bold))),
           SizedBox(height: 24.0),
-          
+
           Divider(thickness: 3),
           // Action Buttons
           if (widget.booking.status == "ASSIGNED") _slider(true),

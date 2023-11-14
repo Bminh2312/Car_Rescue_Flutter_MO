@@ -1,5 +1,6 @@
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/customer.dart';
+import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/providers/firebase_message_provider.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:CarRescue/src/providers/gmail_provider.dart';
@@ -10,7 +11,6 @@ import 'package:CarRescue/src/presentation/elements/app_button.dart';
 import 'package:CarRescue/src/presentation/elements/auth_field.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
-
 
 import 'log_in_widget.dart';
 
@@ -72,7 +72,10 @@ class _LogInBodyState extends State<LogInBody> {
         // Continue with navigation
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const BottomNavBarView(page: 0,)),
+          MaterialPageRoute(
+              builder: (context) => const BottomNavBarView(
+                    page: 0,
+                  )),
         );
         notifyMessage.showToast("Đăng nhập thành công");
       } else {
@@ -101,7 +104,7 @@ class _LogInBodyState extends State<LogInBody> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Login to \nyour account",
+                "Đăng nhập \ntài khoản",
                 style: FrontendConfigs.kHeadingStyle,
               ),
               const SizedBox(
@@ -120,7 +123,7 @@ class _LogInBodyState extends State<LogInBody> {
               CustomTextField(
                 controller: _passwordController,
                 icon: "assets/svg/lock_icon.svg",
-                text: 'Password',
+                text: 'Mật khẩu',
                 onTap: () {},
                 keyBoardType: TextInputType.text,
                 isPassword: true,
@@ -132,7 +135,7 @@ class _LogInBodyState extends State<LogInBody> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   CustomText(
-                    text: 'Forgot Password?',
+                    text: 'Quên mật khẩu?',
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   )
@@ -142,13 +145,15 @@ class _LogInBodyState extends State<LogInBody> {
                 height: 24,
               ),
               AppButton(
-                  onPressed: () async{
+                  onPressed: () async {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const BottomNavBarView(page:2,)));
+                            builder: (context) => const BottomNavBarView(
+                                  page: 2,
+                                )));
                   },
-                  btnLabel: "Log in"),
+                  btnLabel: "Đăng nhập"),
               const SizedBox(
                 height: 30,
               ),
@@ -162,7 +167,7 @@ class _LogInBodyState extends State<LogInBody> {
                     width: 12,
                   ),
                   CustomText(
-                    text: "Or continue with",
+                    text: "hoặc",
                     fontSize: 16,
                   ),
                   const SizedBox(
@@ -177,30 +182,68 @@ class _LogInBodyState extends State<LogInBody> {
               const SizedBox(
                 height: 24,
               ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SizedBox(
-                      width: 12,
-                    ),
-                    LogInWidget(
-                      logo: "assets/images/google.png",
-                      onPressed: () {
-                        if (!isLoading) {
-                          _handleSignInWithGmail();
-                        }
-                      },
-                      isLoading:
-                          isLoading, // Pass the loading state to the widget
-                    ),
-                    SizedBox(
-                      width: 12,
-                    ),
-                  ],
+              InkWell(
+                onTap: () {
+                  if (!isLoading) {
+                    _handleSignInWithGmail();
+                  }
+                },
+                child: Container(
+                  padding: EdgeInsets.all(16),
+                  color: Colors.white,
+                  child: isLoading
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            color: FrontendConfigs.kActiveColor,
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Image(
+                              image: AssetImage("assets/images/google.png"),
+                              height: 18.0,
+                              width: 36,
+                            ),
+                            Padding(
+                              padding: EdgeInsets.only(left: 24, right: 8),
+                              child: Text(
+                                'Đăng nhập với Google',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.black54,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
-              )
+              ),
+              // Padding(
+              //   padding: const EdgeInsets.all(4.0),
+              //   child: Row(
+              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //     children: [
+              //       SizedBox(
+              //         width: 12,
+              //       ),
+              //       LogInWidget(
+              //         logo: "assets/images/google.png",
+              //         onPressed: () {
+              //           if (!isLoading) {
+              //             _handleSignInWithGmail();
+              //           }
+              //         },
+              //         isLoading:
+              //             isLoading, // Pass the loading state to the widget
+              //       ),
+              //       SizedBox(
+              //         width: 12,
+              //       ),
+              //     ],
+              //   ),
+              // )
             ],
           ),
         ),

@@ -2,6 +2,8 @@ import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/feedback.dart';
 import 'package:CarRescue/src/models/technician.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
+import 'package:CarRescue/src/presentation/view/technician_view/waiting_payment/waiting_payment.dart';
+import 'package:CarRescue/src/presentation/view/technician_view/home/layout/widgets/calendar/calendar_view.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/booking_view.dart';
 import 'package:CarRescue/src/models/booking.dart';
@@ -155,13 +157,6 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                 ] else ...[
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Đơn làm việc của bạn sẽ được hiện thị ở đây.',
-                      style: TextStyle(
-                        fontSize: 18.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
                   )
                 ],
               ],
@@ -248,12 +243,12 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                 label: 'Lịch',
                 icon: Icons.calendar_today,
                 onPressed: () {
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //     builder: (context) => CalendarView(),
-                  //   ),
-                  // );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CalendarView(),
+                    ),
+                  );
                 },
               ),
               QuickAccessButton(
@@ -266,6 +261,17 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                       builder: (context) => const NotificationView(),
                     ),
                   );
+                },
+              ),
+              QuickAccessButton(
+                label: 'Test',
+                icon: Icons.menu_book,
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => WaitingForPaymentScreen(),
+                      ));
                 },
               ),
             ],
@@ -517,7 +523,8 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                       backgroundColor: FrontendConfigs.kIconColor,
                       radius: 25,
                       child: ClipOval(
-                        child: _tech?.avatar != null && _tech!.avatar!.isNotEmpty
+                        child: _tech?.avatar != null &&
+                                _tech!.avatar!.isNotEmpty
                             ? Image.network(
                                 _tech!.avatar!,
                                 width: 64,

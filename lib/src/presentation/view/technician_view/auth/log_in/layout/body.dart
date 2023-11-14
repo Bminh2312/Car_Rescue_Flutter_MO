@@ -98,7 +98,7 @@ class _TechnicianLogInBodyState extends State<TechnicianLogInBody> {
                         builder: (context) => BottomNavBarView(
                           accountId: result.accountId,
                           userId: result.userId,
-                          fullname: result.fullname,
+                          
                         ),
                       ),
                     );

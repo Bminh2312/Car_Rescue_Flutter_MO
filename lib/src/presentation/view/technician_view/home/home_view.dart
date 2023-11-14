@@ -6,14 +6,9 @@ import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 
 class TechnicianHomeView extends StatelessWidget {
-  final String fullname;
   final String userId;
   final String accountId;
-  TechnicianHomeView(
-      {Key? key,
-      required this.fullname,
-      required this.userId,
-      required this.accountId})
+  TechnicianHomeView({Key? key, required this.userId, required this.accountId})
       : super(key: key);
   @override
   Widget build(BuildContext context) {

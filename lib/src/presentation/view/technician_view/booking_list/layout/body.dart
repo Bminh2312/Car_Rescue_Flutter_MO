@@ -13,6 +13,7 @@ import 'package:CarRescue/src/presentation/view/technician_view/booking_details/
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:geocoding/geocoding.dart'; // Import the geocoding package
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class BookingListBody extends StatefulWidget {
   final List<Booking> bookings; // Define the list of bookings
@@ -39,14 +40,19 @@ class _BookingListBodyState extends State<BookingListBody> {
   List<Booking> inprogressBookings = [];
   List<Booking> assignedBookings = [];
   List<Booking> otherBookings = [];
+  List<Booking> canceledBookings = [];
   String addressDep = '';
   AuthService authService = AuthService();
   bool isDataLoaded = false;
-
+  List<Booking> completedBookings = [];
+  bool isCompletedEmpty = false;
+  bool isCanceledEmpty = false;
   @override
   void initState() {
     super.initState();
-    separateBookings();
+    // separateBookings();
+    loadCompletedBookings();
+    loadCanceledBookings();
   }
 
   // Future<void> fetchData() async {
@@ -57,48 +63,108 @@ class _BookingListBodyState extends State<BookingListBody> {
   //     print('Error: $e');
   //   }
   // }
+  Future<void> _fetchFeedbacks(
+      Booking booking, Map<String, Map<String, dynamic>> apiFeedbacks) async {
+    var feedbackForBooking = apiFeedbacks[booking.id];
+    booking.rating = feedbackForBooking?['rating']?.toDouble();
+    booking.note = feedbackForBooking?['note'];
+  }
 
-  void separateBookings() async {
+  void loadCompletedBookings() async {
     try {
-      final List<Booking> data = await AuthService()
-          .fetchBookings(widget.userId, '97757c05-1a15-4009-a156-e43095dddd81');
+      final List<Booking> completedBookingsFromAPI =
+          await AuthService().fetchTechBookingByCompleted(widget.userId);
 
-      data.sort((a, b) {
-        if (a.startTime == null && b.startTime == null)
-          return 0; // Both are null, so they're considered equal
-        if (a.startTime == null)
-          return 1; // a is null, so it should come after b
-        if (b.startTime == null)
-          return -1; // b is null, so it should come after a
-        return b.startTime!.compareTo(
-            a.startTime!); // Both are non-null, proceed with the comparison
+      final apiFeedbacks =
+          await authService.fetchTechFeedbackRatings(widget.userId);
+      completedBookingsFromAPI.sort((a, b) {
+        if (a.createdAt == null) return 1;
+        if (b.createdAt == null) return -1;
+        return b.createdAt!.compareTo(a.createdAt!);
       });
-      // Sort by startTime
+      List<Future> vehicleAndFeedbackTasks = [];
+
+      for (Booking booking in completedBookingsFromAPI) {
+        vehicleAndFeedbackTasks.add(_fetchFeedbacks(booking, apiFeedbacks));
+      }
+
+      await Future.wait(vehicleAndFeedbackTasks);
+
       setState(() {
-        assignedBookings = data.where((booking) {
-          final status = booking.status.trim().toUpperCase();
-          return status == 'ASSIGNED';
-        }).toList();
+        completedBookings = completedBookingsFromAPI;
+        isDataLoaded = true;
       });
-
-      
-        inprogressBookings = data.where((booking) {
-          final status = booking.status.trim().toUpperCase();
-          return status == 'INPROGRESS';
-        }).toList();
-    
-
-      print('Inprogress Bookings: $inprogressBookings');
-
-      otherBookings = data.where((booking) {
-        final status = booking.status.trim().toUpperCase();
-        return status != 'INPROGRESS';
-      }).toList();
-      print('Other Bookings: $otherBookings');
+      if (completedBookings.isEmpty) {
+        isCompletedEmpty = true;
+      }
     } catch (e) {
-      print('Error: $e');
+      // Handle any exceptions that occur during the API request
+      print('Error loading bookings: $e');
     }
   }
+
+  void loadCanceledBookings() async {
+    try {
+      setState(() {
+        // This seems like a naming error. You might want to change this to canceledBookings.
+        isDataLoaded = false;
+      });
+      final List<Booking> canceledBookingsFromAPI =
+          await AuthService().fetchTechBookingByCanceled(widget.userId);
+      canceledBookingsFromAPI.sort((a, b) {
+        if (a.createdAt == null) return 1;
+        if (b.createdAt == null) return -1;
+        return b.createdAt!.compareTo(a.createdAt!);
+      });
+
+      setState(() {
+        canceledBookings =
+            canceledBookingsFromAPI; // This seems like a naming error. You might want to change this to canceledBookings.
+        isDataLoaded = true;
+      });
+      if (canceledBookings.isEmpty) {
+        // This seems like a naming error. You might want to change this to canceledBookings.
+        isCanceledEmpty = true;
+      }
+    } catch (e) {
+      // Handle any exceptions that occur during the API request
+      print('Error loading bookings: $e');
+    }
+  }
+
+  // void separateBookings() async {
+  //   try {
+  //     final List<Booking> data = await AuthService()
+  //         .fetchBookings(widget.userId, '97757c05-1a15-4009-a156-e43095dddd81');
+
+  //     data.sort((a, b) {
+  //       if (a.startTime == null && b.startTime == null)
+  //         return 0; // Both are null, so they're considered equal
+  //       if (a.startTime == null)
+  //         return 1; // a is null, so it should come after b
+  //       if (b.startTime == null)
+  //         return -1; // b is null, so it should come after a
+  //       return b.startTime!.compareTo(
+  //           a.startTime!); // Both are non-null, proceed with the comparison
+  //     });
+  //     // Sort by startTime
+  //     setState(() {
+  //       assignedBookings = data.where((booking) {
+  //         final status = booking.status.trim().toUpperCase();
+  //         return status == 'ASSIGNED';
+  //       }).toList();
+  //     });
+
+  //     inprogressBookings = data.where((booking) {
+  //       final status = booking.status.trim().toUpperCase();
+  //       return status == 'INPROGRESS';
+  //     }).toList();
+
+  //     print('Inprogress Bookings: $inprogressBookings');
+  //   } catch (e) {
+  //     print('Error: $e');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +190,7 @@ class _BookingListBodyState extends State<BookingListBody> {
                   Tab(
                     child: Center(
                       child: Text(
-                        'Đang làm',
+                        'Hoàn thành',
                         style: TextStyle(
                           color: Colors.black,
                         ),
@@ -134,7 +200,7 @@ class _BookingListBodyState extends State<BookingListBody> {
                   Tab(
                     child: Center(
                       child: Text(
-                        'Lịch sử',
+                        'Đã hủy',
                         style: TextStyle(
                           color: Colors.black,
                         ),
@@ -150,8 +216,8 @@ class _BookingListBodyState extends State<BookingListBody> {
                 child: TabBarView(
                   children: [
                     _buildBookingListView(assignedBookings),
-                    _buildBookingListView(inprogressBookings),
-                    _buildBookingListView(otherBookings),
+                    _buildBookingListView(completedBookings),
+                    _buildBookingListView(canceledBookings),
                   ],
                 ),
               ),
@@ -218,9 +284,37 @@ class _BookingListBodyState extends State<BookingListBody> {
                       color: Colors.black,
                     ),
                     subtitle: Text(booking.rescueType),
-                    trailing: BookingStatus(
-                        status:
-                            booking.status), // Use the BookingStatusWidget here
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        BookingStatus(status: booking.status),
+                        SizedBox(
+                          height: 5,
+                        ),
+                        if (booking.status.toUpperCase() ==
+                            'COMPLETED') // Spacing
+                          Container(
+                            child: RatingBar.builder(
+                              itemSize: 12,
+                              initialRating: booking.rating ?? 0,
+                              minRating: 1,
+                              direction: Axis.horizontal,
+                              allowHalfRating: true,
+                              itemCount: 5,
+                              itemPadding:
+                                  EdgeInsets.symmetric(horizontal: 4.0),
+                              itemBuilder: (context, _) => Icon(
+                                Icons.star,
+                                size: 10,
+                                color: Colors.amber,
+                              ),
+                              onRatingUpdate: (rating) {
+                                print(rating);
+                              },
+                            ),
+                          )
+                      ],
+                    ), // Use the BookingStatusWidget here
                   ),
                   Divider(
                     color: FrontendConfigs.kIconColor,

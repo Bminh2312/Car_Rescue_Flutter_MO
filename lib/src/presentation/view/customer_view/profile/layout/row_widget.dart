@@ -1,3 +1,5 @@
+// ignore_for_file: must_be_immutable
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
@@ -8,8 +10,8 @@ class SettingWidget extends StatelessWidget {
       required this.icon,
       required this.title,
       this.isShow = false,
-      this.height = 20,
-      this.weight = 20,
+      this.height = 30,
+      this.weight = 30,
       required this.onTap,
       required this.name})
       : super(key: key);
@@ -34,16 +36,12 @@ class SettingWidget extends StatelessWidget {
                 icon,
                 height: height,
                 width: weight,
-                color: FrontendConfigs.kPrimaryColor,
               ),
               const SizedBox(
                 width: 18,
               ),
               Text(name,
-                  style: TextStyle(
-                      color: FrontendConfigs.kPrimaryColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400))
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))
             ],
           ),
           isShow
@@ -51,12 +49,12 @@ class SettingWidget extends StatelessWidget {
                   title,
                   style: TextStyle(
                       color: FrontendConfigs.kAuthColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900),
                 )
               : const Icon(
                   Icons.arrow_forward_ios,
-                  size: 16,
+                  size: 14,
                 )
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/feedback/layout/body.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/select_service_view.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -9,6 +10,7 @@ class OrderProcessingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -20,37 +22,93 @@ class OrderProcessingScreen extends StatelessWidget {
           ),
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            SizedBox(
+              height: 80,
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tạo đơn thành công',
+                  style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: .5),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                Text(
+                  'Vui lòng chờ hệ thống điều phối nhân sự phù hợp.',
+                  style: TextStyle(
+                      fontSize: 17, color: Colors.black87, letterSpacing: .5),
+                ),
+              ],
+            ),
             Row(
               children: [
-                SizedBox(width: 40),
+                SizedBox(width: 10),
                 Lottie.asset('assets/animations/order_processing.json',
                     width: 350, height: 350, fit: BoxFit.fill),
               ],
             ),
-            Text(
-              'Tạo đơn thành công.\nHệ thống đang xác nhận',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 30, fontWeight: FontWeight.bold, letterSpacing: .5),
-            ),
             SizedBox(height: 100),
-            Padding(
-              padding: const EdgeInsets.all(8.0), // Padding cho nút
-              child: SizedBox(
-                width: double.infinity, // Chiều rộng trải rộng toàn bộ màn hình
-                child: ElevatedButton(
-                  child: Text('Quay lại trang chủ'),
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ServiceView(),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              width: double.infinity,
+              child: Column(
+                children: [
+                  ElevatedButton(
+                    child: Text('Trang chủ'),
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.blue, // Background color
+                      onPrimary: Colors.white, // Text color
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(10), // Rounded corners
                       ),
-                    );
-                  },
-                ),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12), // Padding
+                      minimumSize:
+                          Size(double.infinity, 36), // Button minimum size
+                    ),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ServiceView(),
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 10), // Spacing between buttons
+                  ElevatedButton(
+                    child: Text('Xem chi tiết đơn'),
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.blue, // Background color
+                      onPrimary: Colors.white, // Text color
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(10), // Rounded corners
+                      ),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12), // Padding
+                      minimumSize:
+                          Size(double.infinity, 36), // Button minimum size
+                    ),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FeedbackScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             )
           ],
