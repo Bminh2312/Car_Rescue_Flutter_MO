@@ -50,7 +50,7 @@ class _BookingListBodyState extends State<BookingListBody> {
   @override
   void initState() {
     super.initState();
-    // separateBookings();
+    separateBookings();
     loadCompletedBookings();
     loadCanceledBookings();
   }
@@ -132,39 +132,34 @@ class _BookingListBodyState extends State<BookingListBody> {
     }
   }
 
-  // void separateBookings() async {
-  //   try {
-  //     final List<Booking> data = await AuthService()
-  //         .fetchBookings(widget.userId, '97757c05-1a15-4009-a156-e43095dddd81');
+  void separateBookings() async {
+    try {
+      final List<Booking> data = await AuthService()
+          .fetchBookings(widget.userId, '97757c05-1a15-4009-a156-e43095dddd81');
 
-  //     data.sort((a, b) {
-  //       if (a.startTime == null && b.startTime == null)
-  //         return 0; // Both are null, so they're considered equal
-  //       if (a.startTime == null)
-  //         return 1; // a is null, so it should come after b
-  //       if (b.startTime == null)
-  //         return -1; // b is null, so it should come after a
-  //       return b.startTime!.compareTo(
-  //           a.startTime!); // Both are non-null, proceed with the comparison
-  //     });
-  //     // Sort by startTime
-  //     setState(() {
-  //       assignedBookings = data.where((booking) {
-  //         final status = booking.status.trim().toUpperCase();
-  //         return status == 'ASSIGNED';
-  //       }).toList();
-  //     });
+      data.sort((a, b) {
+        if (a.startTime == null && b.startTime == null)
+          return 0; // Both are null, so they're considered equal
+        if (a.startTime == null)
+          return 1; // a is null, so it should come after b
+        if (b.startTime == null)
+          return -1; // b is null, so it should come after a
+        return b.startTime!.compareTo(
+            a.startTime!); // Both are non-null, proceed with the comparison
+      });
+      // Sort by startTime
+      setState(() {
+        assignedBookings = data.where((booking) {
+          final status = booking.status.trim().toUpperCase();
+          return status == 'ASSIGNED';
+        }).toList();
+      });
 
-  //     inprogressBookings = data.where((booking) {
-  //       final status = booking.status.trim().toUpperCase();
-  //       return status == 'INPROGRESS';
-  //     }).toList();
-
-  //     print('Inprogress Bookings: $inprogressBookings');
-  //   } catch (e) {
-  //     print('Error: $e');
-  //   }
-  // }
+      print('Inprogress Bookings: $inprogressBookings');
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -41,7 +41,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
   void initState() {
     super.initState();
     fetchBookings();
-    _loadAssignedBookings();
+    _loadInprogressBookings();
     displayFeedbackForBooking(widget.userId);
     fetchTechInfo().then((value) {
       if (mounted) {
@@ -53,7 +53,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
     });
   }
 
-  Future<void> _loadAssignedBookings() async {
+  Future<void> _loadInprogressBookings() async {
     try {
       List<Booking> bookings =
           await authService.fetchTechBookingByInprogress(widget.userId);
@@ -150,7 +150,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                   // Your header widget here
                   for (var booking in assignedBookings)
                     ActiveBookingCard(
-                      userId: booking.technicianId ?? '',
+                      userId: booking.technicianId,
                       avatar: 'assets/images/avatars-2.png',
                       booking: booking,
                     ),
@@ -263,17 +263,17 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                   );
                 },
               ),
-              QuickAccessButton(
-                label: 'Test',
-                icon: Icons.menu_book,
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => WaitingForPaymentScreen(),
-                      ));
-                },
-              ),
+              // QuickAccessButton(
+              //   label: 'Test',
+              //   icon: Icons.menu_book,
+              //   onPressed: () {
+              //     Navigator.push(
+              //         context,
+              //         MaterialPageRoute(
+              //           builder: (context) => WaitingForPaymentScreen(),
+              //         ));
+              //   },
+              // ),
             ],
           ),
         ],
