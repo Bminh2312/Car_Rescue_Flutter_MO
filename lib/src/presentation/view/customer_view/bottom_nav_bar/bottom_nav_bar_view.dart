@@ -102,7 +102,7 @@ class _BottomNavBarViewState extends State<BottomNavBarView> {
                   width: 18,
                 ),
               ),
-              label: "Profile"),
+              label: "Cá nhân"),
         ],
       ),
     );

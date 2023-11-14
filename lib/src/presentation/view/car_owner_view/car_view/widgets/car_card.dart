@@ -1,4 +1,5 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/car_view/widgets/car_status.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/car_view/widgets/update_car_view.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +8,9 @@ import '../../../../../models/vehicle_item.dart';
 class CarCard extends StatelessWidget {
   final Vehicle vehicle;
   final String userId;
-  CarCard({required this.vehicle, required this.userId});
+  final String accountId;
+  CarCard(
+      {required this.vehicle, required this.userId, required this.accountId});
 
   void _showCarDetails(BuildContext context, String id) {
     // Assuming that you have properly initialized the 'car' object
@@ -104,6 +107,7 @@ class CarCard extends StatelessWidget {
                                   MaterialPageRoute(
                                     builder: (context) => UpdateCarScreen(
                                       userId: userId,
+                                      accountId: accountId,
                                       vehicle: vehicle,
                                     ),
                                   ),
@@ -149,58 +153,67 @@ class CarCard extends StatelessWidget {
         onTap: () {
           _showCarDetails(context, vehicle.id);
         },
-        child: Card(
-          margin: EdgeInsets.all(20),
-          elevation: 6,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
+        child: Container(
+          margin: EdgeInsets.symmetric(vertical: 5),
+          color: Colors.white,
           child: ListTile(
             contentPadding: EdgeInsets.all(16),
             leading: Container(
               width: 80,
-              height: 80,
+              height: 160,
               decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
                 image: DecorationImage(
                   image: NetworkImage(vehicle.image ?? ''),
                   fit: BoxFit.cover,
                 ),
               ),
             ),
-            title: Text(
-              vehicle.manufacturer,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            title: CustomText(
+              text: vehicle.type,
+              fontWeight: FontWeight.normal,
+              color: Colors.grey,
+              fontSize: 18,
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(height: 4),
                 Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Color.fromARGB(134, 154, 154, 154),
-                      width: 2,
-                    ),
-                  ),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                    child: Text(
-                      vehicle.licensePlate,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: FrontendConfigs.kPrimaryColor,
-                      ),
-                    ),
-                  ),
+                  child: CustomText(
+                      text:
+                          '${vehicle.manufacturer} (${vehicle.manufacturingYear})',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20),
                 ),
                 SizedBox(height: 10),
-                CarStatus(status: vehicle.status),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Color.fromARGB(134, 154, 154, 154),
+                          width: 2,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 4, horizontal: 8),
+                        child: Text(
+                          vehicle.licensePlate,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: FrontendConfigs.kPrimaryColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                    CarStatus(status: vehicle.status),
+                  ],
+                ),
               ],
             ),
           ),

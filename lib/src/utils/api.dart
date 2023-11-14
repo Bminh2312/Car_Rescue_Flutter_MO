@@ -105,8 +105,6 @@ class AuthService {
     }
   }
 
-  
-
   Future<List<Booking>> fetchBookings(String userId, String excludedId) async {
     try {
       final apiUrl = Uri.parse(
@@ -391,6 +389,60 @@ class AuthService {
     }
   }
 
+  Future<List<Booking>> fetchTechBookingByCompleted(String userId) async {
+    try {
+      final apiUrl = Uri.parse(
+          'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetAllOrderCompletedOfTech?id=$userId');
+      final response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        // If 'data' key exists and it's not null
+        if (jsonData.containsKey('data') && jsonData['data'] != null) {
+          List<dynamic> bookingsData = jsonData['data'];
+
+          return bookingsData
+              .map((booking) => Booking.fromJson(booking))
+              .toList();
+        } else {
+          throw Exception('Invalid data format in response.');
+        }
+      } else {
+        throw Exception('Failed to load bookings');
+      }
+    } catch (e) {
+      throw Exception('Error fetching bookings: $e');
+    }
+  }
+
+  Future<List<Booking>> fetchTechBookingByCanceled(String userId) async {
+    try {
+      final apiUrl = Uri.parse(
+          'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetAllOrderCancelledOfTech?id=$userId');
+      final response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        // If 'data' key exists and it's not null
+        if (jsonData.containsKey('data') && jsonData['data'] != null) {
+          List<dynamic> bookingsData = jsonData['data'];
+
+          return bookingsData
+              .map((booking) => Booking.fromJson(booking))
+              .toList();
+        } else {
+          throw Exception('Invalid data format in response.');
+        }
+      } else {
+        throw Exception('Failed to load bookings');
+      }
+    } catch (e) {
+      throw Exception('Error fetching bookings: $e');
+    }
+  }
+
   Future<List<Booking>> fetchCarOwnerBookingByInprogress(String userId) async {
     try {
       final apiUrl = Uri.parse(
@@ -535,7 +587,7 @@ class AuthService {
 
     // Use Google Geocoding API to fetch addresses
     const String apiKey =
-        'AIzaSyDtQ6f3BA48dZxUbT6NhN94Byw1wfFJBKM'; // Replace with your actual API key
+        'AIzaSyAzVr5QXjWd5aFyfI2s-0_70CoEjRqJdeQ'; // Replace with your actual API key
     final String urlDeparture =
         'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=$apiKey';
     final String urlDestination =
@@ -972,6 +1024,39 @@ class AuthService {
     } catch (error) {
       print("Error fetching feedback ratings: $error");
       return null;
+    }
+  }
+
+  Future<Map<String, Map<String, dynamic>>> fetchTechFeedbackRatings(
+      String userId) async {
+    final String apiUrl =
+        "https://rescuecapstoneapi.azurewebsites.net/api/Feedback/GetFeedbacksOfTeachnician?id=$userId"; // Your API endpoint
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        var jsonResponse = json.decode(response.body);
+        var feedbacks = jsonResponse['data']['feedbacks'] as List;
+
+        Map<String, Map<String, dynamic>> feedbackData = {};
+
+        for (var feedback in feedbacks) {
+          String orderId = feedback['orderId'];
+          int? rating = feedback['rating'];
+          String? note = feedback['note'];
+
+          feedbackData[orderId] = {'rating': rating, 'note': note};
+        }
+
+        return feedbackData;
+      } else {
+        print("Failed to fetch ratings. Status code: ${response.statusCode}");
+        return {};
+      }
+    } catch (error) {
+      print("Error fetching feedback ratings: $error");
+      return {};
     }
   }
 

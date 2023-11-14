@@ -11,11 +11,11 @@ class BottomNavBarView extends StatefulWidget {
       {Key? key,
       required this.userId,
       required this.accountId,
-      required this.fullname})
+      })
       : super(key: key);
   final String userId;
   final String accountId;
-  final String fullname;
+  
   @override
   _BottomNavBarViewState createState() => _BottomNavBarViewState();
 }
@@ -94,7 +94,7 @@ class _BottomNavBarViewState extends State<BottomNavBarView> {
     switch (_currentIndex) {
       case 0:
         return TechnicianHomeView(
-          fullname: widget.fullname,
+         
           userId: widget.userId,
           accountId: widget.accountId,
         );
@@ -106,7 +106,7 @@ class _BottomNavBarViewState extends State<BottomNavBarView> {
 
       default:
         return TechnicianHomeView(
-          fullname: widget.fullname,
+          
           userId: widget.userId,
           accountId: widget.accountId,
         );
