@@ -671,54 +671,48 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           });
                           dynamic data = await authService
                               .endOrder(widget.booking.id); // Get the data
-                          if (data != null) {
-                            // Fetch the updated data and wait for it to complete
-                            Booking updatedBooking = await authService
-                                .fetchCarOwnerBookingById(widget.booking.id);
 
-                            // Update the local state with the fetched booking details
-                            setState(() {
-                              _currentBooking = updatedBooking;
-                              _isLoading = false;
-                            });
+                          // Fetch the updated data and wait for it to complete
+                          Booking updatedBooking = await authService
+                              .fetchCarOwnerBookingById(widget.booking.id);
 
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => WaitingForPaymentScreen(
-                                  accountId: widget.accountId,
-                                  addressesDepart: widget.addressesDepart,
-                                  subAddressesDepart: widget.subAddressesDepart,
-                                  addressesDesti: widget.addressesDesti,
-                                  subAddressesDesti: widget.subAddressesDesti,
-                                  booking: widget.booking,
-                                  payment: _payment!,
-                                  userId: widget.userId,
-                                  data:
-                                      data, // Pass the retrieved data to WaitingForPaymentScreen
-                                ),
+                          // Update the local state with the fetched booking details
+                          setState(() {
+                            _currentBooking = updatedBooking;
+                            _isLoading = false;
+                          });
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => WaitingForPaymentScreen(
+                                accountId: widget.accountId,
+                                addressesDepart: widget.addressesDepart,
+                                subAddressesDepart: widget.subAddressesDepart,
+                                addressesDesti: widget.addressesDesti,
+                                subAddressesDesti: widget.subAddressesDesti,
+                                booking: widget.booking,
+                                payment: _payment!,
+                                userId: widget.userId,
+                                data: data ??
+                                    '', // Pass the retrieved data to WaitingForPaymentScreen
                               ),
-                            );
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => BookingCompletedScreen(
-                            //       widget.userId,
-                            //       widget.accountId,
-                            //       _currentBooking!,
-                            //       widget.addressesDepart,
-                            //       widget.subAddressesDepart,
-                            //       widget.addressesDesti,
-                            //       widget.subAddressesDesti,
-                            //     ),
-                            //   ),
-                            // );
-                          } else {
-                            setState(() {
-                              _isLoading = false;
-                            });
-                            // Handle error if the endOrder API call was not successful
-                          }
+                            ),
+                          );
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (context) => BookingCompletedScreen(
+                          //       widget.userId,
+                          //       widget.accountId,
+                          //       _currentBooking!,
+                          //       widget.addressesDepart,
+                          //       widget.subAddressesDepart,
+                          //       widget.addressesDesti,
+                          //       widget.subAddressesDesti,
+                          //     ),
+                          //   ),
+                          // );
                         },
                         label: const Text(
                           "Kết thúc",

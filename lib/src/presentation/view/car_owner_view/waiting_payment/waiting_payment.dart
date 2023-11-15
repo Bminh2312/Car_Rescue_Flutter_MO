@@ -192,158 +192,200 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: FrontendConfigs.kIconColor,
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Lottie.asset('assets/animations/waiting_payment.json',
-                width: 300, height: 300, fit: BoxFit.fill),
-            Center(
-              child: CustomText(
-                text: 'Chờ thanh toán',
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  color: Colors.white,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Lottie.asset('assets/animations/waiting_payment.json',
+                    width: 300, height: 300, fit: BoxFit.fill),
+                SizedBox(
+                  height: 20,
                 ),
-                margin: EdgeInsets.all(8),
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: ListView(
-                  children: <Widget>[
-                    CustomText(
-                      text: 'Đơn hàng',
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    _buildOrderItemSection(),
-                    OrderItem(title: 'title', quantity: 2),
-                    OrderItem(title: 'title', quantity: 2),
-                    OrderItem(title: 'title', quantity: 2),
-                    OrderItem(title: 'title', quantity: 2),
-                    OrderItem(title: 'title', quantity: 2),
-                    OrderItem(title: 'title', quantity: 2),
-
-                    // Add more items as needed
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Row(
-                children: [
-                  Expanded(
-                      child: CustomText(
-                    text: 'Tổng cộng',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  )),
-                  Text(
-                    NumberFormat.currency(
-                      locale: 'vi_VN',
-                      symbol: '₫',
-                    ).format(_payment?.amount ?? 0),
-                    // Replace with your total amount calculation
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.right,
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 5),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Text(
-                    (_payment?.method == 'Tiền Mặt')
-                        ? 'Trả bằng tiền mặt'
-                        : (_payment?.method == 'Banking')
-                            ? 'Trả bằng chuyển khoản'
-                            : 'Trả bằng chuyển khoản',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  child: CustomText(
+                    text: 'Chờ thanh toán',
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.qr_code),
-                  iconSize: 30,
-                  onPressed: () {
-                    // Show the QR code image when the button is pressed
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          content: Container(
-                            width: 500, // Set the width to your desired value
-                            // Set the height to your desired value
-                            child: Image.network(
-                              widget.data,
-                              height: 400,
-                              width:
-                                  400, // Replace with your QR code image path
-                              fit: BoxFit
-                                  .contain, // Fit the image within the available space
-                            ),
+                SizedBox(
+                  height: 50,
+                ),
+                Container(
+                  height: MediaQuery.of(context).size.height * 0.3,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.white,
+                  ),
+                  margin: EdgeInsets.all(8),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      CustomText(
+                        text: 'Đơn hàng',
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      _buildOrderItemSection(),
+                      // OrderItem(title: 'title', quantity: 1),
+                      // OrderItem(title: 'title', quantity: 1),
+                      // OrderItem(title: 'title', quantity: 1),
+                      // OrderItem(title: 'title', quantity: 1),
+                      // OrderItem(title: 'title', quantity: 1),
+                      Spacer(),
+                      Divider(
+                        thickness: 2,
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                              child: CustomText(
+                            text: 'Tổng cộng',
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          )),
+                          Text(
+                            NumberFormat.currency(
+                              locale: 'vi_VN',
+                              symbol: '₫',
+                            ).format(_payment?.amount ?? 0),
+                            // Replace with your total amount calculation
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.right,
                           ),
-                          actions: <Widget>[
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: Text('Close'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                )
+                        ],
+                      ),
+                      // Add more items as needed
+                    ],
+                  ),
+                ),
+                SizedBox(height: 5),
               ],
             ),
-            SizedBox(height: 5),
-            Text(
-              'Hãy đảm bảo bạn đã nhận đủ tiền và nhấn nút xác nhận phía dưới.',
-              style: TextStyle(fontSize: 14),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => BookingCompletedScreen(
-                        widget.userId,
-                        widget.accountId,
-                        widget.booking,
-                        widget.addressesDepart,
-                        widget.subAddressesDepart,
-                        widget.addressesDesti,
-                        widget.subAddressesDesti,
-                        widget.payment),
-                  ),
-                );
-              },
-              child: Text('Xác nhận'),
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: FrontendConfigs.kActiveColor, // Text color
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10), // Rounded corners
+          ),
+          Spacer(),
+          Container(
+            color: Colors.white,
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 16),
+                      child: Text(
+                        (_payment?.method == 'Cash')
+                            ? 'Trả bằng tiền mặt'
+                            : (_payment?.method == 'Banking')
+                                ? 'Trả bằng chuyển khoản'
+                                : 'ko cóa',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    _payment?.method != 'Cash'
+                        ? IconButton(
+                            icon: Icon(Icons.qr_code),
+                            iconSize: 30,
+                            onPressed: () {
+                              // Show the QR code image when the button is pressed
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    content: Container(
+                                      width:
+                                          500, // Set the width to your desired value
+                                      // Set the height to your desired value
+                                      child: Image.network(
+                                        widget.data,
+                                        height: 400,
+                                        width:
+                                            400, // Replace with your QR code image path
+                                        fit: BoxFit
+                                            .contain, // Fit the image within the available space
+                                      ),
+                                    ),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text('Close'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              NumberFormat.currency(
+                                locale: 'vi_VN',
+                                symbol: '₫',
+                              ).format(_payment?.amount ?? 0),
+                              // Replace with your total amount calculation
+                              style: TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.right,
+                            ),
+                          ), // Empty container when payment.method is 'Cash'
+                  ],
                 ),
-                padding: EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12), // Padding
-              ),
-            )
-          ],
-        ),
+                SizedBox(height: 5),
+                Text(
+                  'Hãy đảm bảo bạn đã nhận đủ tiền và nhấn nút xác nhận phía dưới.',
+                  style: TextStyle(fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 20),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BookingCompletedScreen(
+                              widget.userId,
+                              widget.accountId,
+                              widget.booking,
+                              widget.addressesDepart,
+                              widget.subAddressesDepart,
+                              widget.addressesDesti,
+                              widget.subAddressesDesti,
+                              widget.payment),
+                        ),
+                      );
+                    },
+                    child: Text('Xác nhận'),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor:
+                          FrontendConfigs.kActiveColor, // Text color
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(10), // Rounded corners
+                      ),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12), // Padding
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        ],
       ),
     );
   }

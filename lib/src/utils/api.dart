@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:CarRescue/src/models/current_week.dart';
 import 'package:CarRescue/src/models/feedback.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
-
+import 'package:CarRescue/src/models/work_shift.dart';
 import 'package:CarRescue/src/models/booking.dart';
 
 import 'package:http/http.dart' as http;
@@ -27,6 +28,17 @@ class LoginResult {
     required this.role,
   });
 }
+
+class LatLng {
+  final double lat;
+  final double long;
+
+  LatLng(this.lat, this.long);
+}
+
+const latPattern = r'lat:\s?([\-0-9.]+)';
+const longPattern = r'long:\s?([\-0-9.]+)';
+const String apiKey = 'AIzaSyCZPpY4KcOcClHuiQEuzb2t51ov9XkJVfg';
 
 class AuthService {
   //TECHNICIAN API
@@ -550,106 +562,74 @@ class AuthService {
   //   });
   // }
 
+  // Constants for regex patterns
+
   Future<Map<String, dynamic>> getAddressInfo(Booking booking) async {
-    // Extract departure latitude and longitude
-    final latMatchDeparture =
-        RegExp(r'lat:\s?([\-0-9.]+)').firstMatch(booking.departure);
-    final longMatchDeparture =
-        RegExp(r'long:\s?([\-0-9.]+)').firstMatch(booking.departure);
-    final double? latDeparture =
-        double.tryParse(latMatchDeparture?.group(1) ?? '');
-    final double? longDeparture =
-        double.tryParse(longMatchDeparture?.group(1) ?? '');
+    final latLngDeparture = _extractLatLng(booking.departure);
+    final latLngDestination = _extractLatLng(booking.destination);
 
-    // Extract destination latitude and longitude
-    final latMatchDestination =
-        RegExp(r'lat:\s?([\-0-9.]+)').firstMatch(booking.destination);
-    final longMatchDestination =
-        RegExp(r'long:\s?([\-0-9.]+)').firstMatch(booking.destination);
-    final double? latDestination =
-        double.tryParse(latMatchDestination?.group(1) ?? '');
-    final double? longDestination =
-        double.tryParse(longMatchDestination?.group(1) ?? '');
-
-    // Check if we successfully extracted both departure and destination coordinates
-    if (latDeparture == null ||
-        longDeparture == null ||
-        latDestination == null ||
-        longDestination == null) {
-      return {
-        'bookingId': booking.id,
-        'address': 'Không xác định',
-        'subAddress': 'Không xác định',
-        'destinationAddress': 'Unknown Destination Address',
-        'destinationSubAddress': 'Unknown Destination SAddress',
-      };
-    }
-
-    // Use Google Geocoding API to fetch addresses
-    const String apiKey =
-        'AIzaSyAzVr5QXjWd5aFyfI2s-0_70CoEjRqJdeQ'; // Replace with your actual API key
-    final String urlDeparture =
-        'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=$apiKey';
-    final String urlDestination =
-        'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=$apiKey';
-
-    // Get departure address
-    final responseDeparture = await http.get(Uri.parse(urlDeparture));
-    if (responseDeparture.statusCode != 200) {
-      return {
-        'bookingId': booking.id,
-        'address': 'Error fetching address',
-        'subAddress': 'Error fetching subAddress',
-        'destinationAddress': 'Error fetching destination address',
-        'destinationSubAddress': 'Error fetching Sdestination address',
-      };
-    }
-
-    // Get destination address
-    final responseDestination = await http.get(Uri.parse(urlDestination));
-    if (responseDestination.statusCode != 200) {
-      // Handle the error or add additional error handling logic here
-    }
-
-    var jsonResponseDeparture = json.decode(responseDeparture.body);
-    var jsonResponseDestination = json.decode(responseDestination.body);
-
-    if (jsonResponseDeparture['status'] != 'OK' ||
-        jsonResponseDeparture['results'].isEmpty) {
-      // Handle the error or add additional error handling logic here
-    }
-
-    if (jsonResponseDestination['status'] != 'OK' ||
-        jsonResponseDestination['results'].isEmpty) {
-      // Handle the error or add additional error handling logic here
-    }
-
-    var addressComponentsDeparture = jsonResponseDeparture['results'][0]
-        ['address_components'] as List<dynamic>;
-    var addressComponentsDestination = jsonResponseDestination['results'][0]
-        ['address_components'] as List<dynamic>;
-
-    // Format address by extracting street number and route for departure
-    String formattedAddressDeparture =
-        formatStreetAndRoute(addressComponentsDeparture);
-    // Format subAddress by extracting additional details for departure
-    String formattedSubAddressDeparture =
-        formatSubAddress(addressComponentsDeparture);
-
-    // Format address for destination (You would create similar functions for destination)
-    String formattedAddressDestination =
-        formatStreetAndRoute(addressComponentsDestination);
-    String formattedSubAddressDestination =
-        formatSubAddress(addressComponentsDestination);
-
-    return {
+    Map<String, dynamic> response = {
       'bookingId': booking.id,
-      'address': formattedAddressDeparture,
-      'subAddress': formattedSubAddressDeparture,
-      'destinationAddress': formattedAddressDestination,
-      'destinationSubAddress': formattedSubAddressDestination,
+      'address': 'Unknown Address',
+      'subAddress': 'Unknown SubAddress',
+      'destinationAddress': 'Unknown Destination Address',
+      'destinationSubAddress': 'Unknown Destination SubAddress',
     };
+
+    if (latLngDeparture != null) {
+      final departureAddress = await _fetchAddressInfo(latLngDeparture);
+      response.addAll(departureAddress);
+    }
+
+    if (latLngDestination != null) {
+      final destinationAddress = await _fetchAddressInfo(latLngDestination);
+      response.addAll({
+        'destinationAddress': destinationAddress['address'],
+        'destinationSubAddress': destinationAddress['subAddress'],
+      });
+    }
+
+    return response;
   }
+
+  LatLng? _extractLatLng(String location) {
+    final latMatch = RegExp(latPattern).firstMatch(location);
+    final longMatch = RegExp(longPattern).firstMatch(location);
+    final double? lat =
+        latMatch != null ? double.tryParse(latMatch.group(1)!) : null;
+    final double? long =
+        longMatch != null ? double.tryParse(longMatch.group(1)!) : null;
+
+    return (lat != null && long != null) ? LatLng(lat, long) : null;
+  }
+
+  Future<Map<String, String>> _fetchAddressInfo(LatLng latLng) async {
+    // Fetch securely
+    final String url =
+        'https://maps.googleapis.com/maps/api/geocode/json?latlng=${latLng.lat},${latLng.long}&key=$apiKey';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        var jsonResponse = json.decode(response.body);
+        if (jsonResponse['status'] == 'OK' &&
+            jsonResponse['results'].isNotEmpty) {
+          var addressComponents =
+              jsonResponse['results'][0]['address_components'] as List<dynamic>;
+          return {
+            'address': formatStreetAndRoute(addressComponents),
+            'subAddress': formatSubAddress(addressComponents),
+          };
+        }
+      }
+      // Log error or handle it appropriately
+    } catch (e) {
+      // Log exception
+    }
+    return {'address': 'Unknown Address', 'subAddress': 'Unknown SubAddress'};
+  }
+
+  // Check if destination coordinates are available
 
   String formatStreetAndRoute(List<dynamic> addressComponents) {
     String pointOfInterest = '';
@@ -754,7 +734,7 @@ class AuthService {
       Map<String, String> subAddresses) async {
     var results =
         await Future.wait(bookings.map((booking) => getAddressInfo(booking)));
-
+    print('Results for Bookings: $results');
     // Update the state once with all the results.
     setState(() {
       for (var result in results) {
@@ -772,7 +752,7 @@ class AuthService {
       Map<String, String> subAddressesDesti) async {
     var results =
         await Future.wait(bookings.map((booking) => getAddressInfo(booking)));
-
+    print(results);
     // Update the state once with all the results.
     setState(() {
       for (var result in results) {
@@ -950,34 +930,32 @@ class AuthService {
   }
 
   Future<dynamic> endOrder(String orderId) async {
-  final String apiUrl =
-      "https://rescuecapstoneapi.azurewebsites.net/api/Order/EndOrder?id=$orderId";
+    final String apiUrl =
+        "https://rescuecapstoneapi.azurewebsites.net/api/Order/EndOrder?id=$orderId";
 
-  final response = await http.post(
-    Uri.parse(apiUrl),
-    headers: {
-      "Content-Type": "application/json",
-      // Add other headers if needed, like authorization headers
-    },
-    body: json.encode({'id': orderId}),
-  );
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {
+        "Content-Type": "application/json",
+        // Add other headers if needed, like authorization headers
+      },
+      body: json.encode({'id': orderId}),
+    );
 
-  if (response.statusCode == 201) {
-    print('Successfully ending the order ${response.body}');
-    // Parse the JSON response to access the "data" field
-    final jsonResponse = json.decode(response.body);
-    final data = jsonResponse['data'];
+    if (response.statusCode == 201) {
+      print('Successfully ending the order ${response.body}');
+      // Parse the JSON response to access the "data" field
+      final jsonResponse = json.decode(response.body);
+      final data = jsonResponse['data'];
 
-    // Return the "data" field
-    return data;
-  } else {
-    print('Failed to end the order: ${response.body}');
-    // Failed to create the car
-    return null; // You can return null or handle the error differently as needed
+      // Return the "data" field
+      return data;
+    } else {
+      print('Failed to end the order: ${response.body}');
+
+      return null; // You can return null or handle the error differently as needed
+    }
   }
-}
-
-
 
   Future<Map<String, Map<String, dynamic>>> fetchFeedbackRatings(
       String userId) async {
@@ -1124,29 +1102,71 @@ class AuthService {
     }
   }
 
+  Future<Map<String, dynamic>> fetchPayment(String orderId) async {
+    final String apiUrl =
+        "https://rescuecapstoneapi.azurewebsites.net/api/Payment/GetPaymentOfOrder?id=$orderId";
 
+    try {
+      // Make the HTTP GET request to the API
+      final response = await http.get(Uri.parse(apiUrl));
 
-Future<Map<String, dynamic>> fetchPayment(String orderId) async {
-  final String apiUrl = "https://rescuecapstoneapi.azurewebsites.net/api/Payment/GetPaymentOfOrder?id=$orderId";
-
-  try {
-    // Make the HTTP GET request to the API
-    final response = await http.get(Uri.parse(apiUrl));
-
-    // Check if the response is successful
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body) as Map<String, dynamic>;
-      return jsonResponse;
-    } else {
-      // Handle non-200 responses
-      print('Request failed with status: ${response.statusCode}.');
+      // Check if the response is successful
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body) as Map<String, dynamic>;
+        return jsonResponse;
+      } else {
+        // Handle non-200 responses
+        print('Request failed with status: ${response.statusCode}.');
+        throw Exception('Failed to load payment data');
+      }
+    } catch (e) {
+      // Handle any exceptions
+      print('An error occurred: $e');
       throw Exception('Failed to load payment data');
     }
-  } catch (e) {
-    // Handle any exceptions
-    print('An error occurred: $e');
-    throw Exception('Failed to load payment data');
   }
-}
 
+  Future<List<WorkShift>> getWeeklyShift(String weekId, String techId) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Schedule/GetWeeklyShiftOfTechnician?id=$weekId&techID=$techId';
+    try {
+      final response = await http.post(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        final List<dynamic> shiftData = jsonData['data'];
+        final List<WorkShift> shifts =
+            shiftData.map((e) => WorkShift.fromJson(e)).toList();
+        return shifts;
+      } else {
+        print(response.statusCode);
+        throw Exception('Failed to load data from the server');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<CurrentWeek> getCurrentWeek() async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Schedule/GetWorkWeeks';
+    try {
+      final response = await http.post(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        // Since the data is a single object and not a list
+        final Map<String, dynamic> weekData = jsonData['data'];
+
+        // Assuming you have a CurrentWeek class that matches the structure of weekData
+        final CurrentWeek currentWeek = CurrentWeek.fromJson(weekData);
+
+        return currentWeek;
+      } else {
+        print(response.statusCode);
+        throw Exception('Failed to load data from the server');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
 }

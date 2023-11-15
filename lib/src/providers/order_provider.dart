@@ -1,4 +1,5 @@
 import 'dart:convert' as convert;
+import 'dart:convert';
 import 'package:CarRescue/src/enviroment/env.dart';
 import 'package:CarRescue/src/models/order.dart';
 import 'package:CarRescue/src/models/service.dart';
@@ -22,7 +23,8 @@ class OrderProvider {
       Environment.API_URL + 'api/OrderDetail/GetDetailsOfOrder';
   final String apiUrlStartOrder = Environment.API_URL + 'api/Order/StartOrder';
   final String apiUrlEndOrder = Environment.API_URL + 'api/Order/EndOrder';
-  final String apiUrlUpdateOrderForTech = Environment.API_URL + 'api/Order/UpdateOrderForTeachnician';
+  final String apiUrlUpdateOrderForTech =
+      Environment.API_URL + 'api/Order/UpdateOrderForTeachnician';
 
   Future<int?> createOrderFixing(OrderBookServiceFixing order) async {
     try {
@@ -137,31 +139,33 @@ class OrderProvider {
   }
 
   Future<Order> getOrderDetail(String id) async {
-  try {
-    final response = await http.get(Uri.parse("${apiUrlGetOrderDetail}?id=${id}"));
-    print(response.body); // Add this line for debugging
-    if (response.statusCode == 200) {
-      final dynamic data = convert.json.decode(response.body);
-      final dynamic orderData = data['data'];
-      print(data);
-      // Assuming Order class exists and you have a factory method to parse data
-      Order order = Order.fromJson(orderData);
+    try {
+      final response =
+          await http.get(Uri.parse("${apiUrlGetOrderDetail}?id=${id}"));
+      print(response.body); // Add this line for debugging
+      if (response.statusCode == 200) {
+        final dynamic data = convert.json.decode(response.body);
+        final dynamic orderData = data['data'];
+        print(data);
+        // Assuming Order class exists and you have a factory method to parse data
+        Order order = Order.fromJson(orderData);
 
-      // Check for null values and handle accordingly
-      if (order.id == "") {
-        throw Exception('Order ID is null');
+        // Check for null values and handle accordingly
+        if (order.id == "") {
+          throw Exception('Order ID is null');
+        }
+
+        return order;
+      } else {
+        throw Exception(
+            'Failed to load orders. Status code: ${response.statusCode}');
       }
-
-      return order;
-    } else {
-      throw Exception('Failed to load orders. Status code: ${response.statusCode}');
+    } catch (e) {
+      // Handle other exceptions or errors
+      print('Error: $e');
+      throw e;
     }
-  } catch (e) {
-    // Handle other exceptions or errors
-    print('Error: $e');
-    throw e;
   }
-}
 
   Future<List<String>> getUrlImages(String orderId) async {
     try {
@@ -261,58 +265,63 @@ class OrderProvider {
   // }
 
   Future<void> startOrder(String orderId) async {
-  final String apiUrl = 'https://rescuecapstoneapi.azurewebsites.net/api/Order/StartOrder';
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Order/StartOrder';
 
-  try {
+    try {
+      final response = await http.post(
+        Uri.parse('$apiUrl?id=$orderId'),
+        headers: {'accept': '*'},
+      );
+
+      if (response.statusCode == 201) {
+        // Nếu mã trạng thái là 201, có nghĩa là yêu cầu thành công
+        print('Order đã được bắt đầu');
+      } else {
+        // Nếu mã trạng thái không phải là 201, in ra thông báo lỗi
+        print('Lỗi: ${response.statusCode}');
+        print('Response body: ${response.body}');
+      }
+    } catch (error) {
+      // Xử lý lỗi trong trường hợp gặp lỗi khi thực hiện yêu cầu
+      print('Lỗi: $error');
+    }
+  }
+
+  Future<dynamic> endOrder(String orderId) async {
+    final String apiUrl =
+        "https://rescuecapstoneapi.azurewebsites.net/api/Order/EndOrder?id=$orderId";
+
     final response = await http.post(
-      Uri.parse('$apiUrl?id=$orderId'),
-      headers: {'accept': '*'},
+      Uri.parse(apiUrl),
+      headers: {
+        "Content-Type": "application/json",
+        // Add other headers if needed, like authorization headers
+      },
+      body: json.encode({'id': orderId}),
     );
 
     if (response.statusCode == 201) {
-      // Nếu mã trạng thái là 201, có nghĩa là yêu cầu thành công
-      print('Order đã được bắt đầu');
+      print('Successfully ending the order ${response.body}');
+      // Parse the JSON response to access the "data" field
+      final jsonResponse = json.decode(response.body);
+      final data = jsonResponse['data'];
+
+      // Return the "data" field
+      return data;
     } else {
-      // Nếu mã trạng thái không phải là 201, in ra thông báo lỗi
-      print('Lỗi: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('Failed to end the order: ${response.body}');
+      // Failed to create the car
+      return null; // You can return null or handle the error differently as needed
     }
-  } catch (error) {
-    // Xử lý lỗi trong trường hợp gặp lỗi khi thực hiện yêu cầu
-    print('Lỗi: $error');
   }
-}
-
-  Future<void> endOrder(String orderId) async {
-  final String apiUrl = 'https://rescuecapstoneapi.azurewebsites.net/api/Order/EndOrder';
-
-  try {
-    final response = await http.post(
-      Uri.parse('$apiUrl?id=$orderId'),
-      headers: {'accept': '*'},
-    );
-
-    if (response.statusCode == 201) {
-      // Nếu mã trạng thái là 201, có nghĩa là yêu cầu thành công
-      print('Order đã được Kết thúc');
-    } else {
-      // Nếu mã trạng thái không phải là 201, in ra thông báo lỗi
-      print('Lỗi: ${response.statusCode}');
-      print('Response body: ${response.body}');
-    }
-  } catch (error) {
-    // Xử lý lỗi trong trường hợp gặp lỗi khi thực hiện yêu cầu
-    print('Lỗi: $error');
-  }
-}
 
   Future<bool> updateOrderForTechnician(
     String orderId,
     String staffNote,
     List<String> imageUrls,
   ) async {
-    final apiUrl =
-        '${apiUrlUpdateOrderForTech}';
+    final apiUrl = '${apiUrlUpdateOrderForTech}';
 
     final Map<String, dynamic> requestBody = {
       'orderId': orderId,

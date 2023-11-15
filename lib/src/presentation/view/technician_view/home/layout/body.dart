@@ -8,7 +8,7 @@ import 'package:CarRescue/src/utils/api.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/booking_view.dart';
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/home/layout/widgets/active_booking.dart';
-import 'package:CarRescue/src/presentation/view/technician_view/home/layout/widgets/calender.dart';
+
 import 'package:CarRescue/src/presentation/elements/quick_access_buttons.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/notification/notification_view.dart';
 import 'package:flutter/material.dart';
@@ -59,9 +59,8 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
           await authService.fetchTechBookingByInprogress(widget.userId);
       // Filter bookings for 'ASSIGNED' status after fetching
       setState(() {
-        assignedBookings = bookings
-            .where((booking) => booking.status == 'INPROGRESS')
-            .toList();
+        assignedBookings = bookings;
+
         isLoading = false;
       });
     } catch (e) {
@@ -246,7 +245,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CalendarView(),
+                      builder: (context) => CalendarView(userId: widget.userId),
                     ),
                   );
                 },

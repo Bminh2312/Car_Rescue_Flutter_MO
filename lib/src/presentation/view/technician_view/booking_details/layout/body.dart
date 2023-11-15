@@ -8,9 +8,7 @@ import 'package:CarRescue/src/presentation/elements/app_button.dart';
 import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
-import 'package:CarRescue/src/presentation/view/car_owner_view/booking_list/booking_view.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/bottom_nav_bar/bottom_nav_bar_view.dart';
-import 'package:CarRescue/src/presentation/view/technician_view/home/home_view.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/waiting_payment/waiting_payment.dart';
 import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
@@ -310,7 +308,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         buttonSize: 45,
         height: 60,
         backgroundColor: FrontendConfigs.kActiveColor,
-        action: () {
+        action: () async {
           if (type) {
             final orderProvider = OrderProvider();
             print("Id: ${widget.booking.id}");
@@ -332,7 +330,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           } else {
             final orderProvider = OrderProvider();
             print("Id: ${widget.booking.id}");
-            orderProvider.endOrder(widget.booking.id);
+            dynamic data = await orderProvider.endOrder(widget.booking.id);
             // Navigator.pushReplacement(
             //   context,
             //   MaterialPageRoute(
@@ -345,10 +343,19 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                  builder: (context) => WaitingForPaymentScreen(
-                        payment: _payment!,
-                        userId: technicianInfo!.id
-                      )),
+                builder: (context) => WaitingForPaymentScreen(
+                  accountId: technicianInfo!.accountId,
+                  addressesDepart: widget.addressesDepart,
+                  subAddressesDepart: widget.subAddressesDepart,
+                  addressesDesti: widget.addressesDesti,
+                  subAddressesDesti: widget.subAddressesDesti,
+                  booking: widget.booking,
+                  payment: _payment!,
+                  userId: technicianInfo!.id,
+                  data:
+                      data, // Pass the retrieved data to WaitingForPaymentScreen
+                ),
+              ),
             );
           }
         },
@@ -670,7 +677,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         _buildInfoRow(
                             "Địa chỉ",
                             Text(
-                                ' ${widget.addressesDepart[widget.booking.id]}',
+                                '${widget.addressesDepart[widget.booking.id]}',
                                 style: TextStyle(fontWeight: FontWeight.bold))),
                         if (widget.booking.rescueType == "Towing")
                           _buildInfoRow(
@@ -714,7 +721,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionTitle("Ghi chú"),
+                        // _buildSectionTitle("Ghi chú"),
                         // if (widget.booking.status == "ASSIGNED")
                         //   _buildNoteRow("Ghi chú", _formKey),
                         // _buildInfoRow(
@@ -723,11 +730,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         //         style: TextStyle(fontWeight: FontWeight.bold))),
                         // Divider(thickness: 3),
                         SizedBox(height: 8.0),
-
+                        _buildSectionTitle("Ghi chú của kĩ thuật viên"),
+                        if (widget.booking.status == "ASSIGNED")
+                          _buildNoteRow("Ghi chú", _formKey),
                         _buildInfoRow(
-                            "Ghi chú của KTV",
+                            "-",
                             Text('${widget.booking.staffNote ?? ''}',
                                 style: TextStyle(fontWeight: FontWeight.bold))),
+                        Divider(thickness: 3),
+                        SizedBox(height: 8.0),
                       ],
                     ),
                   ),
