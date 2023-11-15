@@ -30,7 +30,7 @@ class _RepairBodyState extends State<RepairBody> {
   TextEditingController paymentMethodController = TextEditingController();
   TextEditingController customerNoteController = TextEditingController();
   FirBaseStorageProvider fb = FirBaseStorageProvider();
-  NotifyMessage notifier = NotifyMessage();
+  NotifyMessage notify = NotifyMessage();
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
   final List<Map<String, dynamic>> dropdownItems = [
     {"name": "Quận 1", "value": 1},
@@ -51,7 +51,7 @@ class _RepairBodyState extends State<RepairBody> {
   @override
   void initState() {
     selectedDropdownItem = dropdownItems[0];
-    selectedPaymentOption = "";
+    selectedPaymentOption = '';
     urlImages = [];
     selectedServices = [];
     availableServices = loadService();
@@ -96,14 +96,18 @@ class _RepairBodyState extends State<RepairBody> {
   }
 
   void createOrder() async {
-    if (_formKey.currentState!.validate()) {
+    if (selectedServices.length == 0) {
+      notify.showToast("Hãy chọn ít nhất 1 dịch vụ.");
+    } else if (selectedPaymentOption == '') {
+      notify.showToast("Hãy chọn loại thanh toán.");
+    } else if (_formKey.currentState!.validate()) {
       setState(() {
         isLoading = true; // Bắt đầu hiển thị vòng quay khi bắt đầu gửi yêu cầu
       });
 
       // Bước 1: Xác định thông tin cho đơn hàng
       String departure =
-          "lat:${widget.latLng.latitude},long:${widget.latLng.longitude}";
+          "lat: ${widget.latLng.latitude}, long: ${widget.latLng.longitude}";
       String destination = ""; // Không có thông tin đích đến
       String rescueType = "Fixing"; // Loại cứu hộ (ở đây là "repair")
 
@@ -138,11 +142,11 @@ class _RepairBodyState extends State<RepairBody> {
             ),
             (route) => false, // Loại bỏ tất cả các màn hình khỏi ngăn xếp
           );
-          notifier.showToast("Tạo đơn thành công");
+          notify.showToast("Tạo đơn thành công");
         } else if (status == 500) {
-          notifier.showToast("External error");
+          notify.showToast("External error");
         } else {
-          notifier.showToast("Lỗi đơn hàng");
+          notify.showToast("Lỗi đơn hàng");
         }
       } catch (e) {
         // Xử lý khi có lỗi khi gửi đơn hàng
@@ -311,7 +315,7 @@ class _RepairBodyState extends State<RepairBody> {
                       const Text("Trả bằng momo"),
                     ],
                   ),
-                  value: "MOMO",
+                  value: "BANKING",
                   groupValue: selectedPaymentOption,
                   onChanged: (value) {
                     setState(() {
@@ -329,7 +333,7 @@ class _RepairBodyState extends State<RepairBody> {
                       const Text("Trả bằng tiền mặt"),
                     ],
                   ),
-                  value: "Tiền mặt",
+                  value: "CASH",
                   groupValue: selectedPaymentOption,
                   onChanged: (value) {
                     setState(() {
@@ -363,27 +367,27 @@ class _RepairBodyState extends State<RepairBody> {
             fontSize: 14,
           ),
         ),
-        if (selectedServices?.isNotEmpty != true)
+        if (selectedServices.isNotEmpty != true)
           Text(
             "Hãy chọn ít nhất 1 dịch vụ",
             style: TextStyle(
               color: Colors.red,
             ),
           ),
-        ...availableServices!.map((service) {
+        ...availableServices.map((service) {
           return Row(
             children: [
               Checkbox(
-                value: selectedServices?.contains(service.name),
+                value: selectedServices.contains(service.name),
                 onChanged: (value) {
                   setState(() {
                     if (value == true) {
-                      selectedServices?.add(service.name);
+                      selectedServices.add(service.name);
                       setState(() {
                         totalPrice += service.price;
                       });
                     } else {
-                      selectedServices?.remove(service.name);
+                      selectedServices.remove(service.name);
                       setState(() {
                         totalPrice -= service.price;
                       });

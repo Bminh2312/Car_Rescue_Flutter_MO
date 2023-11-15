@@ -114,7 +114,7 @@ class _TowBodyState extends State<TowBody> {
       String paymentMethod = paymentMethodController.text;
       String customerNote = customerNoteController.text;
       String departure =
-          "lat:${widget.latLng.latitude},long:${widget.latLng.longitude}";
+          "lat: ${widget.latLng.latitude}, long: ${widget.latLng.longitude}";
       String destination =
           "lat:${widget.latLngDrop.latitude},long:${widget.latLngDrop.longitude}"; // Không có thông tin đích đến
       String rescueType = "Towing"; // Loại cứu hộ (ở đây là "repair")

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 class OrderDetail extends StatelessWidget {
   final String orderId;
-  String? techId;
+  final String? techId;
   OrderDetail({Key? key, required this.orderId,  this.techId});
 
   @override
