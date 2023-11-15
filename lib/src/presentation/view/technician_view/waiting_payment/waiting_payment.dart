@@ -1,4 +1,5 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/models/payment.dart';
 import 'package:CarRescue/src/models/technician.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/bottom_nav_bar/bottom_nav_bar_view.dart';
@@ -7,6 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
 class WaitingForPaymentScreen extends StatefulWidget {
+  final Payment payment;
+  final String userId;
+  const WaitingForPaymentScreen(
+      {super.key, required this.payment, required this.userId});
   @override
   State<WaitingForPaymentScreen> createState() =>
       _WaitingForPaymentScreenState();
@@ -14,19 +19,21 @@ class WaitingForPaymentScreen extends StatefulWidget {
 
 class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
   Technician? technicianInfo;
-  // Future<void> _loadTechInfo(String techId) async {
-  //   Map<String, dynamic>? techProfile =
-  //       await AuthService().fetchTechProfile(techId);
-  //   print('day la ${techProfile}');
-  //   if (techProfile != null) {
-  //     setState(() {
-  //       technicianInfo = Technician.fromJson(techProfile);
-  //     });
-  //   }
-  // }
+  Future<void> _loadTechInfo(String techId) async {
+    Map<String, dynamic>? techProfile =
+        await AuthService().fetchTechProfile(techId);
+    print('day la ${techProfile}');
+    if (techProfile != null) {
+      setState(() {
+        technicianInfo = Technician.fromJson(techProfile);
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _loadTechInfo(widget.userId);
   }
 
   @override
@@ -46,7 +53,8 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
-            ),            Expanded(
+            ),
+            Expanded(
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
@@ -89,15 +97,15 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context);                // Navigator.pushReplacement(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => BottomNavBarView(
-                //       accountId: technicianInfo!.accountId,
-                //       userId: technicianInfo!.id,
-                //     ),
-                //   ),
-                // );
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BottomNavBarView(
+                      accountId: technicianInfo!.accountId,
+                      userId: technicianInfo!.id,
+                    ),
+                  ),
+                );
               },
               child: Text('Xác nhận'),
               style: ElevatedButton.styleFrom(

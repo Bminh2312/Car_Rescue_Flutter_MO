@@ -949,27 +949,35 @@ class AuthService {
     return false;
   }
 
-  Future<bool> endOrder(String orderId) async {
-    final String apiUrl =
-        "https://rescuecapstoneapi.azurewebsites.net/api/Order/EndOrder?id=$orderId";
+  Future<dynamic> endOrder(String orderId) async {
+  final String apiUrl =
+      "https://rescuecapstoneapi.azurewebsites.net/api/Order/EndOrder?id=$orderId";
 
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {
-        "Content-Type": "application/json",
-        // Add other headers if needed, like authorization headers
-      },
-      body: json.encode({'id': orderId}),
-    );
-    if (response.statusCode == 201) {
-      print('Successfully ending the order ${response.body}');
-      return true;
-    } else {
-      print('Failed to end the order: ${response.body}');
-      // Failed to create the car
-    }
-    return false;
+  final response = await http.post(
+    Uri.parse(apiUrl),
+    headers: {
+      "Content-Type": "application/json",
+      // Add other headers if needed, like authorization headers
+    },
+    body: json.encode({'id': orderId}),
+  );
+
+  if (response.statusCode == 201) {
+    print('Successfully ending the order ${response.body}');
+    // Parse the JSON response to access the "data" field
+    final jsonResponse = json.decode(response.body);
+    final data = jsonResponse['data'];
+
+    // Return the "data" field
+    return data;
+  } else {
+    print('Failed to end the order: ${response.body}');
+    // Failed to create the car
+    return null; // You can return null or handle the error differently as needed
   }
+}
+
+
 
   Future<Map<String, Map<String, dynamic>>> fetchFeedbackRatings(
       String userId) async {
@@ -1115,4 +1123,30 @@ class AuthService {
       throw Exception('Failed to load data from the API');
     }
   }
+
+
+
+Future<Map<String, dynamic>> fetchPayment(String orderId) async {
+  final String apiUrl = "https://rescuecapstoneapi.azurewebsites.net/api/Payment/GetPaymentOfOrder?id=$orderId";
+
+  try {
+    // Make the HTTP GET request to the API
+    final response = await http.get(Uri.parse(apiUrl));
+
+    // Check if the response is successful
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(response.body) as Map<String, dynamic>;
+      return jsonResponse;
+    } else {
+      // Handle non-200 responses
+      print('Request failed with status: ${response.statusCode}.');
+      throw Exception('Failed to load payment data');
+    }
+  } catch (e) {
+    // Handle any exceptions
+    print('An error occurred: $e');
+    throw Exception('Failed to load payment data');
+  }
+}
+
 }

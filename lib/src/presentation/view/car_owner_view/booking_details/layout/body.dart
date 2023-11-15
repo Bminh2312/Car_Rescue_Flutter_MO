@@ -12,6 +12,7 @@ import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/vehicle_info.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/completed_booking/completed_booking_view.dart';
+import 'package:CarRescue/src/presentation/view/car_owner_view/waiting_payment/waiting_payment.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -23,6 +24,7 @@ import 'package:slider_button/slider_button.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:http/http.dart' as http;
+import '../../../../../models/payment.dart';
 
 class BookingDetailsBody extends StatefulWidget {
   final String userId;
@@ -55,6 +57,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   AuthService authService = AuthService();
   CustomerInfo? customerInfo;
   Vehicle? vehicleInfo;
+  Payment? _payment;
   int desiredTabIndex = 0;
   List<String> _imageUrls = [];
   List<String> pickedImages = [];
@@ -65,6 +68,27 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   num totalAmount = 0;
   int total = 0;
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
+
+  Future<void> _loadPayment(String orderId) async {
+    try {
+      Map<String, dynamic>? paymentInfo =
+          await authService.fetchPayment(widget.booking.id);
+      print(paymentInfo);
+      // Assuming Payment.fromJson is a constructor that returns a Payment object
+      Payment payment = Payment.fromJson(paymentInfo);
+      print(payment);
+      setState(() {
+        _payment = payment;
+
+        _isLoading = false;
+      });
+    } catch (e) {
+      // Handle any potential errors, such as network issues
+      print('Error loading payment: $e');
+      // Optionally, set some state to show an error message in the UI
+    }
+  }
+
   Future<void> fetchServiceData(String orderId) async {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
@@ -119,6 +143,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     _loadImageUrls();
     fetchServiceData(widget.booking.id);
     calculateTotals();
+    _loadPayment(widget.booking.id);
   }
 
   void calculateTotals() {
@@ -389,7 +414,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           Container(
                             child: RatingBar.builder(
                               itemSize: 19,
-                              initialRating: widget.booking?.rating ?? 0,
+                              initialRating: widget.booking.rating ?? 0,
                               minRating: 1,
                               direction: Axis.horizontal,
                               allowHalfRating: true,
@@ -516,27 +541,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      CustomText(
-                        text: 'Tổng tiền',
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      _buildPaymentMethod(_payment?.method ?? '', ''),
                       Text(currencyFormat.format(totalAmount),
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 17)),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 8,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      CustomText(
-                        text: 'Trả qua Momo',
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
                     ],
                   ),
                   SizedBox(
@@ -661,9 +669,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           setState(() {
                             _isLoading = true;
                           });
-                          bool isSuccess =
-                              await authService.endOrder(widget.booking.id);
-                          if (isSuccess) {
+                          dynamic data = await authService
+                              .endOrder(widget.booking.id); // Get the data
+                          if (data != null) {
                             // Fetch the updated data and wait for it to complete
                             Booking updatedBooking = await authService
                                 .fetchCarOwnerBookingById(widget.booking.id);
@@ -677,17 +685,34 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => BookingCompletedScreen(
-                                  widget.userId,
-                                  widget.accountId,
-                                  _currentBooking!,
-                                  widget.addressesDepart,
-                                  widget.subAddressesDepart,
-                                  widget.addressesDesti,
-                                  widget.subAddressesDesti,
+                                builder: (context) => WaitingForPaymentScreen(
+                                  accountId: widget.accountId,
+                                  addressesDepart: widget.addressesDepart,
+                                  subAddressesDepart: widget.subAddressesDepart,
+                                  addressesDesti: widget.addressesDesti,
+                                  subAddressesDesti: widget.subAddressesDesti,
+                                  booking: widget.booking,
+                                  payment: _payment!,
+                                  userId: widget.userId,
+                                  data:
+                                      data, // Pass the retrieved data to WaitingForPaymentScreen
                                 ),
                               ),
                             );
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) => BookingCompletedScreen(
+                            //       widget.userId,
+                            //       widget.accountId,
+                            //       _currentBooking!,
+                            //       widget.addressesDepart,
+                            //       widget.subAddressesDepart,
+                            //       widget.addressesDesti,
+                            //       widget.subAddressesDesti,
+                            //     ),
+                            //   ),
+                            // );
                           } else {
                             setState(() {
                               _isLoading = false;
@@ -832,23 +857,45 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   }
 
   Widget _buildPaymentMethod(String title, String total) {
+    // Check if the title is 'Momo' and change it to 'Chuyen khoan' if it is
+    String displayTitle = title == 'Momo' ? 'Trả bằng chuyển khoản' : title;
+
     return Padding(
-        padding: EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            CustomText(
-              text: title,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
-            CustomText(
-              text: total,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ],
-        ));
+      padding: EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              CustomText(
+                text: displayTitle,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+              SizedBox(width: 10.0),
+              // Conditionally display the image based on the displayTitle
+              if (displayTitle == 'Trả bằng chuyển khoản')
+                Image.asset(
+                  'assets/images/banking.png',
+                  height: 25,
+                  width: 25,
+                )
+              else
+                Image.asset(
+                  'assets/images/money.png', // Replace with your desired asset
+                  height: 25,
+                  width: 25,
+                ),
+            ],
+          ),
+          CustomText(
+            text: total,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildOrderItemSection() {
