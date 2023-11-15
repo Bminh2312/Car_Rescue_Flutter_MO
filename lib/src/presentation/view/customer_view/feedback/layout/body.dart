@@ -1,15 +1,35 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/configuration/show_toast_notify.dart';
+import 'package:CarRescue/src/models/technician.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
+import 'package:CarRescue/src/providers/feedback_order.dart';
+import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
 
 class FeedbackScreen extends StatefulWidget {
+  final String techId;
+  final String orderId;
+  final String customerId;
+  const FeedbackScreen(
+      {Key? key,
+      required this.techId,
+      required this.orderId,
+      required this.customerId})
+      : super(key: key);
+
   @override
   _FeedbackScreenState createState() => _FeedbackScreenState();
 }
 
 class _FeedbackScreenState extends State<FeedbackScreen> {
+  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   int _rating = 0;
+  Technician? technicianInfo;
+  FeedBackProvider feedBackProvider = FeedBackProvider();
   final TextEditingController _noteController = TextEditingController();
+  AuthService authService = AuthService();
+  NotifyMessage notifyMessage = NotifyMessage();
   final List<String> _feedbackHints = [
     "Dịch vụ tốt",
     "Nhiệt tình",
@@ -22,6 +42,54 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     // Add more hints as needed
   ];
   final Set<String> _selectedHints = {};
+
+  void _loadTechInfo(String techId) async {
+    Map<String, dynamic>? techProfile =
+        await authService.fetchTechProfile(techId);
+    print('day la ${techProfile}');
+    if (techProfile != null) {
+      setState(() {
+        technicianInfo = Technician.fromJson(techProfile);
+      });
+    } else {
+      return technicianInfo = null;
+    }
+  }
+
+  void _submitFeedback() async {
+    try {
+      if(_formKey.currentState!.validate()){
+        String feedbackId = await feedBackProvider.getWaitingFeedbacks(
+          widget.customerId, widget.orderId);
+        print(feedbackId);
+      // Now you have feedbackId, you can use it for updating feedback
+      bool isSuccess = await feedBackProvider.updateFeedback(
+          feedbackId, _rating, _noteController.text);
+
+      if (isSuccess) {
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => BottomNavBarView(
+                      page: 0,
+                    )));
+        notifyMessage.showToast("Đã gửi đánh giá.");
+      } else {
+        notifyMessage.showToast("Đã xảy ra lỗi hệ thống.");
+      }
+      }
+    } catch (e) {
+      // Handle exceptions
+      print('Error: $e');
+    }
+  }
+
+  @override
+  void initState() {
+    print(widget.techId);
+    _loadTechInfo(widget.techId);
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,11 +118,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               Container(
                 padding: EdgeInsets.symmetric(vertical: 5),
                 decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    color: Colors.white),
+                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.white,
+                ),
                 child: Column(
                   children: [
-                    _buildTechInfo(),
+                    _buildTechInfo(technicianInfo),
                     _buildRatingStars(),
                   ],
                 ),
@@ -64,8 +133,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               _buildFeedbackNoteField(),
               SizedBox(height: 20),
               _buildSendButton(),
-
-              // SizedBox(height: 20),
             ],
           ),
         ),
@@ -93,27 +160,28 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     );
   }
 
-  Widget _buildTechInfo() {
+  Widget _buildTechInfo(Technician? technicianInfo) {
     return Center(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           CircleAvatar(
             backgroundColor: FrontendConfigs.kBackgrColor,
-            radius: 40.0, // Adjust the size of the CircleAvatar
+            backgroundImage: NetworkImage(technicianInfo?.avatar ?? ''),
+            radius: 40.0, // Điều chỉnh kích thước của CircleAvatar
           ),
           SizedBox(
             height: 8,
           ),
           CustomText(
-            text: 'Tên KTV',
+            text: technicianInfo?.fullname ?? '',
             fontSize: 18,
           ),
           SizedBox(
             height: 8,
           ),
           CustomText(
-            text: 'SĐT',
+            text: technicianInfo?.phone ?? '',
             fontSize: 18,
           )
         ],
@@ -149,35 +217,40 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   Widget _buildFeedbackNoteField() {
-    return TextField(
+  return Form(
+    key: _formKey,
+    child: TextFormField(
       controller: _noteController,
       decoration: InputDecoration(
         hintText: "Hãy góp ý về dịch vụ",
         border: OutlineInputBorder(),
       ),
       maxLines: 5,
-    );
-  }
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Vui lòng nhập góp ý của bạn';
+        }
+        return null;
+      },
+    ),
+  );
+}
 
   Widget _buildSendButton() {
     return ElevatedButton(
-      child: Text('Gửi đánh giá'),
+      child: Text('Gửi'),
       style: ElevatedButton.styleFrom(
-        primary: FrontendConfigs.kActiveColor, // Background color
-        onPrimary: Colors.white, // Text color
+        primary: FrontendConfigs.kActiveColor,
+        onPrimary: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10), // Rounded corners
+          borderRadius: BorderRadius.circular(10),
         ),
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Padding
-        minimumSize: Size(double.infinity, 36), // Button minimum size
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        minimumSize: Size(double.infinity, 36),
       ),
       onPressed: () {
-        // Navigator.pushReplacement(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => FeedbackScreen(),
-        //   ),
-        // );
+        // Thực hiện logic gửi đánh giá
+        _submitFeedback();
       },
     );
   }
