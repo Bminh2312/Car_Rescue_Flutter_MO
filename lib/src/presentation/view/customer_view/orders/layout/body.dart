@@ -319,7 +319,15 @@ class _OrderListState extends State<OrderList> {
                                                       OrderDetail(orderId: order.id,techId: null),
                                                 ),
                                               );
-                                              }else{
+                                              }else if(order.technicianId == ''){
+                                                Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      OrderDetail(orderId: order.id,techId: ''),
+                                                ),
+                                              );
+                                              } else{
                                                 Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
