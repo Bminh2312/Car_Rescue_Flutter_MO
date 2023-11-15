@@ -51,7 +51,7 @@ class ServiceProvider {
             .map((serviceData) => Service.fromJson(serviceData))
             .toList();
 
-        List<Service> towingServices = services.where((service) => service.type == "Fixing").toList();
+        List<Service> towingServices = services.where((service) => service.type == "Fixing" && service.status == "ACTIVE").toList();
 
         return towingServices;
       } else {
@@ -74,7 +74,7 @@ class ServiceProvider {
             .map((serviceData) => Service.fromJson(serviceData))
             .toList();
 
-        List<Service> towingServices = services.where((service) => service.type == "Towing").toList();
+        List<Service> towingServices = services.where((service) => service.type == "Towing" && service.status == "ACTIVE").toList();
 
         return towingServices;
       } else {

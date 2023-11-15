@@ -296,6 +296,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         checkUpdate = false;
       }); // Trả về false nếu có lỗi
     }
+
   }
   // void startOrder(){
 
@@ -306,6 +307,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   // }
 
 // ...
+
 
   Widget _slider(bool type) {
     return Container(

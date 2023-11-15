@@ -4,6 +4,7 @@ import 'package:CarRescue/src/models/order.dart';
 import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/chat_with_driver/chat_view.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/order_detail/order_detail_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/orders/layout/widgets/selection_location_widget.dart';
 import 'package:CarRescue/src/providers/google_map_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
@@ -310,13 +311,32 @@ class _OrderListState extends State<OrderList> {
                                         children: <Widget>[
                                           TextButton(
                                             onPressed: () {
-                                              Navigator.push(
+                                              if(order.technicianId == null){
+                                                Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
                                                   builder: (context) =>
-                                                      ChatView(),
+                                                      OrderDetail(orderId: order.id,techId: null),
                                                 ),
                                               );
+                                              }else if(order.technicianId == ''){
+                                                Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      OrderDetail(orderId: order.id,techId: ''),
+                                                ),
+                                              );
+                                              } else{
+                                                Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      OrderDetail(orderId: order.id,techId: order.technicianId),
+                                                ),
+                                              );
+                                              }
+                                              
                                             },
                                             child: CustomText(
                                               text: 'Chi tiết',
