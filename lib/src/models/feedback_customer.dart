@@ -21,8 +21,8 @@ class FeedbackCustomer {
       customerId: json['customerId'],
       orderId: json['orderId'],
       rating: json['rating'],
-      note: json['note'] != null ? json['note'] : null,
-      status: json['status'],
+      note: json['note'] != null ? json['note'] : '',
+      status: json['status'] ?? '',
     );
   }
 
