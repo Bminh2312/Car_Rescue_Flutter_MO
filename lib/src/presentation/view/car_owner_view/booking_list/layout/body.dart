@@ -486,8 +486,9 @@ class _BookingListBodyState extends State<BookingListBody>
                         ],
                       ),
                       trailing: BookingStatus(
-                          status: booking
-                              .status), // Use the BookingStatusWidget here
+                        status: booking.status,
+                        fontSize: 14,
+                      ), // Use the BookingStatusWidget here
                     ),
                     Divider(
                       color: FrontendConfigs.kIconColor,
@@ -724,7 +725,7 @@ class _BookingListBodyState extends State<BookingListBody>
                       ),
                       trailing: BookingStatus(
                           status: booking
-                              .status), // Use the BookingStatusWidget here
+                              .status,fontSize: 14,), // Use the BookingStatusWidget here
                     ),
                     Divider(
                       color: FrontendConfigs.kIconColor,

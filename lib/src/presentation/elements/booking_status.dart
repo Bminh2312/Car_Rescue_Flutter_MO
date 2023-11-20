@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class BookingStatus extends StatelessWidget {
   final String status;
-
-  BookingStatus({required this.status});
+  final double fontSize;
+  BookingStatus({required this.status, required this.fontSize});
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +16,7 @@ class BookingStatus extends StatelessWidget {
         statusTextStyle = TextStyle(
           color: Color(0xff00721e),
           fontWeight: FontWeight.bold,
+          fontSize: fontSize,
         );
         break;
       case 'assigned':
@@ -23,6 +24,7 @@ class BookingStatus extends StatelessWidget {
         statusTextStyle = TextStyle(
           color: Color(0xff276fdb),
           fontWeight: FontWeight.bold,
+          fontSize: fontSize,
         );
         break;
       case 'cancelled':
@@ -30,6 +32,7 @@ class BookingStatus extends StatelessWidget {
         statusTextStyle = TextStyle(
           color: Color.fromARGB(255, 219, 39, 39),
           fontWeight: FontWeight.bold,
+          fontSize: fontSize,
         );
         break;
       case 'canceled':
@@ -37,6 +40,7 @@ class BookingStatus extends StatelessWidget {
         statusTextStyle = TextStyle(
           color: Color.fromARGB(255, 219, 39, 39),
           fontWeight: FontWeight.bold,
+          fontSize: fontSize,
         );
         break;
       case 'inprogress':
@@ -44,6 +48,7 @@ class BookingStatus extends StatelessWidget {
         statusTextStyle = TextStyle(
           color: Color.fromARGB(255, 228, 203, 10),
           fontWeight: FontWeight.bold,
+          fontSize: fontSize,
         );
         break;
       default:

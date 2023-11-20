@@ -43,6 +43,7 @@ class _BookingCompletedScreenState extends State<BookingCompletedScreen> {
   AuthService authService = AuthService();
   CustomerInfo? customerInfo;
   Vehicle? vehicleInfo;
+
   void initState() {
     super.initState();
     booking = widget.booking;
@@ -77,6 +78,13 @@ class _BookingCompletedScreenState extends State<BookingCompletedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // int durationInMinutes =
+    //     widget.booking.endTime!.difference(widget.booking.startTime!).inMinutes;
+    // int durationInSeconds =
+    //     widget.booking.endTime!.difference(widget.booking.startTime!).inSeconds;
+    // String durationDisplay = durationInMinutes < 1
+    //     ? '${durationInSeconds} giây'
+    //     : '${durationInMinutes} phút';
     return Scaffold(
       backgroundColor: FrontendConfigs.kIconColor,
       body: SafeArea(

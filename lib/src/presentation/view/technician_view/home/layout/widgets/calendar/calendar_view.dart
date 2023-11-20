@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/models/current_week.dart';
 import 'package:CarRescue/src/models/work_shift.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/cupertino.dart';
@@ -19,19 +20,37 @@ class CalendarView extends StatefulWidget {
 
 class _CalendarViewState extends State<CalendarView> {
   DateTime? _selectedDay;
-  DateTime? _currentWeek;
+  CurrentWeek? _currentWeek;
   String? selectedShift;
   DateTime selectedDate = DateTime.now();
   List<WorkShift> weeklyShifts = [];
-  DateTime? _focusedDay = DateTime.utc(2023, 01, 9);
+  CurrentWeek? _nextWeek;
+  DateTime? _focusedDay = DateTime.now();
   @override
   void initState() {
     super.initState();
-    loadWeeklyShift('0a016b11-a478-45ac-8ef5-43fab58ec0b7', widget.userId);
+    loadCurrentWeek();
 
     initializeDateFormattingVietnamese();
     _selectedDay = DateTime.utc(2023, 01, 9);
-    _currentWeek = _selectedDay;
+  }
+
+  Future<void> loadCurrentWeek() async {
+    try {
+      final CurrentWeek currentWeekFromApi =
+          await AuthService().getCurrentWeek();
+      setState(() {
+        _currentWeek = currentWeekFromApi;
+        print('a: $_currentWeek');
+
+        // After obtaining currentWeek.id, call loadWeeklyShift with it
+        loadWeeklyShift(_currentWeek!.id, widget.userId);
+      });
+    } catch (e) {
+      // Handle any exceptions here, such as network errors or errors from getCurrentWeek()
+      print('Error loading current week: $e');
+      throw e; // Rethrow the exception if needed
+    }
   }
 
   Future<void> loadWeeklyShift(String weekId, String userId) async {
@@ -39,7 +58,10 @@ class _CalendarViewState extends State<CalendarView> {
       final List<WorkShift> weeklyShiftsFromAPI =
           await AuthService().getWeeklyShift(weekId, userId);
 
-      // Update the state variable with the new data
+      // Sort the list by the latest date (assuming WorkShift has a date property)
+      weeklyShiftsFromAPI.sort((a, b) => a.date.compareTo(b.date));
+
+      // Update the state variable with the sorted data
       setState(() {
         weeklyShifts = weeklyShiftsFromAPI;
         print(weeklyShifts);
@@ -47,6 +69,26 @@ class _CalendarViewState extends State<CalendarView> {
     } catch (e) {
       // Handle the error or return an empty list based on your requirements
       print('Error loading weekly shifts: $e');
+    }
+  }
+
+  Future<void> loadNextWeek(DateTime startDate) async {
+    try {
+      final CurrentWeek nextWeekFromAPI =
+          await AuthService().getNextWeek(startDate);
+
+      // Sort the list by the latest date (assuming WorkShift has a date property)
+      // nextWeekFromAPI.sort((a, b) => a.date.compareTo(b.date));
+
+      // Update the state variable with the sorted data
+      setState(() {
+        _nextWeek = nextWeekFromAPI;
+        print(_nextWeek);
+      });
+      loadWeeklyShift(_nextWeek!.id, widget.userId);
+    } catch (e) {
+      // Handle the error or return an empty list based on your requirements
+      print('Error loading next weeks: $e');
     }
   }
 
@@ -59,7 +101,6 @@ class _CalendarViewState extends State<CalendarView> {
 
   void onPageChanged(DateTime focusedDay) {
     setState(() {
-      _currentWeek = focusedDay;
       _focusedDay = focusedDay;
       loadWeeklyShift('0a016b11-a478-45ac-8ef5-43fab58ec0b7',
           widget.userId); // Update current week when page changes
@@ -285,8 +326,8 @@ class _CalendarViewState extends State<CalendarView> {
                             await createWeeklyShift(
                               technicianId: widget
                                   .userId, // Replace with the actual technicianId
-                              workScheduleId:
-                                  '0a016b11-a478-45ac-8ef5-43fab58ec0b7', // Replace with the actual workScheduleId
+                              workScheduleId: _currentWeek!
+                                  .id, // Replace with the actual workScheduleId
                               date: selectedDate,
                               type: selectedShift!,
                             );
@@ -295,9 +336,7 @@ class _CalendarViewState extends State<CalendarView> {
 
                             // Close the modal
                             Navigator.of(context).pop();
-                            loadWeeklyShift(
-                                '0a016b11-a478-45ac-8ef5-43fab58ec0b7',
-                                widget.userId);
+                            loadWeeklyShift(_currentWeek!.id, widget.userId);
                           } catch (e) {
                             // Handle the error or show an error message
                             print('Error creating weekly shift: $e');
@@ -326,7 +365,7 @@ class _CalendarViewState extends State<CalendarView> {
         return StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
           return Container(
-            height: 350,
+            height: 250,
             padding: EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,7 +399,7 @@ class _CalendarViewState extends State<CalendarView> {
                     ),
                   ],
                 ),
-                SizedBox(height: 10),
+
                 Row(
                   children: [
                     Expanded(
@@ -452,54 +491,21 @@ class _CalendarViewState extends State<CalendarView> {
                   ],
                 ),
 
-                SizedBox(height: 20),
                 Row(
                   children: [
+                    SizedBox(height: 20),
                     Icon(CupertinoIcons.calendar),
-                    SizedBox(width: 10),
-                    Text(
-                      'Chọn ngày làm việc',
-                      style: TextStyle(
-                          fontSize: 18,
-                          color: FrontendConfigs.kAuthColor,
-                          fontWeight: FontWeight.bold),
+                    SizedBox(
+                      width: 10,
                     ),
-                  ],
-                ),
-                Row(
-                  children: [
                     Expanded(
                       child: Text(
                         formattedDate,
                         style: TextStyle(fontSize: 18),
                       ),
                     ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: FrontendConfigs.kActiveColor,
-                      ),
-                      onPressed: () async {
-                        final DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: selectedDate,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2025),
-                        );
-
-                        if (picked != null && picked != selectedDate) {
-                          setState(() {
-                            // Add this setState to update the selectedDate
-                            selectedDate = picked;
-                          });
-                        }
-                      },
-                      child: Text('Chọn ngày'),
-                    )
                   ],
                 ),
-
-                SizedBox(height: 20),
-                // RegisteredShiftsTimeline(),
                 Spacer(),
                 Row(
                   children: [
@@ -530,9 +536,7 @@ class _CalendarViewState extends State<CalendarView> {
 
                             // Close the modal
                             Navigator.of(context).pop();
-                            loadWeeklyShift(
-                                '0a016b11-a478-45ac-8ef5-43fab58ec0b7',
-                                widget.userId);
+                            loadWeeklyShift(_currentWeek!.id, widget.userId);
                           } catch (e) {
                             // Handle the error or show an error message
                             print('Error creating weekly shift: $e');
@@ -573,7 +577,7 @@ class _CalendarViewState extends State<CalendarView> {
         body: json.encode({
           "technicianId": technicianId,
           "workScheduleId": workScheduleId,
-          "date": date.toUtc().toIso8601String(),
+          "date": date.toUtc().add(Duration(hours: 8)).toIso8601String(),
           "type": type,
         }),
       );
@@ -659,7 +663,17 @@ class _CalendarViewState extends State<CalendarView> {
       body: Column(
         children: [
           TableCalendar(
-            onPageChanged: onPageChanged,
+            onPageChanged: (focusedDay) {
+              setState(() {
+                _focusedDay = focusedDay; // Update the focused day
+              });
+              // Calculate the start date of the week based on the new focused day
+              DateTime startDate =
+                  focusedDay.subtract(Duration(days: focusedDay.weekday - 1));
+
+              // Call loadNextWeek with the start date
+              loadNextWeek(startDate);
+            },
             locale: 'vi_VN',
             startingDayOfWeek: StartingDayOfWeek.monday,
             firstDay: DateTime.utc(2010, 10, 16),
@@ -677,109 +691,103 @@ class _CalendarViewState extends State<CalendarView> {
               itemCount: weeklyShifts.length,
               itemBuilder: (context, index) {
                 final workShift = weeklyShifts[index];
-                if (workShift.date.isAfter(_currentWeek!
-                        .subtract(Duration(days: _currentWeek!.weekday - 1))) &&
-                    workShift.date.isBefore(_currentWeek!
-                        .add(Duration(days: 7 - _currentWeek!.weekday)))) {
-                  return Card(
-                    margin: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    elevation: 3,
-                    child: Stack(
-                      children: [
-                        // The "10 SEP" column
-                        Positioned(
-                          left: 0,
-                          top: 0,
-                          bottom: 0,
-                          child: Container(
-                            width: 50,
-                            decoration: BoxDecoration(
-                              color: FrontendConfigs.kActiveColor,
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(10),
-                                bottomLeft: Radius.circular(10),
-                              ),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  DateFormat('MMM')
-                                      .format(workShift.date)
-                                      .toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  DateFormat('d').format(workShift.date),
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
+
+                return Card(
+                  margin: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  elevation: 3,
+                  child: Stack(
+                    children: [
+                      // The "10 SEP" column
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        child: Container(
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: FrontendConfigs.kActiveColor,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10),
+                              bottomLeft: Radius.circular(10),
                             ),
                           ),
-                        ),
-
-                        // The rest of the content
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              SizedBox(
-                                  width:
-                                      60), // Adjusted to accommodate the "10 SEP" column
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      getTimeRange(workShift.type),
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: 5),
-                                    Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Chip(
-                                        padding: EdgeInsets.zero,
-                                        label: Text("SCHEDULED"),
-                                        backgroundColor: Colors.green,
-                                        labelStyle: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  ],
+                              Text(
+                                DateFormat('MMM')
+                                    .format(workShift.date)
+                                    .toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
                               ),
-                              IconButton(
-                                onPressed: () {
-                                  showUpdatedShiftModal(context, workShift.id,
-                                      workShift.date, workShift.type);
-                                  // Call the updateWeeklyShift function here
-                                },
-                                icon: Icon(CupertinoIcons.pencil, size: 25),
-                              )
+                              Text(
+                                DateFormat('d').format(workShift.date),
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  );
-                } else {
-                  return SizedBox(); // Return an empty container for other weeks
-                }
+                      ),
+
+                      // The rest of the content
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                                width:
+                                    60), // Adjusted to accommodate the "10 SEP" column
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    getTimeRange(workShift.type),
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 5),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Chip(
+                                      padding: EdgeInsets.zero,
+                                      label: Text("SCHEDULED"),
+                                      backgroundColor: Colors.green,
+                                      labelStyle: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                showUpdatedShiftModal(context, workShift.id,
+                                    workShift.date, workShift.type);
+                                // Call the updateWeeklyShift function here
+                              },
+                              icon: Icon(CupertinoIcons.pencil, size: 25),
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
           )

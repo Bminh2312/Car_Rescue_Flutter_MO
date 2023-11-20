@@ -377,7 +377,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       _buildInfoRow(
                           "Trạng thái",
                           BookingStatus(
-                            status: _currentBooking?.status ?? '',
+                            status: _currentBooking?.status ?? '',fontSize: 14,
                           )),
                       _buildInfoRow(
                           "Điểm đi",
@@ -434,9 +434,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         ),
                       if (widget.booking.status.toUpperCase() == 'COMPLETED')
                         _buildInfoRow(
-                            'Nội dung ',
+                            'Nội dung đánh giá',
                             Text(
-                              widget.booking.note ?? 'Không có nội dung',
+                              widget.booking.note ?? 'Không có',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             )),
                     ],
@@ -674,7 +674,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
                           // Fetch the updated data and wait for it to complete
                           Booking updatedBooking = await authService
-                              .fetchCarOwnerBookingById(widget.booking.id);
+                              .fetchBookingById(widget.booking.id);
 
                           // Update the local state with the fetched booking details
                           setState(() {
@@ -851,8 +851,14 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   }
 
   Widget _buildPaymentMethod(String title, String total) {
-    // Check if the title is 'Momo' and change it to 'Chuyen khoan' if it is
-    String displayTitle = title == 'Momo' ? 'Trả bằng chuyển khoản' : title;
+    String displayTitle;
+    if (title == 'Banking') {
+      displayTitle = 'Trả bằng chuyển khoản';
+    } else if (title == 'Cash') {
+      displayTitle = 'Tiền mặt';
+    } else {
+      displayTitle = 'Thanh toán';
+    }
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -867,10 +873,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 fontSize: 18,
               ),
               SizedBox(width: 10.0),
-              // Conditionally display the image based on the displayTitle
-              if (displayTitle == 'Trả bằng chuyển khoản')
+              if (displayTitle == 'Chuyển khoản')
                 Image.asset(
                   'assets/images/banking.png',
+                  height: 25,
+                  width: 25,
+                )
+              else if (displayTitle == 'Tiền mặt')
+                Image.asset(
+                  'assets/images/money.png', // Replace with your cash image asset
                   height: 25,
                   width: 25,
                 )

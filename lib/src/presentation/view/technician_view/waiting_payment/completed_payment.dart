@@ -43,6 +43,7 @@ class _BookingCompletedScreenState extends State<BookingCompletedScreen> {
   AuthService authService = AuthService();
   CustomerInfo? customerInfo;
   Vehicle? vehicleInfo;
+
   void initState() {
     super.initState();
     booking = widget.booking;
@@ -76,6 +77,13 @@ class _BookingCompletedScreenState extends State<BookingCompletedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    int durationInMinutes =
+        widget.booking.endTime!.difference(widget.booking.startTime!).inMinutes;
+    int durationInSeconds =
+        widget.booking.endTime!.difference(widget.booking.startTime!).inSeconds;
+    String durationDisplay = durationInMinutes < 1
+        ? '${durationInSeconds} giây'
+        : '${durationInMinutes} phút';
     return Scaffold(
       backgroundColor: FrontendConfigs.kIconColor,
       body: SafeArea(
@@ -174,8 +182,9 @@ class _BookingCompletedScreenState extends State<BookingCompletedScreen> {
                           ),
                           Text(
                               style: TextStyle(fontSize: 18),
-                              DateFormat('HH:mm').format(
-                                  widget.booking.endTime ?? DateTime.now())),
+                              DateFormat('HH:mm').format(widget.booking.endTime!
+                                  .toUtc()
+                                  .add(Duration(hours: 14)))),
                         ],
                       ),
                     ),
@@ -186,7 +195,7 @@ class _BookingCompletedScreenState extends State<BookingCompletedScreen> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
-                        '20 phút',
+                        durationDisplay,
                         style: TextStyle(fontSize: 18),
                       ),
                       trailing: Column(

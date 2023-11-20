@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:CarRescue/src/models/current_week.dart';
 import 'package:CarRescue/src/models/feedback.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
+import 'package:CarRescue/src/models/wallet_transaction.dart';
 import 'package:CarRescue/src/models/work_shift.dart';
 import 'package:CarRescue/src/models/booking.dart';
+import 'package:CarRescue/src/models/wallet.dart';
+import 'package:CarRescue/src/models/banking_info.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:geocoding/geocoding.dart';
@@ -28,17 +31,6 @@ class LoginResult {
     required this.role,
   });
 }
-
-class LatLng {
-  final double lat;
-  final double long;
-
-  LatLng(this.lat, this.long);
-}
-
-const latPattern = r'lat:\s?([\-0-9.]+)';
-const longPattern = r'long:\s?([\-0-9.]+)';
-const String apiKey = 'AIzaSyCZPpY4KcOcClHuiQEuzb2t51ov9XkJVfg';
 
 class AuthService {
   //TECHNICIAN API
@@ -248,7 +240,7 @@ class AuthService {
     }
   }
 
-  Future<Booking> fetchCarOwnerBookingById(String orderId) async {
+  Future<Booking> fetchBookingById(String orderId) async {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetOrder?id=$orderId');
@@ -544,30 +536,28 @@ class AuthService {
     }
   }
 
-  // Future<void> getAddressesForBookings(
-  //     List<Booking> bookings,
-  //     void Function(VoidCallback) setState,
-  //     Map<String, String> addresses,
-  //     Map<String, String> subAddresses) async {
-  //   // Use Future.wait to initiate all requests in parallel.
-  //   var results =
-  //       await Future.wait(bookings.map((booking) => getAddressInfo(booking)));
-
-  //   // Update the state once with all the results.
-  //   setState(() {
-  //     for (var result in results) {
-  //       addresses[result['bookingId']] = result['address'];
-  //       subAddresses[result['bookingId']] = result['subAddress'];
-  //     }
-  //   });
-  // }
-
-  // Constants for regex patterns
-
   Future<Map<String, dynamic>> getAddressInfo(Booking booking) async {
-    final latLngDeparture = _extractLatLng(booking.departure);
-    final latLngDestination = _extractLatLng(booking.destination);
+    // Extract departure latitude and longitude
+    final latMatchDeparture =
+        RegExp(r'lat:\s?([\-0-9.]+)').firstMatch(booking.departure);
+    final longMatchDeparture =
+        RegExp(r'long:\s?([\-0-9.]+)').firstMatch(booking.departure);
+    final double? latDeparture =
+        double.tryParse(latMatchDeparture?.group(1) ?? '');
+    final double? longDeparture =
+        double.tryParse(longMatchDeparture?.group(1) ?? '');
 
+    // Extract destination latitude and longitude
+    final latMatchDestination =
+        RegExp(r'lat:\s?([\-0-9.]+)').firstMatch(booking.destination);
+    final longMatchDestination =
+        RegExp(r'long:\s?([\-0-9.]+)').firstMatch(booking.destination);
+    final double? latDestination =
+        double.tryParse(latMatchDestination?.group(1) ?? '');
+    final double? longDestination =
+        double.tryParse(longMatchDestination?.group(1) ?? '');
+
+    // Initialize response map with default values
     Map<String, dynamic> response = {
       'bookingId': booking.id,
       'address': 'Unknown Address',
@@ -576,60 +566,64 @@ class AuthService {
       'destinationSubAddress': 'Unknown Destination SubAddress',
     };
 
-    if (latLngDeparture != null) {
-      final departureAddress = await _fetchAddressInfo(latLngDeparture);
-      response.addAll(departureAddress);
+    // Check if departure coordinates are available
+    if (latDeparture != null && longDeparture != null) {
+      const String apiKey =
+          'AIzaSyAid63yPsUnB_deR9bJTfYRKcc2Z8tgl3E'; // Replace with your actual API key
+      final String urlDeparture =
+          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=$apiKey';
+
+      final responseDeparture = await http.get(Uri.parse(urlDeparture));
+      if (responseDeparture.statusCode != 200) {
+        // Handle error or return default values
+      } else {
+        var jsonResponseDeparture = json.decode(responseDeparture.body);
+        if (jsonResponseDeparture['status'] == 'OK' &&
+            jsonResponseDeparture['results'].isNotEmpty) {
+          var addressComponentsDeparture = jsonResponseDeparture['results'][0]
+              ['address_components'] as List<dynamic>;
+          String formattedAddressDeparture =
+              formatStreetAndRoute(addressComponentsDeparture);
+          String formattedSubAddressDeparture =
+              formatSubAddress(addressComponentsDeparture);
+
+          // Update the response map with departure address and sub-address
+          response['address'] = formattedAddressDeparture;
+          response['subAddress'] = formattedSubAddressDeparture;
+        }
+      }
     }
 
-    if (latLngDestination != null) {
-      final destinationAddress = await _fetchAddressInfo(latLngDestination);
-      response.addAll({
-        'destinationAddress': destinationAddress['address'],
-        'destinationSubAddress': destinationAddress['subAddress'],
-      });
+    // Check if destination coordinates are available
+    if (latDestination != null && longDestination != null) {
+      const String apiKey =
+          'AIzaSyCZPpY4KcOcClHuiQEuzb2t51ov9XkJVfg'; // Replace with your actual API key
+      final String urlDestination =
+          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=$apiKey';
+
+      final responseDestination = await http.get(Uri.parse(urlDestination));
+      if (responseDestination.statusCode != 200) {
+        // Handle error or return default values
+      } else {
+        var jsonResponseDestination = json.decode(responseDestination.body);
+        if (jsonResponseDestination['status'] == 'OK' &&
+            jsonResponseDestination['results'].isNotEmpty) {
+          var addressComponentsDestination = jsonResponseDestination['results']
+              [0]['address_components'] as List<dynamic>;
+          String formattedAddressDestination =
+              formatStreetAndRoute(addressComponentsDestination);
+          String formattedSubAddressDestination =
+              formatSubAddress(addressComponentsDestination);
+
+          // Update the response map with destination address and sub-address
+          response['destinationAddress'] = formattedAddressDestination;
+          response['destinationSubAddress'] = formattedSubAddressDestination;
+        }
+      }
     }
 
     return response;
   }
-
-  LatLng? _extractLatLng(String location) {
-    final latMatch = RegExp(latPattern).firstMatch(location);
-    final longMatch = RegExp(longPattern).firstMatch(location);
-    final double? lat =
-        latMatch != null ? double.tryParse(latMatch.group(1)!) : null;
-    final double? long =
-        longMatch != null ? double.tryParse(longMatch.group(1)!) : null;
-
-    return (lat != null && long != null) ? LatLng(lat, long) : null;
-  }
-
-  Future<Map<String, String>> _fetchAddressInfo(LatLng latLng) async {
-    // Fetch securely
-    final String url =
-        'https://maps.googleapis.com/maps/api/geocode/json?latlng=${latLng.lat},${latLng.long}&key=$apiKey';
-
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        var jsonResponse = json.decode(response.body);
-        if (jsonResponse['status'] == 'OK' &&
-            jsonResponse['results'].isNotEmpty) {
-          var addressComponents =
-              jsonResponse['results'][0]['address_components'] as List<dynamic>;
-          return {
-            'address': formatStreetAndRoute(addressComponents),
-            'subAddress': formatSubAddress(addressComponents),
-          };
-        }
-      }
-      // Log error or handle it appropriately
-    } catch (e) {
-      // Log exception
-    }
-    return {'address': 'Unknown Address', 'subAddress': 'Unknown SubAddress'};
-  }
-
-  // Check if destination coordinates are available
 
   String formatStreetAndRoute(List<dynamic> addressComponents) {
     String pointOfInterest = '';
@@ -1150,7 +1144,9 @@ class AuthService {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Schedule/GetWorkWeeks';
     try {
-      final response = await http.post(Uri.parse(apiUrl));
+      final response = await http.get(Uri.parse(apiUrl));
+      print(response.body);
+      print(response.statusCode);
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
@@ -1159,7 +1155,7 @@ class AuthService {
 
         // Assuming you have a CurrentWeek class that matches the structure of weekData
         final CurrentWeek currentWeek = CurrentWeek.fromJson(weekData);
-
+        print(currentWeek);
         return currentWeek;
       } else {
         print(response.statusCode);
@@ -1168,5 +1164,120 @@ class AuthService {
     } catch (e) {
       throw Exception('Error: $e');
     }
+  }
+
+  Future<CurrentWeek> getNextWeek(DateTime startDate) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Schedule/GetWorkWeeksByStartDate?startdate=$startDate';
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      print(response.body);
+      print(response.statusCode);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        // Since the data is a single object and not a list
+        final Map<String, dynamic> weekData = jsonData['data'];
+
+        // Assuming you have a CurrentWeek class that matches the structure of weekData
+        final CurrentWeek currentViewWeek = CurrentWeek.fromJson(weekData);
+        print(currentViewWeek);
+        return currentViewWeek;
+      } else {
+        print(response.statusCode);
+        throw Exception('Failed to load data from the server');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<Wallet> getWalletInfo(String userId) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Wallet/GetWalletOfRVO?id=$userId';
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      print(response.body);
+      print(response.statusCode);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        final Map<String, dynamic> walletData = jsonData['data'];
+
+        final Wallet wallet = Wallet.fromJson(walletData);
+        print(wallet);
+        return wallet;
+      } else {
+        print(response.statusCode);
+        throw Exception('Failed to load data from the server');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<List<WalletTransaction>> getWalletTransaction(String walletId) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Transaction/GetTransactionOfWallet?id=$walletId';
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      print(response.body);
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        final List<dynamic> walletTransactionList = jsonData['data'];
+        List<WalletTransaction> walletTransactions = walletTransactionList
+            .map((data) => WalletTransaction.fromJson(data))
+            .toList();
+        return walletTransactions;
+      } else {
+        print('Failed with status code: ${response.statusCode}');
+        throw Exception('Failed to load data from the server');
+      }
+    } catch (e) {
+      print('Error: $e');
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<List<BankingInfo>> getBankingInfo() async {
+    final String apiUrl = 'https://api.vietqr.io/v2/banks';
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      print(response.body);
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        final List<dynamic> bankingList = jsonData['data'];
+        List<BankingInfo> bankings =
+            bankingList.map((data) => BankingInfo.fromJson(data)).toList();
+        return bankings;
+      } else {
+        print('Failed with status code: ${response.statusCode}');
+        throw Exception('Failed to load data from the server');
+      }
+    } catch (e) {
+      print('Error: $e');
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<bool> completedOrder(String orderId, bool decision) async {
+    final String apiUrl =
+        "https://rescuecapstoneapi.azurewebsites.net/api/Payment/CompletePayment?id=$orderId&boolean=$decision";
+
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {
+        "Content-Type": "application/json",
+        // Add other headers if needed, like authorization headers
+      },
+      body: json.encode({'id': orderId, 'decision': decision}),
+    );
+    if (response.statusCode == 200) {
+      print('Successfully complete order ${response.body}');
+      return true;
+    } else {
+      print('Failed to accept order: ${response.body}');
+      // Failed to create the car
+    }
+    return false;
   }
 }

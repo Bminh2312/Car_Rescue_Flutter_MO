@@ -282,7 +282,7 @@ class _BookingListBodyState extends State<BookingListBody> {
                     trailing: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        BookingStatus(status: booking.status),
+                        BookingStatus(status: booking.status,fontSize: 14,),
                         SizedBox(
                           height: 5,
                         ),

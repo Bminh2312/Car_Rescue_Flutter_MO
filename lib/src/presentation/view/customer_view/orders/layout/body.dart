@@ -160,7 +160,7 @@ class _OrderListState extends State<OrderList> {
                                     subtitle: Text(order.rescueType!),
                                     trailing: BookingStatus(
                                         status: order
-                                            .status), // Use the BookingStatusWidget here
+                                            .status,fontSize: 14,), // Use the BookingStatusWidget here
                                   ),
                                   Divider(
                                     color: FrontendConfigs.kIconColor,

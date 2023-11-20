@@ -459,7 +459,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   }
 
   Widget buildBookingStatus(String status) {
-    return BookingStatus(status: status);
+    return BookingStatus(
+      status: status,
+      fontSize: 14,
+    );
   }
 
   Widget _buildOrderItemSection() {
@@ -544,7 +547,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               ),
               SizedBox(width: 10.0),
               // Conditionally display the image based on the displayTitle
-              if (displayTitle == 'Trả bằng chuyển khoản')
+              if (displayTitle == 'Banking')
                 Image.asset(
                   'assets/images/banking.png',
                   height: 25,
@@ -673,11 +676,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                             "Trạng thái",
                             BookingStatus(
                               status: widget.booking.status,
+                              fontSize: 14,
                             )),
                         _buildInfoRow(
                             "Địa chỉ",
-                            Text(
-                                '${widget.addressesDepart[widget.booking.id]}',
+                            Text('${widget.addressesDepart[widget.booking.id]}',
                                 style: TextStyle(fontWeight: FontWeight.bold))),
                         if (widget.booking.rescueType == "Towing")
                           _buildInfoRow(
@@ -699,17 +702,19 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   ),
 
                   // Image
-                  // if (_imageUrls.isNotEmpty)
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      children: [
-                        _buildImageSection(_imageUrls),
-                      ],
+                  if (widget.booking.status.toUpperCase() == 'ASSIGNED' &&
+                      _imageUrls.isNotEmpty)
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+                          _buildImageSection(_imageUrls),
+                        ],
+                      ),
                     ),
-                  ),
                   // _buildImageSection(imageUrls!),
 
                   // Additional Details
@@ -762,12 +767,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
-                        if (widget.booking.status != "ASSIGNED")
+                        if (widget.booking.status != "ASSIGNED" &&
+                            widget.booking.endTime != null)
                           _buildInfoRow(
                             "Kết thúc ",
                             Text(
-                              DateFormat('dd-MM-yyyy | HH:mm').format(
-                                  widget.booking.endTime ?? DateTime.now()),
+                              DateFormat('dd-MM-yyyy | HH:mm')
+                                  .format(widget.booking.endTime!),
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),

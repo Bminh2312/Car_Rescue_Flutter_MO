@@ -1,5 +1,6 @@
 import 'package:CarRescue/src/models/feedback.dart';
 import 'package:CarRescue/src/models/rescue_vehicle_owner.dart';
+import 'package:CarRescue/src/models/wallet.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/car_view/widgets/add_car_view.dart';
 
@@ -42,9 +43,11 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
   int completedBookings = 0;
   double averageRating = 4.7;
   RescueVehicleOwner? _owner;
+  Wallet? _wallet;
   @override
   void initState() {
     super.initState();
+    loadWalletInfo(widget.userId);
     displayFeedbackForBooking(widget.userId);
     fetchRVOInfo().then((value) {
       if (mounted) {
@@ -54,6 +57,22 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
         });
       }
     });
+  }
+
+  Future<void> loadWalletInfo(String userId) async {
+    try {
+      final Wallet walletInfoFromApi =
+          await AuthService().getWalletInfo(widget.userId);
+      setState(() {
+        _wallet = walletInfoFromApi;
+
+        // After obtaining currentWeek.id, call loadWeeklyShift with it
+      });
+    } catch (e) {
+      // Handle any exceptions here, such as network errors or errors from getCurrentWeek()
+      print('Error loading current week: $e');
+      throw e; // Rethrow the exception if needed
+    }
   }
 
   Future<RescueVehicleOwner> fetchRVOInfo() async {
@@ -96,6 +115,8 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
   }
 
   Widget buildWallet() {
+    final formatter = NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
+    final formattedTotal = formatter.format(_wallet?.total ?? 0);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -121,7 +142,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
                   height: 10,
                 ),
                 Text(
-                  '300.000VND',
+                  formattedTotal,
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 20,

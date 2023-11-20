@@ -188,7 +188,10 @@ class _ActiveBookingCardState extends State<ActiveBookingCard> {
 
                           Row(
                             children: [
-                              BookingStatus(status: widget.booking.status)
+                              BookingStatus(
+                                status: widget.booking.status,
+                                fontSize: 14,
+                              )
                             ],
                           ),
                         ],

@@ -309,7 +309,7 @@ class _HistoryCardState extends State<HistoryCard>
                           // Text(booking.note ?? 'Không có'),
                           BookingStatus(
                               status: booking
-                                  .status), // Your existing BookingStatus widget
+                                  .status,fontSize: 14,), // Your existing BookingStatus widget
                           SizedBox(height: 8.0),
                           if (booking.status.toUpperCase() ==
                               'COMPLETED') // Spacing
@@ -563,7 +563,7 @@ class _HistoryCardState extends State<HistoryCard>
                           // Text(booking.note ?? 'Không có'),
                           BookingStatus(
                               status: booking
-                                  .status), // Your existing BookingStatus widget
+                                  .status,fontSize: 14,), // Your existing BookingStatus widget
                           SizedBox(height: 8.0),
                           if (booking.status.toUpperCase() ==
                               'COMPLETED') // Spacing

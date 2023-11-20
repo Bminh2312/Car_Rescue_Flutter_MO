@@ -41,24 +41,12 @@ class WaitingForPaymentScreen extends StatefulWidget {
 }
 
 class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
-  Technician? technicianInfo;
   List<Map<String, dynamic>> orderDetails = [];
   num totalQuantity = 0;
   num totalAmount = 0;
   int total = 0;
   Payment? _payment;
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
-
-  Future<void> _loadTechInfo(String techId) async {
-    Map<String, dynamic>? techProfile =
-        await AuthService().fetchTechProfile(techId);
-
-    if (techProfile != null) {
-      setState(() {
-        technicianInfo = Technician.fromJson(techProfile);
-      });
-    }
-  }
 
   void calculateTotals() {
     int totalQuantity = 0;
@@ -127,7 +115,7 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
   @override
   void initState() {
     super.initState();
-    _loadTechInfo(widget.userId);
+
     fetchServiceData(widget.booking.id);
     calculateTotals();
     _loadPayment(widget.booking.id);

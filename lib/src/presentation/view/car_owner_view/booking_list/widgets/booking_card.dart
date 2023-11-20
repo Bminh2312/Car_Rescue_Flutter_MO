@@ -60,6 +60,7 @@ class BookingCard extends StatelessWidget {
                 subtitle: Text(booking.rescueType),
                 trailing: BookingStatus(
                   status: booking.status,
+                  fontSize: 14,
                 ),
               ),
               Divider(
