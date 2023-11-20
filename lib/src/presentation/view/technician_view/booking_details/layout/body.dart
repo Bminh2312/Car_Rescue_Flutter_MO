@@ -231,12 +231,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         if (imageUrl != null) {
           setState(() {
             _imageUrls.add(imageUrl);
+            
           });
           print('Image uploaded successfully. URL: $imageUrl');
+          
         } else {
           print('Failed to upload image.');
         }
       }
+      pickedImages.clear();
     } else {
       print('No image selected.');
     }
@@ -321,11 +324,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         buttonSize: 45,
         height: 60,
         backgroundColor: FrontendConfigs.kActiveColor,
-        action: () {
-          if (type) {
+        action: () async {
+          if (type)  {
             final orderProvider = OrderProvider();
             print("Id: ${widget.booking.id}");
-            orderProvider.startOrder(widget.booking.id);
+            await orderProvider.startOrder(widget.booking.id);
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -343,7 +346,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           } else {
             final orderProvider = OrderProvider();
             print("Id: ${widget.booking.id}");
-            orderProvider.endOrder(widget.booking.id);
+            await orderProvider.endOrder(widget.booking.id);
             // Navigator.pushReplacement(
             //   context,
             //   MaterialPageRoute(
@@ -858,7 +861,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                     print("Image empty");
                                   }
                                 } else {
-                                  print("Image empty");
+                                  print("pickedImages empty");
                                 }
                               },
                               btnLabel: checkUpdate
