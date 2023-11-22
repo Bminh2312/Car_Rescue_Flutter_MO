@@ -327,6 +327,14 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
   }
 
   Widget buildWeeklyTaskSchedule() {
+    DateTime now = DateTime.now();
+    DateTime today = DateTime(now.year, now.month, now.day);
+    DateTime tomorrow = DateTime(now.year, now.month, now.day + 1);
+    List<WorkShift> filteredShifts = weeklyShifts.where((shift) {
+      DateTime shiftDate =
+          DateTime(shift.date.year, shift.date.month, shift.date.day);
+      return shiftDate == today || shiftDate == tomorrow;
+    }).toList();
     if (weeklyShifts.length < 2) {
       return Center(child: Text('Not enough shifts data available'));
     }
@@ -351,9 +359,9 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
           height: 300,
           child: ListView.builder(
             physics: NeverScrollableScrollPhysics(),
-            itemCount: 2,
+            itemCount: filteredShifts.length,
             itemBuilder: (context, index) {
-              final workShift = weeklyShifts[index % weeklyShifts.length];
+              final workShift = filteredShifts[index];
 
               return Card(
                 margin: EdgeInsets.symmetric(vertical: 15, horizontal: 10),

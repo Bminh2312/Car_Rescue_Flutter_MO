@@ -130,7 +130,7 @@ class _ActiveBookingCardState extends State<ActiveBookingCard> {
                         radius: 32.0,
                         backgroundColor: Colors.grey,
                         backgroundImage: customerInfo?.avatar != null
-                            ? NetworkImage(customerInfo!.avatar)
+                            ? NetworkImage(customerInfo?.avatar ?? '')
                             : const AssetImage('assets/images/profile.png')
                                 as ImageProvider,
                       ),

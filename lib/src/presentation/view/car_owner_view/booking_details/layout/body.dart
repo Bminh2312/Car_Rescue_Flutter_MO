@@ -102,8 +102,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         setState(() {
           orderDetails = List<Map<String, dynamic>>.from(responseData['data']);
           print(orderDetails);
-          calculateTotals();
         });
+        fetchServiceNameAndQuantity(
+            orderDetails[0]['serviceId']); // Get the first serviceId
       } else {
         throw Exception('API response does not contain a valid list of data.');
       }
@@ -124,10 +125,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
         final Map<String, dynamic> responseData = data['data'];
         final String name = responseData['name'];
+        final int price = responseData['price'];
         final int quantity = orderDetails
             .firstWhere((order) => order['serviceId'] == serviceId)['quantity'];
 
-        return {'name': name, 'quantity': quantity};
+        return {'name': name, 'quantity': quantity, 'price': price};
       }
     }
     throw Exception('Failed to load service name and quantity from API');
@@ -137,34 +139,34 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   void initState() {
     super.initState();
     _currentBooking = widget.booking;
+    fetchServiceData(widget.booking.id);
     // _calculateTotal(widget.booking.id);
     _loadCustomerInfo(widget.booking.customerId);
     _loadVehicleInfo(widget.booking.vehicleId ?? '');
     _loadImageUrls();
-    fetchServiceData(widget.booking.id);
-    calculateTotals();
+
     _loadPayment(widget.booking.id);
   }
 
-  void calculateTotals() {
-    int totalQuantity = 0;
-    double totalAmount = 0.0;
+  // void calculateTotals() {
+  //   int totalQuantity = 0;
+  //   double totalAmount = 0.0;
 
-    for (var order in orderDetails) {
-      int quantity = order['quantity'] ?? 0; // Giả định 'quantity' là một int
-      double total = double.tryParse(order['tOtal'].toString()) ??
-          0.0; // Chuyển 'total' sang double
+  //   for (var order in orderDetails) {
+  //     int quantity = order['quantity'] ?? 0; // Giả định 'quantity' là một int
+  //     double total = double.tryParse(order['tOtal'].toString()) ??
+  //         0.0; // Chuyển 'total' sang double
 
-      totalQuantity += quantity;
-      totalAmount += total;
-    }
+  //     totalQuantity += quantity;
+  //     totalAmount += total;
+  //   }
 
-    // Cập nhật state với tổng số lượng và tổng giá trị
-    setState(() {
-      this.totalQuantity = totalQuantity;
-      this.totalAmount = totalAmount;
-    });
-  }
+  //   // Cập nhật state với tổng số lượng và tổng giá trị
+  //   setState(() {
+  //     this.totalQuantity = totalQuantity;
+  //     this.totalAmount = totalAmount;
+  //   });
+  // }
 
   // Future<List<Service>> _loadServicesOfCustomer(String orderId) async {
   //   try {
@@ -377,7 +379,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       _buildInfoRow(
                           "Trạng thái",
                           BookingStatus(
-                            status: _currentBooking?.status ?? '',fontSize: 14,
+                            status: _currentBooking?.status ?? '',
+                            fontSize: 14,
                           )),
                       _buildInfoRow(
                           "Điểm đi",
@@ -396,9 +399,18 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                   fontWeight: FontWeight.bold, fontSize: 15))),
                       _buildInfoRow(
                           "Ghi chú",
-                          Text(widget.booking.customerNote,
+                          Container(
+                            width: 250,
+                            child: Text(
+                              "${widget.booking.customerNote}",
+                              textAlign: TextAlign.end,
                               style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 15))),
+                                  fontWeight: FontWeight.bold, fontSize: 15),
+                              maxLines:
+                                  4, // Set the maximum number of lines to 2
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )),
                       if (widget.booking.status.toUpperCase() == 'CANCELLED')
                         _buildInfoRow(
                             "Lí do hủy đơn",
@@ -475,8 +487,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           ? _buildInfoRow(
                               "Bắt đầu",
                               Text(
-                                DateFormat('dd-MM-yyyy | HH:mm')
-                                    .format(widget.booking.startTime!),
+                                DateFormat('dd-MM-yyyy | HH:mm').format(widget
+                                    .booking.startTime!
+                                    .toUtc()
+                                    .add(Duration(hours: 14))),
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             )
@@ -487,7 +501,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                               "Kết thúc ",
                               Text(
                                 DateFormat('dd-MM-yyyy | HH:mm').format(
-                                    _currentBooking?.endTime ?? DateTime.now()),
+                                    _currentBooking!.endTime!
+                                        .toUtc()
+                                        .add(Duration(hours: 14))),
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             )
@@ -495,8 +511,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       _buildInfoRow(
                         "Được tạo lúc",
                         Text(
-                          DateFormat('dd-MM-yyyy | HH:mm').format(
-                              widget.booking.createdAt ?? DateTime.now()),
+                          DateFormat('dd-MM-yyyy | HH:mm').format(widget
+                              .booking.createdAt!
+                              .toUtc()
+                              .add(Duration(hours: 14))),
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -535,21 +553,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 mainAxisSize: MainAxisSize
                     .min, // Quan trọng để đảm bảo Column không chiếm toàn bộ không gian
                 children: [
-                  SizedBox(
-                    height: 8,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildPaymentMethod(_payment?.method ?? '', ''),
-                      Text(currencyFormat.format(totalAmount),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 17)),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
                   if (widget.booking.status == 'ASSIGNED')
                     Container(
                       width: double.infinity,
@@ -573,7 +576,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                             //
                             //Navigate back to the previous screen
                             widget.updateTabCallback!(2);
-                            widget.reloadData;
+
                             Navigator.pop(context,
                                 'reload'); // This pops the `BookingDetailsBody` screen.
 
@@ -796,23 +799,23 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
   Widget _buildSummarySection() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildOrderItemSection(),
         SizedBox(
           height: 8,
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            CustomText(
-              text: 'Số lượng',
-              fontSize: 19,
-              fontWeight: FontWeight.bold,
-            ),
-            Text(totalQuantity.toString(),
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-          ],
-        ),
+        // Row(
+        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //   children: [
+        //     CustomText(
+        //       text: 'Khoảng cách',
+        //       fontSize: 16,
+        //     ),
+        //     Text(totalQuantity.toString(),
+        //         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        //   ],
+        // ),
         // Divider(thickness: 1),
         // Row(
         //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -873,7 +876,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 fontSize: 18,
               ),
               SizedBox(width: 10.0),
-              if (displayTitle == 'Chuyển khoản')
+              if (displayTitle == 'Trả bằng chuyển khoản')
                 Image.asset(
                   'assets/images/banking.png',
                   height: 25,
@@ -914,20 +917,60 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
             if (snapshot.connectionState == ConnectionState.done) {
               final name = snapshot.data?['name'] ?? 'Name not available';
               final quantity = snapshot.data?['quantity'] ?? 0;
+              final price = snapshot.data?['price'] ?? 0;
               final total = orderDetail['tOtal'] ?? 0.0;
               // Accumulate the total quantity and total amount
-              totalQuantity += quantity as int;
-              totalAmount += total as int;
+              totalQuantity = quantity as int;
+              totalAmount = total as int;
               final formatter =
                   NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
-              final formattedTotal = formatter.format(total);
+              final formattedTotal = formatter.format(price);
 
-              return _buildInfoRow(
-                '$name (Số lượng: $quantity)',
-                Text(
-                  '$formattedTotal',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+              return Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CustomText(
+                        text: 'Phí dịch vụ',
+                        fontSize: 16,
+                      ),
+                      CustomText(
+                        text: '300.000đ',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ],
+                  ),
+                  _buildInfoRow(
+                    '$name (Đơn giá/km) ',
+                    Text(
+                      '$formattedTotal',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CustomText(
+                        text: 'Khoảng cách',
+                        fontSize: 16,
+                      ),
+                      Text('${totalQuantity.toString()} km',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14)),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildPaymentMethod(_payment?.method ?? '', ''),
+                      Text(currencyFormat.format(totalAmount),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 17)),
+                    ],
+                  ),
+                ],
               );
             } else if (snapshot.hasError) {
               return Text('Error fetching service name and quantity');

@@ -10,6 +10,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:http/http.dart' as http;
+import 'package:fluttertoast/fluttertoast.dart';
 
 class CalendarView extends StatefulWidget {
   final String userId;
@@ -26,11 +27,11 @@ class _CalendarViewState extends State<CalendarView> {
   List<WorkShift> weeklyShifts = [];
   CurrentWeek? _nextWeek;
   DateTime? _focusedDay = DateTime.now();
+  bool isTrue = true;
   @override
   void initState() {
     super.initState();
     loadCurrentWeek();
-
     initializeDateFormattingVietnamese();
     _selectedDay = DateTime.utc(2023, 01, 9);
   }
@@ -68,6 +69,7 @@ class _CalendarViewState extends State<CalendarView> {
       });
     } catch (e) {
       // Handle the error or return an empty list based on your requirements
+
       print('Error loading weekly shifts: $e');
     }
   }
@@ -336,7 +338,8 @@ class _CalendarViewState extends State<CalendarView> {
 
                             // Close the modal
                             Navigator.of(context).pop();
-                            loadWeeklyShift(_currentWeek!.id, widget.userId);
+                            //
+                            loadWeeklyShift(_nextWeek!.id, widget.userId);
                           } catch (e) {
                             // Handle the error or show an error message
                             print('Error creating weekly shift: $e');
@@ -526,22 +529,17 @@ class _CalendarViewState extends State<CalendarView> {
                           }
 
                           // Create the weekly shift based on the selected options
-                          try {
-                            await updateWeeklyShift(
-                              id: workShiftId,
-                              type: selectedShift!, // Replace with the new type
-                            );
 
-                            // Shift created successfully, you can handle success here
+                          await updateWeeklyShift(
+                            id: workShiftId,
+                            type: selectedShift!, // Replace with the new type
+                          );
 
-                            // Close the modal
-                            Navigator.of(context).pop();
-                            loadWeeklyShift(_currentWeek!.id, widget.userId);
-                          } catch (e) {
-                            // Handle the error or show an error message
-                            print('Error creating weekly shift: $e');
-                            // You can display an error message here or handle the error as needed
-                          }
+                          // Shift created successfully, you can handle success here
+
+                          // Close the modal
+                          Navigator.of(context).pop();
+                          loadWeeklyShift(_nextWeek?.id ?? '', widget.userId);
                         },
                       ),
                     ),
@@ -602,11 +600,11 @@ class _CalendarViewState extends State<CalendarView> {
     required String type,
   }) async {
     final String apiUrl =
-        "https://rescuecapstoneapi.azurewebsites.net/api/Schedule/UpdateShift"; // Replace with your actual API endpoint
+        "https://rescuecapstoneapi.azurewebsites.net/api/Schedule/UpdateShift";
 
     try {
       final response = await http.post(
-        Uri.parse('$apiUrl'), // Include the shift ID in the URL for the update
+        Uri.parse(apiUrl),
         headers: {
           "Content-Type": "application/json",
           // Add other headers if needed, like authorization headers
@@ -616,17 +614,25 @@ class _CalendarViewState extends State<CalendarView> {
           "type": type,
         }),
       );
-      print(response.body);
-      if (response.statusCode == 200) {
-        // Successfully updated the weekly shift
-        print('Weekly shift updated successfully.');
-      } else {
-        // Failed to update the weekly shift
-        print('Failed to update the weekly shift: ${response.body}');
-        throw Exception('Failed to update the weekly shift');
+
+      final responseData = json.decode(response.body);
+      // final int status = responseData['status'];
+      final String message = responseData['message'];
+
+      if (message == 'Success') {
+        print('Weekly shift updated successfully: $message');
+      } else if (message == 'Fail To update due to past due date') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Đã quá ngày để cập nhật"), // "Too late to update"
+            duration: Duration(seconds: 1),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
+
+      // print("a: ${status}");
     } catch (e) {
-      // Handle any exceptions or errors
       print('Error updating weekly shift: $e');
       throw Exception('Error updating weekly shift: $e');
     }

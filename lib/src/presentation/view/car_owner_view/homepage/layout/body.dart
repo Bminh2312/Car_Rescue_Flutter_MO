@@ -1,12 +1,15 @@
 import 'package:CarRescue/src/models/feedback.dart';
 import 'package:CarRescue/src/models/rescue_vehicle_owner.dart';
 import 'package:CarRescue/src/models/wallet.dart';
+import 'package:CarRescue/src/models/wallet_transaction.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/car_view/widgets/add_car_view.dart';
 
 import 'package:CarRescue/src/presentation/view/car_owner_view/homepage/widgets/calendar/calendar_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/notification/notification_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/profile/profile_view.dart';
+import 'package:CarRescue/src/presentation/view/car_owner_view/wallet/layout/wallet_transation.dart';
+import 'package:CarRescue/src/presentation/view/car_owner_view/wallet/layout/widgets/withdraw_form.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
@@ -44,11 +47,13 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
   double averageRating = 4.7;
   RescueVehicleOwner? _owner;
   Wallet? _wallet;
+  List<WalletTransaction> walletTransactions = [];
   @override
   void initState() {
     super.initState();
     loadWalletInfo(widget.userId);
     displayFeedbackForBooking(widget.userId);
+
     fetchRVOInfo().then((value) {
       if (mounted) {
         // Check if the widget is still in the tree
@@ -57,6 +62,26 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
         });
       }
     });
+  }
+
+  Future<void> loadWalletTransaction(String walletId) async {
+    try {
+      final List<WalletTransaction> walletTransactionsFromAPI =
+          await AuthService().getWalletTransaction(walletId);
+
+      // Sort the list by the latest date (assuming WorkShift has a date property)
+      walletTransactionsFromAPI
+          .sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      // Update the state variable with the sorted data
+      setState(() {
+        walletTransactions = walletTransactionsFromAPI;
+        print(walletTransactions);
+      });
+    } catch (e) {
+      // Handle the error or return an empty list based on your requirements
+      print('Error loading wallet transactions: $e');
+    }
   }
 
   Future<void> loadWalletInfo(String userId) async {
@@ -68,6 +93,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
 
         // After obtaining currentWeek.id, call loadWeeklyShift with it
       });
+      loadWalletTransaction(_wallet!.id);
     } catch (e) {
       // Handle any exceptions here, such as network errors or errors from getCurrentWeek()
       print('Error loading current week: $e');
@@ -118,7 +144,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
     final formatter = NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
     final formattedTotal = formatter.format(_wallet?.total ?? 0);
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 16),
@@ -160,7 +186,11 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
             padding: EdgeInsets.all(0),
           ),
           onPressed: () {
-            // Add your withdraw function here for the first button
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => WithdrawFormScreen(wallet: _wallet!)),
+            );
           },
           child: Column(
             children: [
@@ -196,7 +226,14 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
             padding: EdgeInsets.all(0),
           ),
           onPressed: () {
-            // Add your withdraw function here for the second button
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => WalletTransactionScreen(
+                        wallet: _wallet!,
+                        transactions: walletTransactions,
+                      )),
+            );
           },
           child: Column(
             children: [

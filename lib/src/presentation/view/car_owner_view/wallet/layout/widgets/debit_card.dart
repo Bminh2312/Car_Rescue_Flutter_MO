@@ -10,6 +10,7 @@ class WalletCardWidget extends StatefulWidget {
       : super(key: key);
   final String userId;
   final Wallet wallet;
+  
   @override
   State<WalletCardWidget> createState() => _WalletCardWidgetState();
 }

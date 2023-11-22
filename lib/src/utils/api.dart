@@ -136,7 +136,7 @@ class AuthService {
         throw Exception('Failed to load bookings');
       }
     } catch (e) {
-      throw Exception('Error fetching bookings: $e');
+      throw Exception('Error fetching bookings1: $e');
     }
   }
 
@@ -549,9 +549,9 @@ class AuthService {
 
     // Extract destination latitude and longitude
     final latMatchDestination =
-        RegExp(r'lat:\s?([\-0-9.]+)').firstMatch(booking.destination);
+        RegExp(r'lat:\s?([\-0-9.]+)').firstMatch(booking.destination ?? '');
     final longMatchDestination =
-        RegExp(r'long:\s?([\-0-9.]+)').firstMatch(booking.destination);
+        RegExp(r'long:\s?([\-0-9.]+)').firstMatch(booking.destination ?? '');
     final double? latDestination =
         double.tryParse(latMatchDestination?.group(1) ?? '');
     final double? longDestination =
@@ -569,7 +569,7 @@ class AuthService {
     // Check if departure coordinates are available
     if (latDeparture != null && longDeparture != null) {
       const String apiKey =
-          'AIzaSyAid63yPsUnB_deR9bJTfYRKcc2Z8tgl3E'; // Replace with your actual API key
+          'AIzaSyB3pfcWmEJDtpO6Kjy3OfikhN4bRP1ORjc'; // Replace with your actual API key
       final String urlDeparture =
           'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=$apiKey';
 
@@ -597,7 +597,7 @@ class AuthService {
     // Check if destination coordinates are available
     if (latDestination != null && longDestination != null) {
       const String apiKey =
-          'AIzaSyCZPpY4KcOcClHuiQEuzb2t51ov9XkJVfg'; // Replace with your actual API key
+          'AIzaSyB3pfcWmEJDtpO6Kjy3OfikhN4bRP1ORjc'; // Replace with your actual API key
       final String urlDestination =
           'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=$apiKey';
 
@@ -1132,7 +1132,6 @@ class AuthService {
             shiftData.map((e) => WorkShift.fromJson(e)).toList();
         return shifts;
       } else {
-        print(response.statusCode);
         throw Exception('Failed to load data from the server');
       }
     } catch (e) {
@@ -1146,7 +1145,7 @@ class AuthService {
     try {
       final response = await http.get(Uri.parse(apiUrl));
       print(response.body);
-      print(response.statusCode);
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
@@ -1158,7 +1157,6 @@ class AuthService {
         print(currentWeek);
         return currentWeek;
       } else {
-        print(response.statusCode);
         throw Exception('Failed to load data from the server');
       }
     } catch (e) {
@@ -1172,7 +1170,7 @@ class AuthService {
     try {
       final response = await http.get(Uri.parse(apiUrl));
       print(response.body);
-      print(response.statusCode);
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
@@ -1184,7 +1182,6 @@ class AuthService {
         print(currentViewWeek);
         return currentViewWeek;
       } else {
-        print(response.statusCode);
         throw Exception('Failed to load data from the server');
       }
     } catch (e) {

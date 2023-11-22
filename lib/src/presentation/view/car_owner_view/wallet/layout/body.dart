@@ -30,6 +30,11 @@ class _WalletBodyState extends State<WalletBody> {
     loadWalletInfo(widget.userId);
   }
 
+  void reloadData() {
+    loadWalletInfo(widget.userId);
+    // Optionally, reload other necessary data
+  }
+
   Future<void> loadWalletInfo(String userId) async {
     try {
       final Wallet walletInfoFromApi =
@@ -97,6 +102,7 @@ class _WalletBodyState extends State<WalletBody> {
               WalletStatisticsCard(
                 walletTrans: walletTransactions,
                 wallet: _wallet!,
+                onSuccessfulWithdrawal: reloadData,
               ),
               const SizedBox(
                 height: 18,
@@ -118,6 +124,7 @@ class _WalletBodyState extends State<WalletBody> {
                           Navigator.push(context,
                               MaterialPageRoute(builder: (context) {
                             return WalletTransactionScreen(
+                                wallet: _wallet!,
                                 transactions:
                                     walletTransactions); // Replace with your list of transactions
                           }));

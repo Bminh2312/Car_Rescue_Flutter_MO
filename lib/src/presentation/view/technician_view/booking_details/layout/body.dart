@@ -473,6 +473,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          CustomText(
+            text: 'Tạm tính',
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
           FutureBuilder<List<Service>>(
             future: _loadServicesOfCustomer(widget.booking.id),
             builder: (context, serviceSnapshot) {
@@ -726,14 +731,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // _buildSectionTitle("Ghi chú"),
-                        // if (widget.booking.status == "ASSIGNED")
-                        //   _buildNoteRow("Ghi chú", _formKey),
-                        // _buildInfoRow(
-                        //     "-",
-                        //     Text('${widget.booking.staffNote ?? ''}',
-                        //         style: TextStyle(fontWeight: FontWeight.bold))),
-                        // Divider(thickness: 3),
                         SizedBox(height: 8.0),
                         _buildSectionTitle("Ghi chú của kĩ thuật viên"),
                         if (widget.booking.status == "ASSIGNED")
@@ -762,8 +759,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           _buildInfoRow(
                             "Bắt đầu",
                             Text(
-                              DateFormat('dd-MM-yyyy | HH:mm').format(
-                                  widget.booking.startTime ?? DateTime.now()),
+                              DateFormat('dd-MM-yyyy | HH:mm').format(widget
+                                  .booking.startTime!
+                                  .toUtc()
+                                  .add(Duration(hours: 14))),
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -772,16 +771,20 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           _buildInfoRow(
                             "Kết thúc ",
                             Text(
-                              DateFormat('dd-MM-yyyy | HH:mm')
-                                  .format(widget.booking.endTime!),
+                              DateFormat('dd-MM-yyyy | HH:mm').format(widget
+                                  .booking.endTime!
+                                  .toUtc()
+                                  .add(Duration(hours: 14))),
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
                         _buildInfoRow(
                           "Được tạo lúc",
                           Text(
-                            DateFormat('dd-MM-yyyy | HH:mm').format(
-                                widget.booking.createdAt ?? DateTime.now()),
+                            DateFormat('dd-MM-yyyy | HH:mm').format(widget
+                                .booking.createdAt!
+                                .toUtc()
+                                .add(Duration(hours: 14))),
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -824,11 +827,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     color: Colors.white,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildPaymentMethod(
-                          _payment?.method ?? '',
-                          NumberFormat('#,##0₫', 'vi_VN').format(total),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildPaymentMethod(
+                              _payment?.method ?? '',
+                              NumberFormat('#,##0₫', 'vi_VN').format(total),
+                            ),
+                          ],
                         ),
                       ],
                     ),

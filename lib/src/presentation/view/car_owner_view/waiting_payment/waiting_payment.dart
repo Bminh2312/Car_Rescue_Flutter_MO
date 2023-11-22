@@ -46,6 +46,7 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
   num totalAmount = 0;
   int total = 0;
   Payment? _payment;
+  Booking? booking;
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
 
   void calculateTotals() {
@@ -103,10 +104,11 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
       if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
         final Map<String, dynamic> responseData = data['data'];
         final String name = responseData['name'];
+        final int price = responseData['price'];
         final int quantity = orderDetails
             .firstWhere((order) => order['serviceId'] == serviceId)['quantity'];
 
-        return {'name': name, 'quantity': quantity};
+        return {'name': name, 'quantity': quantity, 'price': price};
       }
     }
     throw Exception('Failed to load service name and quantity from API');
@@ -115,7 +117,7 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
   @override
   void initState() {
     super.initState();
-
+    booking = widget.booking;
     fetchServiceData(widget.booking.id);
     calculateTotals();
     _loadPayment(widget.booking.id);
@@ -150,20 +152,54 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
             if (snapshot.connectionState == ConnectionState.done) {
               final name = snapshot.data?['name'] ?? 'Name not available';
               final quantity = snapshot.data?['quantity'] ?? 0;
+              final price = snapshot.data?['price'] ?? 0;
               final total = orderDetail['tOtal'] ?? 0.0;
               // Accumulate the total quantity and total amount
-              totalQuantity += quantity as int;
-              totalAmount += total as int;
+              totalQuantity = quantity as int;
+              totalAmount = total as int;
               final formatter =
                   NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
-              final formattedTotal = formatter.format(total);
+              final formattedTotal = formatter.format(price);
 
-              return _buildInfoRow(
-                '$name (Số lượng: $quantity)',
-                Text(
-                  '$formattedTotal',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+              return Column(
+                children: [
+                  SizedBox(
+                    height: 10.0,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CustomText(
+                        text: 'Phí dịch vụ',
+                        fontSize: 16,
+                      ),
+                      CustomText(
+                        text: '300.000đ',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ],
+                  ),
+                  _buildInfoRow(
+                    '$name (Đơn giá/km) ',
+                    Text(
+                      '$formattedTotal',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CustomText(
+                        text: 'Khoảng cách (km)',
+                        fontSize: 16,
+                      ),
+                      Text(totalQuantity.toString(),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14)),
+                    ],
+                  ),
+                ],
               );
             } else if (snapshot.hasError) {
               return Text('Error fetching service name and quantity');
@@ -214,10 +250,25 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      CustomText(
-                        text: 'Đơn hàng',
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          CustomText(
+                            text: 'Đơn hàng',
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          Tooltip(
+                            message:
+                                'Phí dịch vụ là bắt buộc được tính 300.000đ mỗi đơn hàng\n\nTổng cộng = Phí dịch vụ + (Đơn giá x Khoảng cách) ',
+                            textStyle: TextStyle(color: Colors.white),
+                            padding: EdgeInsets.all(8),
+                            margin: EdgeInsets.all(5),
+                            waitDuration: Duration(seconds: 1),
+                            showDuration: Duration(seconds: 10),
+                            child: Icon(Icons.info),
+                          ),
+                        ],
                       ),
                       _buildOrderItemSection(),
                       // OrderItem(title: 'title', quantity: 1),
@@ -340,14 +391,21 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                   padding: EdgeInsets.symmetric(horizontal: 16),
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      Booking updatedBooking = await AuthService()
+                          .fetchBookingById(widget.booking.id);
+                      AuthService().completedOrder(widget.booking.id, true);
+                      // Update the local state with the fetched booking details
+                      setState(() {
+                        booking = updatedBooking;
+                      });
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                           builder: (context) => BookingCompletedScreen(
                               widget.userId,
                               widget.accountId,
-                              widget.booking,
+                              booking!,
                               widget.addressesDepart,
                               widget.subAddressesDepart,
                               widget.addressesDesti,

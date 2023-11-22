@@ -1,4 +1,5 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/models/wallet.dart';
 import 'package:CarRescue/src/models/wallet_transaction.dart';
 import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
@@ -12,8 +13,8 @@ import 'package:intl/intl.dart';
 
 class WalletTransactionScreen extends StatefulWidget {
   final List<WalletTransaction> transactions;
-
-  WalletTransactionScreen({required this.transactions});
+  final Wallet wallet;
+  WalletTransactionScreen({required this.transactions, required this.wallet});
 
   @override
   State<WalletTransactionScreen> createState() =>
