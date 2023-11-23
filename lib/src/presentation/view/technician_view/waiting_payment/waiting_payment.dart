@@ -170,28 +170,16 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
               totalAmount = total as int;
               final formatter =
                   NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
-              final formattedTotal = formatter.format(price);
+              final formattedTotal = formatter.format(total);
 
               return Column(
                 children: [
                   _buildInfoRow(
-                    '$name (Đơn giá/km) ',
+                    '$name (Số lượng: ${totalQuantity.toString()}) ',
                     Text(
                       '$formattedTotal',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      CustomText(
-                        text: 'Khoảng cách',
-                        fontSize: 16,
-                      ),
-                      Text(totalQuantity.toString(),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14)),
-                    ],
                   ),
                 ],
               );

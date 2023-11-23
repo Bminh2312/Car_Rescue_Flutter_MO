@@ -15,7 +15,8 @@ import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/booking_details_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
-// Import the geocoding package
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class BookingListBody extends StatefulWidget {
   final List<Booking> bookings; // Define the list of bookings
@@ -51,6 +52,7 @@ class _BookingListBodyState extends State<BookingListBody>
   bool isEmpty = false;
   TabController? _tabController;
   Map<String, dynamic>? userProfile;
+  final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
 
   String accountId = '';
   String phoneNumber = '';
@@ -61,7 +63,7 @@ class _BookingListBodyState extends State<BookingListBody>
   bool isDataLoadedForTab0 = false;
   bool isDataLoadedForTab1 = false;
   bool isDataLoadedForTab2 = false;
-
+  List<Map<String, dynamic>> orderDetails = [];
   @override
   void initState() {
     super.initState();
@@ -100,6 +102,33 @@ class _BookingListBodyState extends State<BookingListBody>
     });
   }
 
+  Future<Map<String, dynamic>> fetchServiceData(String orderId) async {
+    final apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
+
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      print(responseData);
+      if (responseData.containsKey('data') && responseData['data'] is List) {
+        final List<dynamic> data = responseData['data'];
+        print(data);
+        if (data.isNotEmpty) {
+          final Map<String, dynamic> orderData = data[0];
+          final int quantity = orderData['quantity'];
+          final int total = orderData['tOtal'];
+
+          return {
+            'quantity': quantity,
+            'total': total,
+          };
+        }
+      }
+    }
+    throw Exception('Failed to load data from API');
+  }
+
   void loadAssigningBookings() async {
     try {
       setState(() {
@@ -118,7 +147,12 @@ class _BookingListBodyState extends State<BookingListBody>
       for (Booking booking in assigningBookingsFromAPI) {
         vehicleTasks.add(_fetchVehicleForBooking(booking));
       }
-
+      for (int i = 0; i < assigningBookingsFromAPI.length; i++) {
+        final Map<String, dynamic> serviceData =
+            await fetchServiceData(assigningBookingsFromAPI[i].id);
+        assigningBookingsFromAPI[i].quantity = serviceData['quantity'];
+        assigningBookingsFromAPI[i].total = serviceData['total'];
+      }
       await Future.wait(vehicleTasks);
 
       setState(() {
@@ -139,7 +173,6 @@ class _BookingListBodyState extends State<BookingListBody>
   void loadAssignedBookings() async {
     try {
       setState(() {
-        // This seems like a naming error. You might want to change this to canceledBookings.
         isDataLoaded = false;
       });
       final List<Booking> assignedBookingsFromAPI =
@@ -155,19 +188,24 @@ class _BookingListBodyState extends State<BookingListBody>
         vehicleTasks.add(_fetchVehicleForBooking(booking));
       }
 
+      // Fetch quantity and total for each booking
+      for (int i = 0; i < assignedBookingsFromAPI.length; i++) {
+        final Map<String, dynamic> serviceData =
+            await fetchServiceData(assignedBookingsFromAPI[i].id);
+        assignedBookingsFromAPI[i].quantity = serviceData['quantity'];
+        assignedBookingsFromAPI[i].total = serviceData['total'];
+      }
+
       await Future.wait(vehicleTasks);
 
       setState(() {
-        assiginedBookings =
-            assignedBookingsFromAPI; // This seems like a naming error. You might want to change this to canceledBookings.
+        assiginedBookings = assignedBookingsFromAPI;
         isDataLoaded = true;
       });
       if (assiginedBookings.isEmpty) {
-        // This seems like a naming error. You might want to change this to canceledBookings.
         isAssiginedEmpty = true;
       }
     } catch (e) {
-      // Handle any exceptions that occur during the API request
       print('Error loading bookings: $e');
     }
   }
@@ -180,17 +218,22 @@ class _BookingListBodyState extends State<BookingListBody>
       });
       final List<Booking> inprogressBookingsFromAPI =
           await AuthService().fetchCarOwnerBookingByInprogress(widget.userId);
-      inprogressBookings.sort((a, b) {
-        if (a.createdAt == null) return 1;
-        if (b.createdAt == null) return -1;
-        return b.createdAt!.compareTo(a.createdAt!);
+      inprogressBookingsFromAPI.sort((a, b) {
+        if (a.startTime == null) return 1;
+        if (b.startTime == null) return -1;
+        return b.startTime!.compareTo(a.startTime!);
       });
       List<Future> vehicleTasks = [];
 
       for (Booking booking in inprogressBookingsFromAPI) {
         vehicleTasks.add(_fetchVehicleForBooking(booking));
       }
-
+      for (int i = 0; i < inprogressBookingsFromAPI.length; i++) {
+        final Map<String, dynamic> serviceData =
+            await fetchServiceData(inprogressBookingsFromAPI[i].id);
+        inprogressBookingsFromAPI[i].quantity = serviceData['quantity'];
+        inprogressBookingsFromAPI[i].total = serviceData['total'];
+      }
       await Future.wait(vehicleTasks);
 
       setState(() {
@@ -218,7 +261,11 @@ class _BookingListBodyState extends State<BookingListBody>
     // Call the API to fetch the latest booking list
     List<Booking> inprogressOnlyBookings =
         await authService.fetchCarOwnerBookingByInprogress(widget.userId);
-
+    inprogressOnlyBookings.sort((a, b) {
+      if (a.startTime == null) return 1;
+      if (b.startTime == null) return -1;
+      return b.startTime!.compareTo(a.startTime!);
+    });
     for (Booking booking in inprogressOnlyBookings) {
       Vehicle vehicleInfoFromAPI =
           await authService.fetchVehicleInfo(booking.vehicleId ?? '');
@@ -410,7 +457,8 @@ class _BookingListBodyState extends State<BookingListBody>
         itemCount: bookings.length,
         itemBuilder: (context, index) {
           final booking = bookings[index];
-
+          final int quantity = booking.quantity ?? 0;
+          final int total = booking.total ?? 0;
           String formattedStartTime = DateFormat('dd/MM/yyyy | HH:mm')
               .format(booking.createdAt ?? DateTime.now());
 
@@ -511,20 +559,7 @@ class _BookingListBodyState extends State<BookingListBody>
                                     width: 10,
                                   ),
                                   CustomText(
-                                      text: '6.5km',
-                                      fontWeight: FontWeight.w600,
-                                      color: FrontendConfigs.kAuthColor)
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  SvgPicture.asset("assets/svg/watch_icon.svg",
-                                      color: FrontendConfigs.kIconColor),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  CustomText(
-                                      text: "15 mins",
+                                      text: '$quantity',
                                       fontWeight: FontWeight.w600,
                                       color: FrontendConfigs.kAuthColor)
                                 ],
@@ -539,7 +574,7 @@ class _BookingListBodyState extends State<BookingListBody>
                                     width: 10,
                                   ),
                                   CustomText(
-                                      text: "\$56.00",
+                                      text: currencyFormat.format(total),
                                       fontWeight: FontWeight.w600,
                                       color: FrontendConfigs.kAuthColor)
                                 ],
@@ -609,7 +644,7 @@ class _BookingListBodyState extends State<BookingListBody>
                                       reloadData: _reloadData,
                                     ),
                                   ),
-                                ).then((value) => {_reloadBookingList()});
+                                ).then((value) => {loadInprogressBookings()});
                                 // if (result == 'reload') {
                                 //   setState(() {
                                 //     isDataLoaded = true;
@@ -648,7 +683,8 @@ class _BookingListBodyState extends State<BookingListBody>
         itemCount: bookings.length,
         itemBuilder: (context, index) {
           final booking = bookings[index];
-
+          final int quantity = booking.quantity ?? 0;
+          final int total = booking.total ?? 0;
           String formattedStartTime = DateFormat('dd/MM/yyyy | HH:mm')
               .format(booking.createdAt ?? DateTime.now());
 
@@ -724,8 +760,9 @@ class _BookingListBodyState extends State<BookingListBody>
                         ],
                       ),
                       trailing: BookingStatus(
-                          status: booking
-                              .status,fontSize: 14,), // Use the BookingStatusWidget here
+                        status: booking.status,
+                        fontSize: 14,
+                      ), // Use the BookingStatusWidget here
                     ),
                     Divider(
                       color: FrontendConfigs.kIconColor,
@@ -737,7 +774,7 @@ class _BookingListBodyState extends State<BookingListBody>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 2),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               Row(
                                 children: [
@@ -748,20 +785,7 @@ class _BookingListBodyState extends State<BookingListBody>
                                     width: 10,
                                   ),
                                   CustomText(
-                                      text: '6.5km',
-                                      fontWeight: FontWeight.w600,
-                                      color: FrontendConfigs.kAuthColor)
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  SvgPicture.asset("assets/svg/watch_icon.svg",
-                                      color: FrontendConfigs.kIconColor),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  CustomText(
-                                      text: "15 mins",
+                                      text: '$quantity km',
                                       fontWeight: FontWeight.w600,
                                       color: FrontendConfigs.kAuthColor)
                                 ],
@@ -776,7 +800,7 @@ class _BookingListBodyState extends State<BookingListBody>
                                     width: 10,
                                   ),
                                   CustomText(
-                                      text: "\$56.00",
+                                      text: currencyFormat.format(total),
                                       fontWeight: FontWeight.w600,
                                       color: FrontendConfigs.kAuthColor)
                                 ],

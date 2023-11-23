@@ -728,7 +728,7 @@ class AuthService {
       Map<String, String> subAddresses) async {
     var results =
         await Future.wait(bookings.map((booking) => getAddressInfo(booking)));
-    print('Results for Bookings: $results');
+
     // Update the state once with all the results.
     setState(() {
       for (var result in results) {
@@ -746,7 +746,7 @@ class AuthService {
       Map<String, String> subAddressesDesti) async {
     var results =
         await Future.wait(bookings.map((booking) => getAddressInfo(booking)));
-    print(results);
+
     // Update the state once with all the results.
     setState(() {
       for (var result in results) {

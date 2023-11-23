@@ -1,3 +1,5 @@
+import 'package:CarRescue/src/models/order.dart';
+import 'package:CarRescue/src/models/order_detail.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
 
 class Booking {
@@ -20,10 +22,11 @@ class Booking {
   final int? area;
   double? rating;
   String? note;
-
+  OrderDetail? orderDetail;
   Vehicle? vehicleInfo;
   bool isShowDetails = false;
-
+  int? quantity;
+  int? total;
   Booking({
     required this.id,
     required this.customerId,
@@ -42,6 +45,8 @@ class Booking {
     required this.departure,
     required this.destination,
     required this.area,
+    this.quantity,
+    this.total,
   });
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(

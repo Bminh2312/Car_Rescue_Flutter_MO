@@ -14,6 +14,8 @@ import '../../../../../configuration/frontend_configs.dart';
 // import '../../layout/selection_location_widget.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_list/widgets/selection_location_widget.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class HistoryCard extends StatefulWidget {
   HistoryCard({
@@ -49,12 +51,40 @@ class _HistoryCardState extends State<HistoryCard>
   TabController? _tabController;
   bool isCompletedEmpty = false;
   bool isCanceledEmpty = false;
+  final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
   void initState() {
     super.initState();
     loadCompletedBookings();
     loadCanceledBookings();
 
     // loadBookings();
+  }
+
+  Future<Map<String, dynamic>> fetchServiceData(String orderId) async {
+    final apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
+
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      print(responseData);
+      if (responseData.containsKey('data') && responseData['data'] is List) {
+        final List<dynamic> data = responseData['data'];
+        print(data);
+        if (data.isNotEmpty) {
+          final Map<String, dynamic> orderData = data[0];
+          final int quantity = orderData['quantity'];
+          final int total = orderData['tOtal'];
+
+          return {
+            'quantity': quantity,
+            'total': total,
+          };
+        }
+      }
+    }
+    throw Exception('Failed to load data from API');
   }
 
   void loadCompletedBookings() async {
@@ -75,7 +105,12 @@ class _HistoryCardState extends State<HistoryCard>
         vehicleAndFeedbackTasks
             .add(_fetchVehicleAndFeedbacks(booking, apiFeedbacks));
       }
-
+      for (int i = 0; i < completedBookingsFromAPI.length; i++) {
+        final Map<String, dynamic> serviceData =
+            await fetchServiceData(completedBookingsFromAPI[i].id);
+        completedBookingsFromAPI[i].quantity = serviceData['quantity'];
+        completedBookingsFromAPI[i].total = serviceData['total'];
+      }
       await Future.wait(vehicleAndFeedbackTasks);
 
       setState(() {
@@ -228,7 +263,8 @@ class _HistoryCardState extends State<HistoryCard>
 
           String formattedStartTime = DateFormat('dd/MM/yyyy | HH:mm')
               .format(booking.createdAt ?? DateTime.now());
-
+          final int quantity = booking.quantity ?? 0;
+          final int total = booking.total ?? 0;
           return Container(
             color: FrontendConfigs.kBackgrColor,
             child: Padding(
@@ -308,8 +344,9 @@ class _HistoryCardState extends State<HistoryCard>
                         children: [
                           // Text(booking.note ?? 'Không có'),
                           BookingStatus(
-                              status: booking
-                                  .status,fontSize: 14,), // Your existing BookingStatus widget
+                            status: booking.status,
+                            fontSize: 14,
+                          ), // Your existing BookingStatus widget
                           SizedBox(height: 8.0),
                           if (booking.status.toUpperCase() ==
                               'COMPLETED') // Spacing
@@ -357,7 +394,7 @@ class _HistoryCardState extends State<HistoryCard>
                                     width: 10,
                                   ),
                                   CustomText(
-                                      text: '6.5km',
+                                      text: '${quantity} km',
                                       fontWeight: FontWeight.w600,
                                       color: FrontendConfigs.kAuthColor)
                                 ],
@@ -385,7 +422,7 @@ class _HistoryCardState extends State<HistoryCard>
                                     width: 10,
                                   ),
                                   CustomText(
-                                      text: "\$56.00",
+                                      text: currencyFormat.format(total),
                                       fontWeight: FontWeight.w600,
                                       color: FrontendConfigs.kAuthColor)
                                 ],
@@ -562,8 +599,9 @@ class _HistoryCardState extends State<HistoryCard>
                         children: [
                           // Text(booking.note ?? 'Không có'),
                           BookingStatus(
-                              status: booking
-                                  .status,fontSize: 14,), // Your existing BookingStatus widget
+                            status: booking.status,
+                            fontSize: 14,
+                          ), // Your existing BookingStatus widget
                           SizedBox(height: 8.0),
                           if (booking.status.toUpperCase() ==
                               'COMPLETED') // Spacing

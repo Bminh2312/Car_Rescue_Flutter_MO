@@ -336,7 +336,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
       return shiftDate == today || shiftDate == tomorrow;
     }).toList();
     if (weeklyShifts.length < 2) {
-      return Center(child: Text('Not enough shifts data available'));
+      return Center(child: LoadingState());
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
