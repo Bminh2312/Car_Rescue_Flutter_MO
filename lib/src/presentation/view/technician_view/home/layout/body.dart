@@ -1,6 +1,10 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/models/current_week.dart';
 import 'package:CarRescue/src/models/feedback.dart';
 import 'package:CarRescue/src/models/technician.dart';
+import 'package:CarRescue/src/models/wallet.dart';
+import 'package:CarRescue/src/models/work_shift.dart';
+import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/waiting_payment/waiting_payment.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/home/layout/widgets/calendar/calendar_view.dart';
@@ -8,7 +12,7 @@ import 'package:CarRescue/src/utils/api.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/booking_view.dart';
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/home/layout/widgets/active_booking.dart';
-import 'package:CarRescue/src/presentation/view/technician_view/home/layout/widgets/calender.dart';
+
 import 'package:CarRescue/src/presentation/elements/quick_access_buttons.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/notification/notification_view.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +31,7 @@ class TechncianHomePageBody extends StatefulWidget {
 
 class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
   List<Booking> bookings = [];
-  DateTime? selectedDate; // Change the type to DateTime?
+  // Change the type to DateTime?
   int completedBookings = 0;
   double averageRating = 0;
   AuthService authService = AuthService();
@@ -36,11 +40,18 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
     "Thứ Hai: \n9:00 - 21:00",
   ];
   List<Booking> assignedBookings = [];
+  DateTime? _selectedDay;
+  CurrentWeek? _currentWeek;
+
+  String? selectedShift;
+  DateTime selectedDate = DateTime.now();
+  List<WorkShift> weeklyShifts = [];
+  DateTime? _focusedDay = DateTime.now();
   bool isLoading = true;
   // Method to show the shift registration popup
   void initState() {
     super.initState();
-    fetchBookings();
+
     _loadInprogressBookings();
     displayFeedbackForBooking(widget.userId);
     fetchTechInfo().then((value) {
@@ -51,6 +62,44 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
         });
       }
     });
+    loadCurrentWeek();
+  }
+
+  Future<void> loadCurrentWeek() async {
+    try {
+      final CurrentWeek currentWeekFromApi =
+          await AuthService().getCurrentWeek();
+      setState(() {
+        _currentWeek = currentWeekFromApi;
+        print('a: $_currentWeek');
+
+        // After obtaining currentWeek.id, call loadWeeklyShift with it
+        loadWeeklyShift(_currentWeek!.id, widget.userId);
+      });
+    } catch (e) {
+      // Handle any exceptions here, such as network errors or errors from getCurrentWeek()
+      print('Error loading current week: $e');
+      throw e; // Rethrow the exception if needed
+    }
+  }
+
+  Future<void> loadWeeklyShift(String weekId, String userId) async {
+    try {
+      final List<WorkShift> weeklyShiftsFromAPI =
+          await AuthService().getWeeklyShift(weekId, userId);
+
+      // Sort the list by the latest date (assuming WorkShift has a date property)
+      weeklyShiftsFromAPI.sort((a, b) => a.date.compareTo(b.date));
+
+      // Update the state variable with the sorted data
+      setState(() {
+        weeklyShifts = weeklyShiftsFromAPI;
+        print(weeklyShifts);
+      });
+    } catch (e) {
+      // Handle the error or return an empty list based on your requirements
+      print('Error loading weekly shifts: $e');
+    }
   }
 
   Future<void> _loadInprogressBookings() async {
@@ -59,9 +108,8 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
           await authService.fetchTechBookingByInprogress(widget.userId);
       // Filter bookings for 'ASSIGNED' status after fetching
       setState(() {
-        assignedBookings = bookings
-            .where((booking) => booking.status == 'INPROGRESS')
-            .toList();
+        assignedBookings = bookings;
+
         isLoading = false;
       });
     } catch (e) {
@@ -104,22 +152,6 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
       }
     } catch (error) {
       print("Error in displayFeedbackForBooking: $error");
-    }
-  }
-
-  Future<void> fetchBookings() async {
-    try {
-      final bookingsFromApi =
-          await authService.fetchBookings(widget.userId, 'a');
-      completedBookings = bookingsFromApi
-          .where((booking) => booking.status == 'COMPLETED')
-          .length;
-
-      setState(() {
-        bookings = bookingsFromApi;
-      });
-    } catch (error) {
-      print('Error loading data: $error');
     }
   }
 
@@ -171,7 +203,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Hiệu suất làm việc trong tuần',
+            'Hiệu suất làm việc',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -215,6 +247,19 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
     );
   }
 
+  String getTimeRange(String type) {
+    switch (type) {
+      case 'Night':
+        return '16:00 - 00:00';
+      case 'Morning':
+        return '08:00 - 16:00';
+      case 'Midnight':
+        return '00:00 - 08:00';
+      default:
+        return 'Unknown'; // Add a default value in case the type is not recognized
+    }
+  }
+
   Widget buildQuickAccessButtons() {
     return Container(
       padding: EdgeInsets.all(16),
@@ -246,7 +291,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CalendarView(),
+                      builder: (context) => CalendarView(userId: widget.userId),
                     ),
                   );
                 },
@@ -282,12 +327,26 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
   }
 
   Widget buildWeeklyTaskSchedule() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
+    DateTime now = DateTime.now();
+    DateTime today = DateTime(now.year, now.month, now.day);
+    DateTime tomorrow = DateTime(now.year, now.month, now.day + 1);
+    List<WorkShift> filteredShifts = weeklyShifts.where((shift) {
+      DateTime shiftDate =
+          DateTime(shift.date.year, shift.date.month, shift.date.day);
+      return shiftDate == today || shiftDate == tomorrow;
+    }).toList();
+    if (weeklyShifts.length < 2) {
+      return Center(child: Text('Not enough shifts data available'));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 10,
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
             'Lịch làm việc',
             style: TextStyle(
               fontSize: 20,
@@ -295,16 +354,20 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
               color: FrontendConfigs.kAuthColor,
             ),
           ),
-          SizedBox(height: 10),
-          Wrap(
-            spacing: 20,
-            runSpacing: 20,
-            children: weeklyTasks.map((task) {
+        ),
+        Container(
+          height: 300,
+          child: ListView.builder(
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: filteredShifts.length,
+            itemBuilder: (context, index) {
+              final workShift = filteredShifts[index];
+
               return Card(
-                margin: EdgeInsets.symmetric(vertical: 5, horizontal: 0),
+                margin: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
-                elevation: 1,
+                elevation: 3,
                 child: Stack(
                   children: [
                     // The "10 SEP" column
@@ -315,7 +378,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                       child: Container(
                         width: 50,
                         decoration: BoxDecoration(
-                          color: FrontendConfigs.kIconColor,
+                          color: FrontendConfigs.kActiveColor,
                           borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(10),
                             bottomLeft: Radius.circular(10),
@@ -326,7 +389,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                           children: [
                             Text(
                               DateFormat('MMM')
-                                  .format(DateTime.now())
+                                  .format(workShift.date)
                                   .toUpperCase(),
                               style: TextStyle(
                                 fontSize: 16,
@@ -335,7 +398,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                               ),
                             ),
                             Text(
-                              DateFormat('d').format(DateTime.now()),
+                              DateFormat('d').format(workShift.date),
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -348,85 +411,58 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                     ),
 
                     // The rest of the content
-                    Container(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                                width:
-                                    55), // Adjusted to accommodate the "10 SEP" column
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '9:00 - 21:00',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                              width:
+                                  60), // Adjusted to accommodate the "10 SEP" column
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  getTimeRange(workShift.type),
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  SizedBox(height: 5),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'Manager',
-                                        style:
-                                            TextStyle(color: Colors.grey[600]),
-                                      ),
-                                      Text('Client',
-                                          style: TextStyle(
-                                              color: Colors.grey[600])),
-                                    ],
+                                ),
+                                SizedBox(height: 5),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Chip(
+                                    padding: EdgeInsets.zero,
+                                    label: Text("SCHEDULED"),
+                                    backgroundColor: Colors.green,
+                                    labelStyle: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold),
                                   ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'Messi',
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      Text(
-                                        'CR7',
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                  // if (event.isScheduled)
-                                  //   Align(
-                                  //     alignment: Alignment.centerLeft,
-                                  //     child: Chip(
-                                  //       padding: EdgeInsets.zero,
-                                  //       label: Text("SCHEDULED"),
-                                  //       backgroundColor: Colors.green,
-                                  //       labelStyle: TextStyle(
-                                  //           color: Colors.white,
-                                  //           fontWeight: FontWeight.bold),
-                                  //     ),
-                                  //   ),
-                                ],
-                              ),
-                            )
-                          ],
-                        ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // IconButton(
+                          //   onPressed: () {
+                          //     showUpdatedShiftModal(context, workShift.id,
+                          //         workShift.date, workShift.type);
+                          //     // Call the updateWeeklyShift function here
+                          //   },
+                          //   icon: Icon(CupertinoIcons.pencil, size: 25),
+                          // )
+                        ],
                       ),
                     ),
                   ],
                 ),
               );
-            }).toList(),
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -483,6 +519,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                       SizedBox(
                         height: 20,
                       ),
+
                       Container(
                           margin: EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
@@ -494,7 +531,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                             children: [
                               buildPerformanceMetrics(),
                               Divider(thickness: 1, height: 0.5),
-                              buildWeeklyTaskSchedule(),
+                              buildWeeklyTaskSchedule()
                             ],
                           )),
 

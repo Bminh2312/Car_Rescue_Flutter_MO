@@ -41,6 +41,7 @@ class _BookingListViewState extends State<BookingListView> {
           widget.userId, '97757c05-1a15-4009-a156-e43095dddd81');
       await authService.getDestiForBookings(
           bookingsFromApi, setState, addressesDesti, subAddressesDesti);
+      
       await authService.getAddressesForBookings(
           bookingsFromApi, setState, addressesDepart, subAddressesDepart);
       setState(() {

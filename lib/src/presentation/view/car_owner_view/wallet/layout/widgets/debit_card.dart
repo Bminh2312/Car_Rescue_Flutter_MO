@@ -1,23 +1,28 @@
+import 'package:CarRescue/src/models/wallet.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:intl/intl.dart';
 
 class WalletCardWidget extends StatefulWidget {
-  const WalletCardWidget({Key? key, required this.userId}) : super(key: key);
+  const WalletCardWidget({Key? key, required this.userId, required this.wallet})
+      : super(key: key);
   final String userId;
+  final Wallet wallet;
+  
   @override
   State<WalletCardWidget> createState() => _WalletCardWidgetState();
 }
 
 class _WalletCardWidgetState extends State<WalletCardWidget> {
+  String userName = '';
   void initState() {
     super.initState();
     // Call the function to fetch user data when the widget is initialized
     fetchUserProfileData();
   }
 
-  String userName = '';
   void fetchUserProfileData() async {
     try {
       final userProfile =
@@ -49,6 +54,8 @@ class _WalletCardWidgetState extends State<WalletCardWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final formatter = NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
+    final formattedTotal = formatter.format(widget.wallet.total);
     return Container(
       width: 370,
       height: 200,
@@ -86,7 +93,7 @@ class _WalletCardWidgetState extends State<WalletCardWidget> {
                     color: Colors.white),
               ),
               Text(
-                '300.000VNĐ',
+                formattedTotal,
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
@@ -99,14 +106,14 @@ class _WalletCardWidgetState extends State<WalletCardWidget> {
             width: 60,
             height: 60,
           ),
-          Text(
-            '• • • •   • • • •   • • • •   2541',
-            style: TextStyle(
-                fontSize: 18,
-                letterSpacing: 2,
-                fontWeight: FontWeight.bold,
-                color: Colors.white),
-          ),
+          // Text(
+          //   '• • • •   • • • •   • • • •   2541',
+          //   style: TextStyle(
+          //       fontSize: 18,
+          //       letterSpacing: 2,
+          //       fontWeight: FontWeight.bold,
+          //       color: Colors.white),
+          // ),
           Spacer(),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

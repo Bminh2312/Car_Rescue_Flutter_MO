@@ -45,6 +45,7 @@ class _ActiveBookingCardState extends State<ActiveBookingCard> {
     customerInfoFuture = loadCustomerInfo(widget.booking.customerId);
     authService.getAddressesForBookings(
         [widget.booking], setState, addressesDepart, subAddressesDepart);
+
     authService.getDestiForBookings(
         [widget.booking], setState, addressesDesti, subAddressesDesti);
   }
@@ -97,7 +98,7 @@ class _ActiveBookingCardState extends State<ActiveBookingCard> {
             ),
           ),
         );
-        print('day la: ${addressesDesti}');
+        print('day la: ${addressesDepart}');
       },
       child: Container(
         child: Card(
@@ -129,7 +130,7 @@ class _ActiveBookingCardState extends State<ActiveBookingCard> {
                         radius: 32.0,
                         backgroundColor: Colors.grey,
                         backgroundImage: customerInfo?.avatar != null
-                            ? NetworkImage(customerInfo!.avatar)
+                            ? NetworkImage(customerInfo?.avatar ?? '')
                             : const AssetImage('assets/images/profile.png')
                                 as ImageProvider,
                       ),
@@ -179,35 +180,18 @@ class _ActiveBookingCardState extends State<ActiveBookingCard> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 3.0), // Add spacing
+                          // Add spacing
 
-                          Row(
-                            children: [
-                              SizedBox(width: 2.5),
-                              SvgPicture.asset(
-                                'assets/svg/location_icon.svg',
-                                // Replace with the path to your SVG file
-                                color: FrontendConfigs.kIconColor,
-                                width: 10.0,
-                                height: 20.0,
-                              ),
-                              SizedBox(width: 12.5),
-                              CustomText(
-                                text: '${addressesDesti[widget.booking.id]}',
-
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.bold,
-                                // Slate-dark color
-                              ),
-                            ],
-                          ),
                           // Add spacing
 
                           SizedBox(height: 10.0), // Add spacing
 
                           Row(
                             children: [
-                              BookingStatus(status: widget.booking.status)
+                              BookingStatus(
+                                status: widget.booking.status,
+                                fontSize: 14,
+                              )
                             ],
                           ),
                         ],

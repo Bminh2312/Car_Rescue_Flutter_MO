@@ -1,7 +1,6 @@
 import 'package:CarRescue/src/models/vehicle_item.dart';
 
 class Booking {
-
   final String id;
   final String customerId;
   final String technicianId;
@@ -17,7 +16,7 @@ class Booking {
   final DateTime? createdAt;
   final String status;
   final String departure;
-  final String destination;
+  final String? destination;
   final int? area;
   double? rating;
   String? note;
@@ -54,7 +53,7 @@ class Booking {
       paymentId: json['paymentId'] as String?,
       customerNote: json['customerNote'],
       departure: json['departure'],
-      destination: json['destination'],
+      destination: json['destination'] as String?,
       rescueType: json['rescueType'],
       staffNote: json['staffNote'] != null ? json['staffNote'] : null,
       cancellationReason: json['cancellationReason'] as String?,
