@@ -38,7 +38,7 @@ class _BookingListViewState extends State<BookingListView> {
   Future<void> _loadData() async {
     try {
       final bookingsFromApi = await authService.fetchBookings(
-          widget.userId, '97757c05-1a15-4009-a156-e43095dddd81');
+          widget.userId);
       await authService.getDestiForBookings(
           bookingsFromApi, setState, addressesDesti, subAddressesDesti);
       await authService.getAddressesForBookings(

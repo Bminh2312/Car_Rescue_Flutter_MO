@@ -105,7 +105,7 @@ class AuthService {
     }
   }
 
-  Future<List<Booking>> fetchBookings(String userId, String excludedId) async {
+  Future<List<Booking>> fetchBookings(String userId) async {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetOrdersOfTechnician?id=$userId');

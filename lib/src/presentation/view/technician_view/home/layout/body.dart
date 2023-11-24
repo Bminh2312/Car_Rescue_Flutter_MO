@@ -110,7 +110,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
   Future<void> fetchBookings() async {
     try {
       final bookingsFromApi =
-          await authService.fetchBookings(widget.userId, 'a');
+          await authService.fetchBookings(widget.userId);
       completedBookings = bookingsFromApi
           .where((booking) => booking.status == 'COMPLETED')
           .length;

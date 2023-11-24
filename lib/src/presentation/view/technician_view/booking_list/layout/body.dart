@@ -135,7 +135,7 @@ class _BookingListBodyState extends State<BookingListBody> {
   void separateBookings() async {
     try {
       final List<Booking> data = await AuthService()
-          .fetchBookings(widget.userId, '97757c05-1a15-4009-a156-e43095dddd81');
+          .fetchBookings(widget.userId);
 
       data.sort((a, b) {
         if (a.startTime == null && b.startTime == null)

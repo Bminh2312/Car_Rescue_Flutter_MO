@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/customerInfo.dart';
+import 'package:CarRescue/src/models/order.dart';
 import 'package:CarRescue/src/models/service.dart';
 import 'package:CarRescue/src/models/technician.dart';
 import 'package:CarRescue/src/presentation/elements/app_button.dart';
@@ -46,8 +47,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   bool _isLoading = true;
   int total = 0;
   AuthService authService = AuthService();
+  OrderProvider orderProvider = OrderProvider();
   CustomerInfo? customerInfo;
   Technician? technicianInfo;
+  Booking? _currentBooking ;
   Payment? _payment;
   List<String> _imageUrls = [];
   List<String> pickedImages = [];
@@ -55,12 +58,27 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   @override
   void initState() {
     super.initState();
+    _currentBooking = widget.booking;
     _loadCustomerInfo(widget.booking.customerId);
     _loadImageOrders(widget.booking.id);
     _loadTechInfo(widget.booking.technicianId);
     _calculateTotal(widget.booking.id);
     _loadPayment(widget.booking.id);
+    _loadBooking(widget.booking.id);
     // _imageUrls.clear();
+  }
+
+  void _loadBooking(String orderId) async{
+    try{
+      Booking updatedBooking = await authService
+                              .fetchCarOwnerBookingById(widget.booking.id);
+      setState(() {
+        _currentBooking = updatedBooking;
+        _isLoading = false;
+      });
+    }catch(e){
+      print('Error loading payment: $e');
+    }
   }
 
   Future<void> _loadPayment(String orderId) async {
@@ -134,7 +152,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     }
   }
 
-  Future<void> _loadImageOrders(String id) async {
+  void _loadImageOrders(String id) async {
     final orderProvider = OrderProvider();
     List<String> imgData = await orderProvider.getUrlImages(id);
     setState(() {
@@ -231,15 +249,14 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         if (imageUrl != null) {
           setState(() {
             _imageUrls.add(imageUrl);
-            
           });
           print('Image uploaded successfully. URL: $imageUrl');
-          
         } else {
           print('Failed to upload image.');
         }
       }
       pickedImages.clear();
+      _loadImageOrders(widget.booking.id);
     } else {
       print('No image selected.');
     }
@@ -299,7 +316,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         checkUpdate = false;
       }); // Trả về false nếu có lỗi
     }
-
   }
   // void startOrder(){
 
@@ -310,7 +326,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   // }
 
 // ...
-
 
   Widget _slider(bool type) {
     return Container(
@@ -325,7 +340,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         height: 60,
         backgroundColor: FrontendConfigs.kActiveColor,
         action: () async {
-          if (type)  {
+          if (type) {
             final orderProvider = OrderProvider();
             print("Id: ${widget.booking.id}");
             await orderProvider.startOrder(widget.booking.id);
@@ -360,9 +375,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               context,
               MaterialPageRoute(
                   builder: (context) => WaitingForPaymentScreen(
-                        payment: _payment!,
-                        userId: technicianInfo!.id
-                      )),
+                      payment: _payment!, userId: technicianInfo!.id)),
             );
           }
         },
@@ -729,19 +742,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSectionTitle("Ghi chú"),
-                        // if (widget.booking.status == "ASSIGNED")
-                        //   _buildNoteRow("Ghi chú", _formKey),
+                        if (widget.booking.status == "ASSIGNED")
+                          _buildNoteRow("", _formKey),
+                          Text('${_currentBooking?.staffNote ?? ''}'),
                         // _buildInfoRow(
                         //     "-",
-                        //     Text('${widget.booking.staffNote ?? ''}',
+                        //     Text('${_currentBooking?.staffNote ?? ''}',
                         //         style: TextStyle(fontWeight: FontWeight.bold))),
-                        // Divider(thickness: 3),
-                        SizedBox(height: 8.0),
-
-                        _buildInfoRow(
-                            "Ghi chú của KTV",
-                            Text('${widget.booking.staffNote ?? ''}',
-                                style: TextStyle(fontWeight: FontWeight.bold))),
                       ],
                     ),
                   ),
@@ -840,23 +847,27 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           SizedBox(width: 24.0),
                           AppButton(
                               onPressed: () async {
+                                setState(() {
+                                    _isLoading = true;
+                                  });
                                 if (_formKey.currentState!.validate() &&
                                     pickedImages.isNotEmpty) {
                                   await uploadImage();
+                                  
                                   if (_imageUrls.isNotEmpty) {
                                     await updateOrder(widget.booking.id,
                                         techNoteController.text, _imageUrls);
                                     techNoteController.clear();
-                                    if (checkUpdate) {
-                                      setState(() {
+                                    setState(() {
                                         _loadCustomerInfo(
                                             widget.booking.customerId);
                                         _loadImageOrders(widget.booking.id);
                                         _loadTechInfo(
                                             widget.booking.technicianId);
                                         _calculateTotal(widget.booking.id);
+                                        _loadBooking(widget.booking.id);
+                                        
                                       });
-                                    }
                                   } else {
                                     print("Image empty");
                                   }
