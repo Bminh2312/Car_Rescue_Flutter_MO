@@ -6,8 +6,11 @@ import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:intl/intl.dart'; // Import the intl package
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class WithdrawFormScreen extends StatefulWidget {
   final Wallet wallet;
@@ -28,11 +31,55 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
   String? radioGroupValue;
   List<BankingInfo> bankings =
       []; // Make sure to fetch or pass this data as required
+  TextEditingController _amountController = TextEditingController();
+  final NumberFormat numberFormat = NumberFormat("#,##0");
+  void handleSubmit() {
+    final formState = _formKey.currentState;
+    if (formState!.validate()) {
+      formState.save(); // Ensure that other form fields are saved
+
+      // Use the controller's value directly, ensuring it's formatted correctly
+      String amountText = _amountController.text.replaceAll(',', '');
+      final numericValue = int.tryParse(amountText) ?? 0;
+
+      // Now numericValue should have the correct value, and you can use it in your create function
+      createWithdrawRequest(
+        walletId: widget.wallet.id,
+        accountInfo: radioGroupValue == 'Momo' ? _phoneNumber! : _accountName!,
+        bank: radioGroupValue == 'Momo' ? 'Momo' : _selectedBanking!,
+        amount: numericValue,
+      );
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     loadBankingInfo();
+    _amountController.addListener(_formatAmount);
+  }
+
+  @override
+  void dispose() {
+    _amountController.removeListener(_formatAmount);
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  void _formatAmount() {
+    if (_amountController.text.isEmpty) return;
+
+    String text = _amountController.text;
+    text = text.replaceAll(',', ''); // Remove existing commas
+    final numericValue = int.tryParse(text) ?? 0;
+
+    final formattedValue = NumberFormat("#,###", "en_US").format(numericValue);
+    if (formattedValue != _amountController.text) {
+      _amountController.value = TextEditingValue(
+        text: formattedValue,
+        selection: TextSelection.collapsed(offset: formattedValue.length),
+      );
+    }
   }
 
   void _showSuccessDialog() {
@@ -116,6 +163,20 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
       print('Error creating withdraw request: $e');
       throw Exception('Error creating withdraw request: $e');
     }
+  }
+
+  String? _validateAmount(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Nhập số tiền';
+    }
+
+    final numericValue = int.tryParse(value.replaceAll(',', ''));
+
+    if (numericValue == null || numericValue <= 0) {
+      return 'Số tiền không hợp lệ';
+    }
+
+    return null;
   }
 
   @override
@@ -339,37 +400,34 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                       if (radioGroupValue == 'Momo' ||
                           radioGroupValue == 'Ngân hàng')
                         TextFormField(
+                          controller: _amountController,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(
+                                10), // Limit the length if needed
+                          ],
                           onSaved: (value) {
-                            if (value != null && value.isNotEmpty) {
-                              _amount = int.tryParse(
-                                  value); // Convert the string to a double
-                            }
+                            final numericValue = int.tryParse(value ?? '0');
+                            setState(() {
+                              _amount =
+                                  numericValue; // Store the numeric value as an int
+                            });
                           },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Nhập số tiền';
-                            }
-                            if (double.tryParse(value) == null) {
-                              return 'Please enter a valid number'; // Check if the value is a valid number
-                            }
-                            // Additional validation logic here
-                            return null;
-                          },
+                          validator: _validateAmount,
                           decoration: InputDecoration(
                             hintText: 'Nhập số tiền cần rút',
                             border: OutlineInputBorder(),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                  color: FrontendConfigs.kActiveColor,
-                                  width:
-                                      2.0), // Change the color and width to fit your needs
+                                color: Colors.blue,
+                                width: 2.0,
+                              ),
                             ),
                           ),
-                          keyboardType: TextInputType
-                              .number, // Ensure numeric keyboard for amount input
+                          keyboardType: TextInputType.number,
                           style: TextStyle(fontSize: 16, color: Colors.black),
-                          cursorColor: FrontendConfigs.kActiveColor,
-                        ),
+                          cursorColor: Colors.blue,
+                        )
 
                       // ... other widgets if any
                     ],
@@ -391,16 +449,7 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                         _formKey.currentState!
                             .save(); // Save the form field values
                         try {
-                          await createWithdrawRequest(
-                            walletId: widget.wallet.id,
-                            accountInfo: radioGroupValue == 'Momo'
-                                ? _phoneNumber!
-                                : _accountName!,
-                            bank: radioGroupValue == 'Momo'
-                                ? 'Momo'
-                                : _selectedBanking!, // Set bank based on radioGroupValue
-                            amount: _amount!,
-                          );
+                          handleSubmit();
 
                           Navigator.pop(context, 'success');
 

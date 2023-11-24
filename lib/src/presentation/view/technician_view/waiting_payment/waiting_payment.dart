@@ -14,6 +14,7 @@ import 'package:lottie/lottie.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
+
 class WaitingForPaymentScreen extends StatefulWidget {
   final Payment payment;
   final Booking booking;
@@ -49,7 +50,6 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
   int total = 0;
   Payment? _payment;
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
-
   Future<void> _loadTechInfo(String techId) async {
     Map<String, dynamic>? techProfile =
         await AuthService().fetchTechProfile(techId);

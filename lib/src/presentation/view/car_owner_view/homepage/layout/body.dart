@@ -510,7 +510,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CalendarView(),
+                      builder: (context) => CalendarView(userId: widget.userId),
                     ),
                   );
                 },

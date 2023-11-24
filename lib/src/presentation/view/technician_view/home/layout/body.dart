@@ -86,7 +86,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
   Future<void> loadWeeklyShift(String weekId, String userId) async {
     try {
       final List<WorkShift> weeklyShiftsFromAPI =
-          await AuthService().getWeeklyShift(weekId, userId);
+          await AuthService().getWeeklyShiftofTechnician(weekId, userId);
 
       // Sort the list by the latest date (assuming WorkShift has a date property)
       weeklyShiftsFromAPI.sort((a, b) => a.date.compareTo(b.date));

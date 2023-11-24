@@ -1120,11 +1120,33 @@ class AuthService {
     }
   }
 
-  Future<List<WorkShift>> getWeeklyShift(String weekId, String techId) async {
+  Future<List<WorkShift>> getWeeklyShiftofTechnician(
+      String weekId, String techId) async {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Schedule/GetWeeklyShiftOfTechnician?id=$weekId&techID=$techId';
     try {
       final response = await http.post(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        final List<dynamic> shiftData = jsonData['data'];
+        final List<WorkShift> shifts =
+            shiftData.map((e) => WorkShift.fromJson(e)).toList();
+        return shifts;
+      } else {
+        throw Exception('Failed to load data from the server');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<List<WorkShift>> getWeeklyShiftOfCarOwner(
+      String weekId, String rvoId) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Schedule/GetWeeklyShiftOfRVO?id=$weekId&rvoId=$rvoId';
+    try {
+      final response = await http.post(Uri.parse(apiUrl));
+      print('${response.body}');
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
         final List<dynamic> shiftData = jsonData['data'];

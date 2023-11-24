@@ -57,7 +57,7 @@ class _CalendarViewState extends State<CalendarView> {
   Future<void> loadWeeklyShift(String weekId, String userId) async {
     try {
       final List<WorkShift> weeklyShiftsFromAPI =
-          await AuthService().getWeeklyShift(weekId, userId);
+          await AuthService().getWeeklyShiftofTechnician(weekId, userId);
 
       // Sort the list by the latest date (assuming WorkShift has a date property)
       weeklyShiftsFromAPI.sort((a, b) => a.date.compareTo(b.date));
@@ -101,13 +101,7 @@ class _CalendarViewState extends State<CalendarView> {
     });
   }
 
-  void onPageChanged(DateTime focusedDay) {
-    setState(() {
-      _focusedDay = focusedDay;
-      loadWeeklyShift('0a016b11-a478-45ac-8ef5-43fab58ec0b7',
-          widget.userId); // Update current week when page changes
-    });
-  }
+ 
 
   String getTimeRange(String type) {
     switch (type) {
