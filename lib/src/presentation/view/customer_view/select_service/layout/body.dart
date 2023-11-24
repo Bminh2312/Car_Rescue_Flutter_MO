@@ -1,15 +1,21 @@
 import 'dart:async';
 
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
+import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/quick_access_buttons.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/car_view/car_view.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/order_detail/order_detail_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/order_status/order_processing.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/orders/orders_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/animated_indicator.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/popup_service_view.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/selection_location_widget%20copy.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/service_category.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/slider_banner.dart';
+import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/customer.dart';
@@ -282,95 +288,14 @@ class _ServiceBodyState extends State<ServiceBody> {
   }
 
   Widget buildSliderBanner() {
-    return Column(
-      children: [
-        SizedBox(
-          height: 150,
-          width: 400, // Adjust the height as needed
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: _advertisements.length,
-            onPageChanged: (int page) {
-              setState(() {
-                _currentPage = page;
-              });
-            },
-            itemBuilder: (context, index) {
-              return Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  color: FrontendConfigs.kActiveColor,
-                ),
-                margin: EdgeInsets.symmetric(horizontal: 3),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(
-                      16), // Clip the image to the border radius
-                  child: Image.network(
-                    _advertisements[
-                        index], // Placeholder for an advertisement image
-                    fit:
-                        BoxFit.cover, // Cover the entire space of the container
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        SizedBox(height: 7),
-        AnimatedIndicator(
-          pageController: _pageController,
-          itemCount: _advertisements.length,
-          activeColor: FrontendConfigs.kPrimaryColor, // Active indicator color
-          inactiveColor: Colors.grey, // Inactive indicator color
-        ),
-        SizedBox(height: 7),
-      ],
-    );
-  }
-
-  Widget buildService() {
-    final List<String> categories = [
-      'Đổ xăng',
-      'Thay bánh xe',
-      'Bơm bánh xe',
-      'Sạc ắc quy',
-      'Kích bình',
-      'Thay bình',
-      // Add more categories if needed
-    ];
-    final size = MediaQuery.of(context).size;
-
-    // Ensure the GridView is returned within a widget that provides enough space,
-    // like Expanded if in a Column or Row, or directly in the body of a Scaffold.
-
-    return Container(
-      height: size.height *
-          0.35, // Specify the height to ensure it takes the available space
-      width: size.width,
-      child: GridView.builder(
-        physics: ClampingScrollPhysics(),
-        padding: const EdgeInsets.all(10),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount:
-              3, // Increase the number of columns to make each item smaller
-          crossAxisSpacing: 10, // Horizontal space between items
-          mainAxisSpacing: 10, // Vertical space between items
-          childAspectRatio:
-              1, // Adjust the aspect ratio to change the size of the items
-        ),
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          return ServiceCategoryWidget(category: categories[index]);
-        },
-      ),
-    );
+    return SliderBanner(advertisements: _advertisements);
   }
 
   Widget buildOrders() {
     return Container(
       height: 300, // Reduced height
       child: FutureBuilder<List<Order>>(
-        future: getAllOrders("NEW"),
+        future: getAllOrders("ASSIGNED"),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -389,19 +314,189 @@ class _ServiceBodyState extends State<ServiceBody> {
                 return Column(
                   children: [
                     Card(
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Color.fromARGB(115, 47, 47, 47),
-                          backgroundImage:
-                              AssetImage('assets/images/logocarescue.png'),
-                          radius: 20,
-                        ), // Simplified icon
-                        title: Text(formattedStartTime), // Order creation date
-                        // Rescue type
-                        trailing: Text(order.status), // Order status
-                        onTap: () {
-                          // Action to view details or cancel the order
-                        },
+                      child: Column(
+                        children: [
+                          ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Color.fromARGB(115, 47, 47, 47),
+                              backgroundImage:
+                                  AssetImage('assets/images/logocarescue.png'),
+                              radius: 20,
+                            ), // Simplified icon
+                            title:
+                                Text(formattedStartTime), // Order creation date
+                            // Rescue type
+                            trailing: BookingStatus(
+                                          status: order.status,
+                                        ), // Order status
+                            onTap: () {
+                              // Action to view details or cancel the order
+                            },
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 2),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    SvgPicture.asset(
+                                        "assets/svg/location_icon.svg",
+                                        color: FrontendConfigs.kPrimaryColor),
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
+                                    CustomText(
+                                      text: "6.5 km",
+                                      fontWeight: FontWeight.w600,
+                                    )
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    SvgPicture.asset(
+                                        "assets/svg/watch_icon.svg"),
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
+                                    CustomText(
+                                      text: "15 mins",
+                                      fontWeight: FontWeight.w600,
+                                    )
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    SvgPicture.asset(
+                                      "assets/svg/wallet_icon.svg",
+                                      color: FrontendConfigs.kPrimaryColor,
+                                    ),
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
+                                    CustomText(
+                                      text: "\$56.00",
+                                      fontWeight: FontWeight.w600,
+                                    )
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          Divider(
+                            color: FrontendConfigs.kIconColor,
+                          ),
+                          const SizedBox(
+                            height: 8,
+                          ),
+                          FutureBuilder<String>(
+                            future: getPlaceDetails(order.departure!),
+                            builder: (context, addressSnapshot) {
+                              if (addressSnapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                // Display loading indicator or placeholder text
+                                return CircularProgressIndicator();
+                              } else if (addressSnapshot.hasError) {
+                                // Handle error
+                                return Text('Error: ${addressSnapshot.error}');
+                              } else {
+                                String departureAddress =
+                                    addressSnapshot.data ?? '';
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12.0),
+                                  child: RideSelectionWidget(
+                                    icon: 'assets/svg/pickup_icon.svg',
+                                    title:
+                                        "Địa điểm hiện tại", // Add your title here
+                                    body: departureAddress,
+                                    onPressed: () {},
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          if (order.rescueType == "Towing")
+                            const Padding(
+                              padding: EdgeInsets.only(left: 31),
+                              child: DottedLine(
+                                direction: Axis.vertical,
+                                lineLength: 30,
+                                lineThickness: 1.0,
+                                dashLength: 4.0,
+                                dashColor: Colors.black,
+                                dashRadius: 2.0,
+                                dashGapLength: 4.0,
+                                dashGapRadius: 0.0,
+                              ),
+                            ),
+                          if (order.rescueType == "Towing")
+                            FutureBuilder<String>(
+                              future: getPlaceDetails(order.destination!),
+                              builder: (context, addressSnapshot) {
+                                if (addressSnapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  // Display loading indicator or placeholder text
+                                  return CircularProgressIndicator();
+                                } else if (addressSnapshot.hasError) {
+                                  // Handle error
+                                  return Text(
+                                      'Error: ${addressSnapshot.error}');
+                                } else {
+                                  String destinationAddress =
+                                      addressSnapshot.data ?? '';
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12.0),
+                                    child: RideSelectionWidget(
+                                      icon: 'assets/svg/location_icon.svg',
+                                      title: "Địa điểm muốn đến",
+                                      body: destinationAddress,
+                                      onPressed: () {},
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ButtonBar(children: <Widget>[
+                            TextButton(
+                              onPressed: () {
+                                if (order.technicianId == null) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => OrderDetail(
+                                          orderId: order.id, techId: null),
+                                    ),
+                                  );
+                                } else if (order.technicianId == '') {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => OrderDetail(
+                                          orderId: order.id, techId: ''),
+                                    ),
+                                  );
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => OrderDetail(
+                                          orderId: order.id,
+                                          techId: order.technicianId),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: CustomText(
+                                text: 'Chi tiết',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ]),
+                        ],
                       ),
                       margin: EdgeInsets.all(8.0),
                     ),
@@ -565,24 +660,26 @@ class _ServiceBodyState extends State<ServiceBody> {
                       children: [
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 13),
-                          child: InkWell(
-                            onTap: () {},
-                            child: Row(
-                              children: [
-                                CustomText(
-                                  text: 'Dịch vụ phổ biến',
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                SizedBox(
-                                  width: 8,
-                                ),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 16,
-                                ),
-                              ],
-                            ),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  CustomText(
+                                    text: 'Các đơn được duyệt',
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  SizedBox(
+                                    width: 8,
+                                  ),
+                                  Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: 16,
+                                  ),
+                                ],
+                              ),
+                              buildOrders(),
+                            ],
                           ),
                         ),
                       ],
