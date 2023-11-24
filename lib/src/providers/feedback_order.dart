@@ -10,41 +10,66 @@ class FeedBackProvider {
   final String apiUrlGetAllFeedBack =
       Environment.API_URL + 'api/Feedback/GetWaitingFeedbacksOfUser';
 
-  Future<String> getWaitingFeedbacks(String customerId, String orderId) async {
-  final Uri url = Uri.parse('$apiUrlGetAllFeedBack?id=$customerId');
+  final String apiUrlGetFeedBackOfOrder =
+      Environment.API_URL + 'api/Feedback/GetFeedbackOfOrder';
 
-  try {
-    final response = await http.get(url, headers: {'accept': '*/*'});
+  Future<FeedbackCustomer> getFeedbackOfOrder(String orderId) async {
+    final Uri url = Uri.parse('$apiUrlGetFeedBackOfOrder?id=${orderId}');
+    final response = await http.get(
+      url,
+      headers: {'accept': '*/*'},
+    );
+
     if (response.statusCode == 200) {
-      final Map<String, dynamic> responseBody =
-          convert.json.decode(response.body);
-      final List<dynamic> feedbacksData = responseBody['data'];
-
-      if (feedbacksData.isNotEmpty) {
-        print(feedbacksData);
-        print(orderId);
-        final List<FeedbackCustomer> feedbackList = feedbacksData
-            .map((feedbackData) => FeedbackCustomer.fromJson(feedbackData))
-            .toList();
-
-        // Filter feedbacks based on orderId
-        final FeedbackCustomer filteredFeedback = feedbackList.firstWhere(
-            (feedback) => feedback.orderId == orderId);
-            
-        return filteredFeedback.id;
-      } else {
-        // Handle case when feedbacksData is empty
-        throw Exception('No feedback data available for customer $customerId');
-      }
+      // If the server returns a 200 OK response, parse the JSON
+      final dynamic responseBody = convert.json.decode(response.body);
+      // Assuming that the Feedback class has been defined
+      final dynamic feedbackData = responseBody['data'];
+      final FeedbackCustomer filteredFeedback = FeedbackCustomer.fromJson(feedbackData);
+      print(filteredFeedback);
+      return filteredFeedback;
     } else {
-      throw Exception(
-          'Failed to load feedbacks. Status code: ${response.statusCode}');
+      // If the server did not return a 200 OK response,
+      // throw an exception.
+      throw Exception('Failed to load feedback');
     }
-  } catch (e) {
-    throw Exception('Error: $e');
   }
-}
 
+  Future<String> getWaitingFeedbacks(String customerId, String orderId) async {
+    final Uri url = Uri.parse('$apiUrlGetAllFeedBack?id=$customerId');
+
+    try {
+      final response = await http.get(url, headers: {'accept': '*/*'});
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody =
+            convert.json.decode(response.body);
+        final List<dynamic> feedbacksData = responseBody['data'];
+
+        if (feedbacksData.isNotEmpty) {
+          print(feedbacksData);
+          print(orderId);
+          final List<FeedbackCustomer> feedbackList = feedbacksData
+              .map((feedbackData) => FeedbackCustomer.fromJson(feedbackData))
+              .toList();
+
+          // Filter feedbacks based on orderId
+          final FeedbackCustomer filteredFeedback = feedbackList
+              .firstWhere((feedback) => feedback.orderId == orderId);
+
+          return filteredFeedback.id;
+        } else {
+          // Handle case when feedbacksData is empty
+          throw Exception(
+              'No feedback data available for customer $customerId');
+        }
+      } else {
+        throw Exception(
+            'Failed to load feedbacks. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
 
   Future<bool> updateFeedback(String id, int rating, String note) async {
     final Map<String, dynamic> feedbackData = {

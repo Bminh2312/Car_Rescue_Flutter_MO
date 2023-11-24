@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/customerInfo.dart';
 import 'package:CarRescue/src/models/service.dart';
@@ -229,12 +228,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         if (imageUrl != null) {
           setState(() {
             _imageUrls.add(imageUrl);
+            
           });
           print('Image uploaded successfully. URL: $imageUrl');
+          
         } else {
           print('Failed to upload image.');
         }
       }
+      pickedImages.clear();
     } else {
       print('No image selected.');
     }
@@ -309,10 +311,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         height: 60,
         backgroundColor: FrontendConfigs.kActiveColor,
         action: () async {
-          if (type) {
+          if (type)  {
             final orderProvider = OrderProvider();
             print("Id: ${widget.booking.id}");
-            orderProvider.startOrder(widget.booking.id);
+            await orderProvider.startOrder(widget.booking.id);
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -871,7 +873,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                     print("Image empty");
                                   }
                                 } else {
-                                  print("Image empty");
+                                  print("pickedImages empty");
                                 }
                               },
                               btnLabel: checkUpdate

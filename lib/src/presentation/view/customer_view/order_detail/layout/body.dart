@@ -1,6 +1,8 @@
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:CarRescue/src/models/customer.dart';
+import 'package:CarRescue/src/models/feedback_customer.dart';
 import 'package:CarRescue/src/models/order.dart';
 import 'package:CarRescue/src/models/service.dart';
 import 'package:CarRescue/src/models/technician.dart';
@@ -9,11 +11,13 @@ import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/feedback/layout/body.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/order_detail/widget/customer_info.dart';
+import 'package:CarRescue/src/providers/feedback_order.dart';
 import 'package:CarRescue/src/providers/google_map_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
 import 'package:CarRescue/src/providers/service_provider.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
@@ -31,6 +35,9 @@ class OrderDetailBody extends StatefulWidget {
 class _OrderDetailBodyState extends State<OrderDetailBody> {
   Technician? technicianInfo;
   AuthService authService = AuthService();
+  FeedBackProvider feedBackProvider = FeedBackProvider();
+  FeedbackCustomer? feedbackCustomer;
+  double ratingParse = 0.0;
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
   int total = 0;
   List<String> _imageUrls = [];
@@ -38,12 +45,30 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   void initState() {
     print(widget.orderId);
     print(widget.techId);
-    if (widget.techId != '' && widget.techId != null ) {
+    if (widget.techId != '' && widget.techId != null) {
       _loadTechInfo(widget.techId ?? '');
     }
     _loadImageOrders(widget.orderId);
     _calculateTotal(widget.orderId);
+    fetchFeedback(widget.orderId);
     super.initState();
+  }
+
+  Future<void> fetchFeedback(String idOrder) async {
+    try {
+      FeedbackCustomer feedback =
+          await feedBackProvider.getFeedbackOfOrder(idOrder);
+      // Do something with the feedbackList
+      setState(() {
+        feedbackCustomer = feedback;
+        ratingParse = feedback.rating.toDouble();
+      });
+      print(feedback);
+    } catch (e) {
+      // Handle errors
+      print('Error: $e');
+      return null;
+    }
   }
 
   Future<String> getPlaceDetails(String latLng) async {
@@ -165,7 +190,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
           // Handle case where data is null
           return Text('Data is null');
         } else {
-          Order order = snapshot.data! ;
+          Order order = snapshot.data!;
           print(order.id);
           return SingleChildScrollView(
             padding: EdgeInsets.all(16.0),
@@ -173,12 +198,23 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 // Header
-                Center(
-                  child: CustomText(
-                    text: "Mã đơn hàng: ${widget.orderId}",
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Column(
+                  children: [
+                    Center(
+                      child: CustomText(
+                        text: "Mã đơn hàng:",
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Center(
+                      child: CustomText(
+                        text: "${widget.orderId}",
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
                 if (widget.techId != '' && widget.techId != null)
                   Divider(thickness: 3),
@@ -186,12 +222,40 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                 // Example: Text(order.id),
                 if (widget.techId != '' && widget.techId != null)
                   _buildSectionTitle("Thông tin kĩ thuật viên"),
-                if ( widget.techId != '' && widget.techId != null)
+                if (widget.techId != '' && widget.techId != null)
                   CustomerInfoRow(
                     name: technicianInfo?.fullname ?? "",
                     phone: technicianInfo?.phone ?? "",
                     avt: technicianInfo?.avatar ?? "",
                   ),
+                if (feedbackCustomer?.status == "COMPLETED")
+                  Divider(thickness: 3),
+                if (feedbackCustomer?.status == "COMPLETED")
+                  _buildSectionTitle("Đánh giá"),
+                if (feedbackCustomer?.status == "COMPLETED")
+                  Center(
+                    child: RatingBar.builder(
+                      initialRating: ratingParse,
+                      minRating: 1,
+                      direction: Axis.horizontal,
+                      allowHalfRating: false,
+                      itemCount: 5,
+                      itemSize: 50,
+                      itemPadding: EdgeInsets.symmetric(horizontal: 2.0),
+                      itemBuilder: (context, _) => Icon(
+                        Icons.star,
+                        color: Colors.amber,
+                      ),
+                      onRatingUpdate: (newRating) {
+                        // Handle the updated rating if needed
+                      },
+                      ignoreGestures: true,
+                    ),
+                  ),
+                _buildInfoRow(
+                    "Nội dung",
+                    Text(feedbackCustomer?.note ?? '',
+                        style: TextStyle(fontWeight: FontWeight.bold))),
                 Divider(thickness: 3),
                 SizedBox(height: 15.0),
                 _buildSectionTitle("Thông tin đơn hàng"),
@@ -345,17 +409,21 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                       Text('${total} vnd',
                           style: TextStyle(fontWeight: FontWeight.bold))),
                 SizedBox(height: 24.0),
-                if (order.status == "COMPLETED")
+                if (order.status == "COMPLETED" &&
+                    feedbackCustomer?.status == "WAITING")
                   AppButton(
                       onPressed: () {
-                        if(widget.techId != null){
+                        if (widget.techId != null) {
                           Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => FeedbackScreen(techId: widget.techId!,orderId: widget.orderId,customerId: customer.id,)),
-                        );
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => FeedbackScreen(
+                                      techId: widget.techId!,
+                                      orderId: widget.orderId,
+                                      customerId: customer.id,
+                                    )),
+                          );
                         }
-                        
                       },
                       btnLabel: "Gửi đánh giá"),
               ],

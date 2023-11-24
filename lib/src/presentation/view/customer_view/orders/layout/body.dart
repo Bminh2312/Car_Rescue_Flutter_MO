@@ -1,15 +1,18 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/customer.dart';
+import 'package:CarRescue/src/models/feedback_customer.dart';
 import 'package:CarRescue/src/models/order.dart';
 import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/chat_with_driver/chat_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/order_detail/order_detail_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/orders/layout/widgets/selection_location_widget.dart';
+import 'package:CarRescue/src/providers/feedback_order.dart';
 import 'package:CarRescue/src/providers/google_map_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
 import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
@@ -24,7 +27,8 @@ class OrderList extends StatefulWidget {
 class _OrderListState extends State<OrderList> {
   String selectedStatus = "ASSIGNING";
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
-
+  FeedBackProvider feedBackProvider = FeedBackProvider();
+  FeedbackCustomer? feedbackCustomer ;
   Future<String> getPlaceDetails(String latLng) async {
     try {
       final locationProvider = LocationProvider();
@@ -36,6 +40,20 @@ class _OrderListState extends State<OrderList> {
       // Xử lý lỗi nếu có
       print("Lỗi khi lấy địa chỉ: $e");
       return "Không tìm thấy";
+    }
+  }
+
+  Future<FeedbackCustomer?> fetchFeedback(String idOrder) async {
+    try {
+      FeedbackCustomer feedback =
+          await feedBackProvider.getFeedbackOfOrder(idOrder);
+      // Do something with the feedbackList
+      print(feedback);
+      return feedback;
+    } catch (e) {
+      // Handle errors
+      print('Error: $e');
+      return null;
     }
   }
 
@@ -158,9 +176,72 @@ class _OrderListState extends State<OrderList> {
                                       color: Colors.black,
                                     ),
                                     subtitle: Text(order.rescueType!),
-                                    trailing: BookingStatus(
-                                        status: order
-                                            .status,fontSize: 14,), // Use the BookingStatusWidget here
+
+                                    trailing: Column(
+                                      children: [
+                                        BookingStatus(
+                                          status: order.status,
+                                        ),
+                                        Expanded(
+                                          child:
+                                              FutureBuilder<FeedbackCustomer?>(
+                                            future: fetchFeedback(order.id),
+                                            builder:
+                                                (context, feedbackSnapshot) {
+                                              if (feedbackSnapshot
+                                                      .connectionState ==
+                                                  ConnectionState.waiting) {
+                                                // Display loading indicator or placeholder text
+                                                return CircularProgressIndicator(
+                                                  value:
+                                                      null, // Set to null for an indeterminate (spinning) indicator
+                                                  strokeWidth:
+                                                      2, // Adjust the value to make the indicator smaller
+                                                );
+                                              } else if (feedbackSnapshot
+                                                  .hasError) {
+                                                return Text(
+                                                    'Error: ${feedbackSnapshot.error}');
+                                              } else {
+                                                // Assuming your FeedbackCustomer class has a 'rating' field
+                                                
+                                                int rating = feedbackSnapshot
+                                                        .data?.rating ??
+                                                    0;
+                                                double ratingParse =
+                                                    rating.toDouble();
+
+                                                String status = feedbackSnapshot
+                                                        .data?.status ??
+                                                    '';
+
+                                                return status == 'COMPLETED' ? RatingBar.builder(
+                                                  initialRating: ratingParse,
+                                                  minRating: 1,
+                                                  direction: Axis.horizontal,
+                                                  allowHalfRating: false,
+                                                  itemCount: 5,
+                                                  itemSize: 20,
+                                                  itemPadding:
+                                                      EdgeInsets.symmetric(
+                                                          horizontal: 2.0),
+                                                  itemBuilder: (context, _) =>
+                                                      Icon(
+                                                    Icons.star,
+                                                    color: Colors.amber,
+                                                  ),
+                                                  onRatingUpdate: (newRating) {
+                                                    // Handle the updated rating if needed
+                                                  },
+                                                  ignoreGestures: true,
+                                                ): Text("Chưa đánh giá");
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    // Use the BookingStatusWidget here
                                   ),
                                   Divider(
                                     color: FrontendConfigs.kIconColor,
@@ -311,32 +392,39 @@ class _OrderListState extends State<OrderList> {
                                         children: <Widget>[
                                           TextButton(
                                             onPressed: () {
-                                              if(order.technicianId == null){
+                                              if (order.technicianId == null) {
                                                 Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      OrderDetail(orderId: order.id,techId: null),
-                                                ),
-                                              );
-                                              }else if(order.technicianId == ''){
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        OrderDetail(
+                                                            orderId: order.id,
+                                                            techId: null),
+                                                  ),
+                                                );
+                                              } else if (order.technicianId ==
+                                                  '') {
                                                 Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      OrderDetail(orderId: order.id,techId: ''),
-                                                ),
-                                              );
-                                              } else{
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        OrderDetail(
+                                                            orderId: order.id,
+                                                            techId: ''),
+                                                  ),
+                                                );
+                                              } else {
                                                 Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      OrderDetail(orderId: order.id,techId: order.technicianId),
-                                                ),
-                                              );
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        OrderDetail(
+                                                            orderId: order.id,
+                                                            techId: order
+                                                                .technicianId),
+                                                  ),
+                                                );
                                               }
-                                              
                                             },
                                             child: CustomText(
                                               text: 'Chi tiết',
