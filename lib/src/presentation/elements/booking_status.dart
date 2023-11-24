@@ -27,6 +27,14 @@ class BookingStatus extends StatelessWidget {
           fontSize: fontSize,
         );
         break;
+      case 'assigning':
+        statusColor = Color.fromARGB(255, 201, 243, 251);
+        statusTextStyle = TextStyle(
+          color: Color.fromARGB(255, 14, 140, 219),
+          fontWeight: FontWeight.bold,
+          fontSize: fontSize,
+        );
+        break;
       case 'cancelled':
         statusColor = Color.fromARGB(255, 251, 201, 201);
         statusTextStyle = TextStyle(
@@ -58,6 +66,18 @@ class BookingStatus extends StatelessWidget {
         );
         break;
     }
+    String getStatusTranslation(String status) {
+      switch (status) {
+        case 'ASSIGNING':
+          return 'Chờ xác nhận';
+        case 'ASSIGNED':
+          return 'Đã điều phối';
+        case 'INPROGRESS':
+          return 'Đang hoạt động';
+        default:
+          return '';
+      }
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -66,7 +86,7 @@ class BookingStatus extends StatelessWidget {
       ),
       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Text(
-        status,
+        getStatusTranslation(status),
         style: statusTextStyle,
       ),
     );

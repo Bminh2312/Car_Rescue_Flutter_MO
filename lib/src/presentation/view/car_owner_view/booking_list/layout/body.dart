@@ -762,7 +762,8 @@ class _BookingListBodyState extends State<BookingListBody>
                       trailing: BookingStatus(
                         status: booking.status,
                         fontSize: 14,
-                      ), // Use the BookingStatusWidget here
+                      ),
+                      // Use the BookingStatusWidget here
                     ),
                     Divider(
                       color: FrontendConfigs.kIconColor,

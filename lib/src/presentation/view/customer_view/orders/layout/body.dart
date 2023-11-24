@@ -28,7 +28,7 @@ class _OrderListState extends State<OrderList> {
   String selectedStatus = "ASSIGNING";
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
   FeedBackProvider feedBackProvider = FeedBackProvider();
-  FeedbackCustomer? feedbackCustomer ;
+  FeedbackCustomer? feedbackCustomer;
   Future<String> getPlaceDetails(String latLng) async {
     try {
       final locationProvider = LocationProvider();
@@ -180,6 +180,7 @@ class _OrderListState extends State<OrderList> {
                                     trailing: Column(
                                       children: [
                                         BookingStatus(
+                                          fontSize: 16,
                                           status: order.status,
                                         ),
                                         Expanded(
@@ -204,7 +205,7 @@ class _OrderListState extends State<OrderList> {
                                                     'Error: ${feedbackSnapshot.error}');
                                               } else {
                                                 // Assuming your FeedbackCustomer class has a 'rating' field
-                                                
+
                                                 int rating = feedbackSnapshot
                                                         .data?.rating ??
                                                     0;
@@ -215,26 +216,33 @@ class _OrderListState extends State<OrderList> {
                                                         .data?.status ??
                                                     '';
 
-                                                return status == 'COMPLETED' ? RatingBar.builder(
-                                                  initialRating: ratingParse,
-                                                  minRating: 1,
-                                                  direction: Axis.horizontal,
-                                                  allowHalfRating: false,
-                                                  itemCount: 5,
-                                                  itemSize: 20,
-                                                  itemPadding:
-                                                      EdgeInsets.symmetric(
-                                                          horizontal: 2.0),
-                                                  itemBuilder: (context, _) =>
-                                                      Icon(
-                                                    Icons.star,
-                                                    color: Colors.amber,
-                                                  ),
-                                                  onRatingUpdate: (newRating) {
-                                                    // Handle the updated rating if needed
-                                                  },
-                                                  ignoreGestures: true,
-                                                ): Text("Chưa đánh giá");
+                                                return status == 'COMPLETED'
+                                                    ? RatingBar.builder(
+                                                        initialRating:
+                                                            ratingParse,
+                                                        minRating: 1,
+                                                        direction:
+                                                            Axis.horizontal,
+                                                        allowHalfRating: false,
+                                                        itemCount: 5,
+                                                        itemSize: 20,
+                                                        itemPadding: EdgeInsets
+                                                            .symmetric(
+                                                                horizontal:
+                                                                    2.0),
+                                                        itemBuilder:
+                                                            (context, _) =>
+                                                                Icon(
+                                                          Icons.star,
+                                                          color: Colors.amber,
+                                                        ),
+                                                        onRatingUpdate:
+                                                            (newRating) {
+                                                          // Handle the updated rating if needed
+                                                        },
+                                                        ignoreGestures: true,
+                                                      )
+                                                    : Text("Chưa đánh giá");
                                               }
                                             },
                                           ),

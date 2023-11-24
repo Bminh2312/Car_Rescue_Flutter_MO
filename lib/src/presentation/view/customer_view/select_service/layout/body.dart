@@ -328,6 +328,7 @@ class _ServiceBodyState extends State<ServiceBody> {
                             // Rescue type
                             trailing: BookingStatus(
                                           status: order.status,
+                                          fontSize: 16,
                                         ), // Order status
                             onTap: () {
                               // Action to view details or cancel the order
