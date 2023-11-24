@@ -144,51 +144,6 @@ class _HistoryCardState extends State<HistoryCard>
     booking.note = feedbackForBooking?['note'];
   }
 
-  // void loadBookings() async {
-  //   try {
-  //     final List<Booking> data =
-  //         await AuthService().fetchCarOwnerBookings(widget.userId, '');
-  //     data.sort((a, b) {
-  //       if (a.createdAt == null) return 1;
-  //       if (b.createdAt == null) return -1;
-  //       return b.createdAt!.compareTo(a.createdAt!);
-  //     });
-  //     for (Booking booking in data) {
-  //       Vehicle vehicleInfoFromAPI =
-  //           await authService.fetchVehicleInfo(booking.vehicleId ?? '');
-  //       booking.vehicleInfo = vehicleInfoFromAPI;
-
-  //       if (booking.status.toUpperCase() == 'COMPLETED') {
-  //         final Map<String, Map<String, dynamic>> apiFeedbacks =
-  //             await authService.fetchFeedbackRatings(widget.userId);
-
-  //         var feedbackForBooking = apiFeedbacks[booking.id];
-
-  //         booking.rating = feedbackForBooking?['rating']?.toDouble();
-  //         booking.note = feedbackForBooking?['note'];
-
-  //         print('Feedbacks from API: ${apiFeedbacks}');
-  //       }
-  //     }
-
-  //     // Use `setState` to reflect changes
-  //     setState(() {
-  //       canceledBookings = data.where((booking) {
-  //         final status = booking.status.trim().toUpperCase();
-  //         return status == 'CANCELLED';
-  //       }).toList();
-  //       print(canceledBookings);
-
-  //       // Additional line to print the rating for debugging
-  //       print('Rating stars: $ratingStars');
-
-  //       isDataLoaded = true; // Mark the data as loaded
-  //     });
-  //   } catch (e) {
-  //     print('Error: $e');
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -354,14 +309,14 @@ class _HistoryCardState extends State<HistoryCard>
                           // Text(booking.note ?? 'Không có'),
                           BookingStatus(
                               status: booking
-                                  .status), // Your existing BookingStatus widget
+                                  .status,fontSize: 14,), // Your existing BookingStatus widget
                           SizedBox(height: 8.0),
                           if (booking.status.toUpperCase() ==
                               'COMPLETED') // Spacing
                             Container(
                               child: RatingBar.builder(
                                 itemSize: 12,
-                                initialRating: booking.rating!,
+                                initialRating: booking.rating ?? 0,
                                 minRating: 1,
                                 direction: Axis.horizontal,
                                 allowHalfRating: true,
@@ -608,14 +563,14 @@ class _HistoryCardState extends State<HistoryCard>
                           // Text(booking.note ?? 'Không có'),
                           BookingStatus(
                               status: booking
-                                  .status), // Your existing BookingStatus widget
+                                  .status,fontSize: 14,), // Your existing BookingStatus widget
                           SizedBox(height: 8.0),
                           if (booking.status.toUpperCase() ==
                               'COMPLETED') // Spacing
                             Container(
                               child: RatingBar.builder(
                                 itemSize: 12,
-                                initialRating: booking.rating!,
+                                initialRating: booking.rating ?? 0,
                                 minRating: 1,
                                 direction: Axis.horizontal,
                                 allowHalfRating: true,

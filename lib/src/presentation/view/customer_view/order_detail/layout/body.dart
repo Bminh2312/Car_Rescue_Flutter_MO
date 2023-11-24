@@ -262,7 +262,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                 _buildInfoRow(
                     "Trạng thái",
                     BookingStatus(
-                      status: order.status,
+                      status: order.status,fontSize: 14,
                     )),
                 _buildInfoRow(
                     "Loại dịch vụ",

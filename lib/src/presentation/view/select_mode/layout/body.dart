@@ -1,4 +1,3 @@
-
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/auth/log_in/layout/body.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/auth/log_in/log_in_view.dart';
@@ -31,7 +30,6 @@ class SelectModeBody extends StatelessWidget {
                     BlendMode.srcOver,
                   )),
             ),
-
             child: Container(
               // color: Colors.black.withOpacity(0.30),
               decoration: const BoxDecoration(),
@@ -45,7 +43,6 @@ class SelectModeBody extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               Center(
                 child: Image.asset(
                   "assets/images/logo-no-background.png",
@@ -115,7 +112,6 @@ class SelectModeBody extends StatelessWidget {
                       MaterialPageRoute(
                           builder: (context) => CarOwnerLogInView()));
                 },
-
                 btnLabel: "Tôi là chủ xe cứu hộ",
               )
             ],

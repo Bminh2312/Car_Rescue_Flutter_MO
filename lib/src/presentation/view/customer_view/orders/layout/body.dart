@@ -176,10 +176,11 @@ class _OrderListState extends State<OrderList> {
                                       color: Colors.black,
                                     ),
                                     subtitle: Text(order.rescueType!),
+
                                     trailing: Column(
                                       children: [
                                         BookingStatus(
-                                          status: order.status,
+                                          status: order.status, fontSize: 12,
                                         ),
                                         Expanded(
                                           child:

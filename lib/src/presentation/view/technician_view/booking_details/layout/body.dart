@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/customerInfo.dart';
 import 'package:CarRescue/src/models/order.dart';
@@ -9,9 +8,7 @@ import 'package:CarRescue/src/presentation/elements/app_button.dart';
 import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
-import 'package:CarRescue/src/presentation/view/car_owner_view/booking_list/booking_view.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/bottom_nav_bar/bottom_nav_bar_view.dart';
-import 'package:CarRescue/src/presentation/view/technician_view/home/home_view.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/waiting_payment/waiting_payment.dart';
 import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
@@ -71,7 +68,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   void _loadBooking(String orderId) async{
     try{
       Booking updatedBooking = await authService
-                              .fetchCarOwnerBookingById(widget.booking.id);
+                              .fetchBookingById(widget.booking.id);
       setState(() {
         _currentBooking = updatedBooking;
         _isLoading = false;
@@ -317,15 +314,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       }); // Trả về false nếu có lỗi
     }
   }
-  // void startOrder(){
 
-  // }
-
-  // void endOrder(){
-
-  // }
-
-// ...
 
   Widget _slider(bool type) {
     return Container(
@@ -361,7 +350,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           } else {
             final orderProvider = OrderProvider();
             print("Id: ${widget.booking.id}");
-            await orderProvider.endOrder(widget.booking.id);
+            dynamic data = await orderProvider.endOrder(widget.booking.id);
             // Navigator.pushReplacement(
             //   context,
             //   MaterialPageRoute(
@@ -374,10 +363,28 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                  builder: (context) => WaitingForPaymentScreen(
-                      payment: _payment!, userId: technicianInfo!.id)),
+
+                builder: (context) => WaitingForPaymentScreen(
+                  accountId: technicianInfo!.accountId,
+                  addressesDepart: widget.addressesDepart,
+                  subAddressesDepart: widget.subAddressesDepart,
+                  addressesDesti: widget.addressesDesti,
+                  subAddressesDesti: widget.subAddressesDesti,
+                  booking: widget.booking,
+                  payment: _payment!,
+                  userId: technicianInfo!.id,
+                  data:
+                      data, // Pass the retrieved data to WaitingForPaymentScreen
+                ),
+              ),
             );
           }
+          
+            @override
+            Widget build(BuildContext context) {
+              // TODO: implement build
+              throw UnimplementedError();
+            }
         },
         label: type
             ? const Text(
@@ -479,7 +486,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   }
 
   Widget buildBookingStatus(String status) {
-    return BookingStatus(status: status);
+    return BookingStatus(
+      status: status,
+      fontSize: 14,
+    );
   }
 
   Widget _buildOrderItemSection() {
@@ -490,6 +500,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          CustomText(
+            text: 'Tạm tính',
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
           FutureBuilder<List<Service>>(
             future: _loadServicesOfCustomer(widget.booking.id),
             builder: (context, serviceSnapshot) {
@@ -564,7 +579,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               ),
               SizedBox(width: 10.0),
               // Conditionally display the image based on the displayTitle
-              if (displayTitle == 'Trả bằng chuyển khoản')
+              if (displayTitle == 'Banking')
                 Image.asset(
                   'assets/images/banking.png',
                   height: 25,
@@ -693,11 +708,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                             "Trạng thái",
                             BookingStatus(
                               status: widget.booking.status,
+                              fontSize: 14,
                             )),
                         _buildInfoRow(
                             "Địa chỉ",
-                            Text(
-                                ' ${widget.addressesDepart[widget.booking.id]}',
+                            Text('${widget.addressesDepart[widget.booking.id]}',
                                 style: TextStyle(fontWeight: FontWeight.bold))),
                         if (widget.booking.rescueType == "Towing")
                           _buildInfoRow(
@@ -719,17 +734,19 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   ),
 
                   // Image
-                  // if (_imageUrls.isNotEmpty)
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      children: [
-                        _buildImageSection(_imageUrls),
-                      ],
+                  if (widget.booking.status.toUpperCase() == 'ASSIGNED' &&
+                      _imageUrls.isNotEmpty)
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+                          _buildImageSection(_imageUrls),
+                        ],
+                      ),
                     ),
-                  ),
                   // _buildImageSection(imageUrls!),
 
                   // Additional Details
@@ -741,14 +758,17 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionTitle("Ghi chú"),
+
+                        SizedBox(height: 8.0),
+                        _buildSectionTitle("Ghi chú của kĩ thuật viên"),
                         if (widget.booking.status == "ASSIGNED")
-                          _buildNoteRow("", _formKey),
-                          Text('${_currentBooking?.staffNote ?? ''}'),
-                        // _buildInfoRow(
-                        //     "-",
-                        //     Text('${_currentBooking?.staffNote ?? ''}',
-                        //         style: TextStyle(fontWeight: FontWeight.bold))),
+                          _buildNoteRow("Ghi chú", _formKey),
+                        _buildInfoRow(
+                            "-",
+                            Text('${widget.booking.staffNote ?? ''}',
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        Divider(thickness: 3),
+                        SizedBox(height: 8.0),
                       ],
                     ),
                   ),
@@ -767,25 +787,32 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           _buildInfoRow(
                             "Bắt đầu",
                             Text(
-                              DateFormat('dd-MM-yyyy | HH:mm').format(
-                                  widget.booking.startTime ?? DateTime.now()),
+                              DateFormat('dd-MM-yyyy | HH:mm').format(widget
+                                  .booking.startTime!
+                                  .toUtc()
+                                  .add(Duration(hours: 14))),
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
-                        if (widget.booking.status != "ASSIGNED")
+                        if (widget.booking.status != "ASSIGNED" &&
+                            widget.booking.endTime != null)
                           _buildInfoRow(
                             "Kết thúc ",
                             Text(
-                              DateFormat('dd-MM-yyyy | HH:mm').format(
-                                  widget.booking.endTime ?? DateTime.now()),
+                              DateFormat('dd-MM-yyyy | HH:mm').format(widget
+                                  .booking.endTime!
+                                  .toUtc()
+                                  .add(Duration(hours: 14))),
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
                         _buildInfoRow(
                           "Được tạo lúc",
                           Text(
-                            DateFormat('dd-MM-yyyy | HH:mm').format(
-                                widget.booking.createdAt ?? DateTime.now()),
+                            DateFormat('dd-MM-yyyy | HH:mm').format(widget
+                                .booking.createdAt!
+                                .toUtc()
+                                .add(Duration(hours: 14))),
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -828,11 +855,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     color: Colors.white,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildPaymentMethod(
-                          _payment?.method ?? '',
-                          NumberFormat('#,##0₫', 'vi_VN').format(total),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildPaymentMethod(
+                              _payment?.method ?? '',
+                              NumberFormat('#,##0₫', 'vi_VN').format(total),
+                            ),
+                          ],
                         ),
                       ],
                     ),
