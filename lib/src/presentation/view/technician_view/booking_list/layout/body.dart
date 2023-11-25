@@ -134,8 +134,10 @@ class _BookingListBodyState extends State<BookingListBody> {
 
   void separateBookings() async {
     try {
-      final List<Booking> data =
-          await AuthService().fetchBookings(widget.userId, '');
+
+      final List<Booking> data = await AuthService()
+          .fetchBookings(widget.userId);
+
 
       // data.sort((a, b) {
       //   if (a.createdAt == null && b.createdAt == null)

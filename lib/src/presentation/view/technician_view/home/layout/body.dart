@@ -155,6 +155,23 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
     }
   }
 
+
+  Future<void> fetchBookings() async {
+    try {
+      final bookingsFromApi =
+          await authService.fetchBookings(widget.userId);
+      completedBookings = bookingsFromApi
+          .where((booking) => booking.status == 'COMPLETED')
+          .length;
+
+      setState(() {
+        bookings = bookingsFromApi;
+      });
+    } catch (error) {
+      print('Error loading data: $error');
+    }
+  }
+
   Widget headerWidget = Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
