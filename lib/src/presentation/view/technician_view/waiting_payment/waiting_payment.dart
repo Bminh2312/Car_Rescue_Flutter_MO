@@ -14,6 +14,7 @@ import 'package:lottie/lottie.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
+
 class WaitingForPaymentScreen extends StatefulWidget {
   final Payment payment;
   final Booking booking;
@@ -49,7 +50,6 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
   int total = 0;
   Payment? _payment;
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
-
   Future<void> _loadTechInfo(String techId) async {
     Map<String, dynamic>? techProfile =
         await AuthService().fetchTechProfile(techId);
@@ -170,28 +170,16 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
               totalAmount = total as int;
               final formatter =
                   NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
-              final formattedTotal = formatter.format(price);
+              final formattedTotal = formatter.format(total);
 
               return Column(
                 children: [
                   _buildInfoRow(
-                    '$name (Đơn giá/km) ',
+                    '$name (Số lượng: ${totalQuantity.toString()}) ',
                     Text(
                       '$formattedTotal',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      CustomText(
-                        text: 'Khoảng cách',
-                        fontSize: 16,
-                      ),
-                      Text(totalQuantity.toString(),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14)),
-                    ],
                   ),
                 ],
               );

@@ -86,7 +86,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
   Future<void> loadWeeklyShift(String weekId, String userId) async {
     try {
       final List<WorkShift> weeklyShiftsFromAPI =
-          await AuthService().getWeeklyShift(weekId, userId);
+          await AuthService().getWeeklyShiftofTechnician(weekId, userId);
 
       // Sort the list by the latest date (assuming WorkShift has a date property)
       weeklyShiftsFromAPI.sort((a, b) => a.date.compareTo(b.date));
@@ -353,7 +353,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
       return shiftDate == today || shiftDate == tomorrow;
     }).toList();
     if (weeklyShifts.length < 2) {
-      return Center(child: Text('Not enough shifts data available'));
+      return Center(child: LoadingState());
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -259,6 +259,7 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                           Tooltip(
+                            triggerMode: TooltipTriggerMode.tap,
                             message:
                                 'Phí dịch vụ là bắt buộc được tính 300.000đ mỗi đơn hàng\n\nTổng cộng = Phí dịch vụ + (Đơn giá x Khoảng cách) ',
                             textStyle: TextStyle(color: Colors.white),

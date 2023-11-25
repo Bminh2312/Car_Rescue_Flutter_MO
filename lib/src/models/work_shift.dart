@@ -1,6 +1,6 @@
 class WorkShift {
   final String id;
-  final String technicianId;
+  final String? technicianId;
   final String workScheduleId;
   final DateTime date;
   final String type;
@@ -16,7 +16,7 @@ class WorkShift {
   factory WorkShift.fromJson(Map<String, dynamic> json) {
     return WorkShift(
       id: json['id'],
-      technicianId: json['technicianId'],
+      technicianId: json['technicianId'] ?? '',
       workScheduleId: json['workScheduleId'],
       date: DateTime.parse(json['date']),
       type: json['type'],
@@ -26,7 +26,7 @@ class WorkShift {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'technicianId': technicianId,
+      'technicianId': technicianId ?? '',
       'workScheduleId': workScheduleId,
       'date': date.toIso8601String(),
       'type': type,

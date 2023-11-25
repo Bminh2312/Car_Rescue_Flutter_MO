@@ -1,7 +1,11 @@
+import 'package:CarRescue/src/models/current_week.dart';
 import 'package:CarRescue/src/models/feedback.dart';
 import 'package:CarRescue/src/models/rescue_vehicle_owner.dart';
 import 'package:CarRescue/src/models/wallet.dart';
 import 'package:CarRescue/src/models/wallet_transaction.dart';
+import 'package:CarRescue/src/models/work_shift.dart';
+import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/car_view/widgets/add_car_view.dart';
 
@@ -48,6 +52,8 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
   RescueVehicleOwner? _owner;
   Wallet? _wallet;
   List<WalletTransaction> walletTransactions = [];
+  List<WorkShift> weeklyShifts = [];
+  CurrentWeek? _currentWeek;
   @override
   void initState() {
     super.initState();
@@ -62,6 +68,44 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
         });
       }
     });
+  }
+
+  Future<void> loadCurrentWeek() async {
+    try {
+      final CurrentWeek currentWeekFromApi =
+          await AuthService().getCurrentWeek();
+      setState(() {
+        _currentWeek = currentWeekFromApi;
+        print('a1: $_currentWeek');
+
+        // After obtaining currentWeek.id, call loadWeeklyShift with it
+        loadWeeklyShift(_currentWeek!.id, widget.userId);
+      });
+    } catch (e) {
+      // Handle any exceptions here, such as network errors or errors from getCurrentWeek()
+      print('Error loading current week: $e');
+      throw e; // Rethrow the exception if needed
+    }
+  }
+
+  Future<void> loadWeeklyShift(String weekId, String userId) async {
+    try {
+      final List<WorkShift> weeklyShiftsFromAPI =
+          await AuthService().getWeeklyShiftOfCarOwner(weekId, userId);
+
+      // Sort the list by the latest date (assuming WorkShift has a date property)
+      weeklyShiftsFromAPI.sort((a, b) => a.date.compareTo(b.date));
+
+      // Update the state variable with the sorted data
+      setState(() {
+        weeklyShifts = weeklyShiftsFromAPI;
+        print('a2: $weeklyShifts');
+      });
+    } catch (e) {
+      // Handle the error or return an empty list based on your requirements
+
+      print('Error loading weekly shifts: $e');
+    }
   }
 
   Future<void> loadWalletTransaction(String walletId) async {
@@ -265,13 +309,48 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
     );
   }
 
+  String getTimeRange(String type) {
+    switch (type) {
+      case 'Night':
+        return '16:00 - 00:00';
+      case 'Morning':
+        return '08:00 - 16:00';
+      case 'Midnight':
+        return '00:00 - 08:00';
+      default:
+        return 'Unknown'; // Add a default value in case the type is not recognized
+    }
+  }
+
   Widget buildWeeklyTaskSchedule() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
+    DateTime now = DateTime.now();
+    DateTime today = DateTime(now.year, now.month, now.day);
+    DateTime tomorrow = DateTime(now.year, now.month, now.day + 1);
+    List<WorkShift> filteredShifts = weeklyShifts.where((shift) {
+      DateTime shiftDate =
+          DateTime(shift.date.year, shift.date.month, shift.date.day);
+      return shiftDate == today || shiftDate == tomorrow;
+    }).toList();
+    if (weeklyShifts.length < 2) {
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Center(
+            child: CustomText(
+          text: 'Hiện tại không có lịch làm việc',
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        )),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 10,
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
             'Lịch làm việc',
             style: TextStyle(
               fontSize: 20,
@@ -279,16 +358,20 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
               color: FrontendConfigs.kAuthColor,
             ),
           ),
-          SizedBox(height: 10),
-          Wrap(
-            spacing: 20,
-            runSpacing: 20,
-            children: weeklyTasks.map((task) {
+        ),
+        Container(
+          height: 300,
+          child: ListView.builder(
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: filteredShifts.length,
+            itemBuilder: (context, index) {
+              final workShift = filteredShifts[index];
+
               return Card(
-                margin: EdgeInsets.symmetric(vertical: 5, horizontal: 0),
+                margin: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
-                elevation: 1,
+                elevation: 3,
                 child: Stack(
                   children: [
                     // The "10 SEP" column
@@ -299,7 +382,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
                       child: Container(
                         width: 50,
                         decoration: BoxDecoration(
-                          color: FrontendConfigs.kIconColor,
+                          color: FrontendConfigs.kActiveColor,
                           borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(10),
                             bottomLeft: Radius.circular(10),
@@ -310,7 +393,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
                           children: [
                             Text(
                               DateFormat('MMM')
-                                  .format(DateTime.now())
+                                  .format(workShift.date)
                                   .toUpperCase(),
                               style: TextStyle(
                                 fontSize: 16,
@@ -319,7 +402,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
                               ),
                             ),
                             Text(
-                              DateFormat('d').format(DateTime.now()),
+                              DateFormat('d').format(workShift.date),
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -332,85 +415,58 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
                     ),
 
                     // The rest of the content
-                    Container(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                                width:
-                                    55), // Adjusted to accommodate the "10 SEP" column
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '9:00 - 21:00',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                              width:
+                                  60), // Adjusted to accommodate the "10 SEP" column
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  getTimeRange(workShift.type),
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  SizedBox(height: 5),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'Manager',
-                                        style:
-                                            TextStyle(color: Colors.grey[600]),
-                                      ),
-                                      Text('Client',
-                                          style: TextStyle(
-                                              color: Colors.grey[600])),
-                                    ],
+                                ),
+                                SizedBox(height: 5),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Chip(
+                                    padding: EdgeInsets.zero,
+                                    label: Text("SCHEDULED"),
+                                    backgroundColor: Colors.green,
+                                    labelStyle: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold),
                                   ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'Messi',
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      Text(
-                                        'CR7',
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                  // if (event.isScheduled)
-                                  //   Align(
-                                  //     alignment: Alignment.centerLeft,
-                                  //     child: Chip(
-                                  //       padding: EdgeInsets.zero,
-                                  //       label: Text("SCHEDULED"),
-                                  //       backgroundColor: Colors.green,
-                                  //       labelStyle: TextStyle(
-                                  //           color: Colors.white,
-                                  //           fontWeight: FontWeight.bold),
-                                  //     ),
-                                  //   ),
-                                ],
-                              ),
-                            )
-                          ],
-                        ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // IconButton(
+                          //   onPressed: () {
+                          //     showUpdatedShiftModal(context, workShift.id,
+                          //         workShift.date, workShift.type);
+                          //     // Call the updateWeeklyShift function here
+                          //   },
+                          //   icon: Icon(CupertinoIcons.pencil, size: 25),
+                          // )
+                        ],
                       ),
                     ),
                   ],
                 ),
               );
-            }).toList(),
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -510,7 +566,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CalendarView(),
+                      builder: (context) => CalendarView(userId: widget.userId),
                     ),
                   );
                 },

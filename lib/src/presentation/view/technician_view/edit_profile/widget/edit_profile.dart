@@ -144,7 +144,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
       print(_downloadURL);
       // Display a success message to the user
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Profile updated successfully')),
+        SnackBar(content: Text('Cập nhật thông tin thành công.')),
       );
     } else {
       _isUpdating = false;

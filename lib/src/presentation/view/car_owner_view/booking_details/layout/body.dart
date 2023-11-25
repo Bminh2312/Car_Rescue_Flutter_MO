@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
-
+import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/models/customerInfo.dart';
@@ -10,6 +10,7 @@ import 'package:CarRescue/src/models/vehicle_item.dart';
 import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
+import 'package:CarRescue/src/presentation/elements/tooltip.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/vehicle_info.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/completed_booking/completed_booking_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/waiting_payment/waiting_payment.dart';
@@ -23,7 +24,7 @@ import 'package:intl/intl.dart';
 import 'package:slider_button/slider_button.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
-import 'package:http/http.dart' as http;
+
 import '../../../../../models/payment.dart';
 
 class BookingDetailsBody extends StatefulWidget {
@@ -908,78 +909,98 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
   Widget _buildOrderItemSection() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: orderDetails.map((orderDetail) {
-        return FutureBuilder<Map<String, dynamic>>(
-          future: fetchServiceNameAndQuantity(
-              orderDetail['serviceId']), // Fetch service name and quantity
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              final name = snapshot.data?['name'] ?? 'Name not available';
-              final quantity = snapshot.data?['quantity'] ?? 0;
-              final price = snapshot.data?['price'] ?? 0;
-              final total = orderDetail['tOtal'] ?? 0.0;
-              // Accumulate the total quantity and total amount
-              totalQuantity = quantity as int;
-              totalAmount = total as int;
-              final formatter =
-                  NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
-              final formattedTotal = formatter.format(price);
-
-              return Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      CustomText(
-                        text: 'Phí dịch vụ',
-                        fontSize: 16,
-                      ),
-                      CustomText(
-                        text: '300.000đ',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ],
-                  ),
-                  _buildInfoRow(
-                    '$name (Đơn giá/km) ',
-                    Text(
-                      '$formattedTotal',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+      children: [
+        Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    CustomText(
+                      text: 'Phí dịch vụ',
+                      fontSize: 16,
                     ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    SizedBox(
+                      width: 7,
+                    ),
+                    Tooltip(
+                      triggerMode: TooltipTriggerMode.tap,
+                      message:
+                          'Phí dịch vụ mặc định được tính 300.000đ mỗi đơn hàng\n\nTổng cộng = Phí dịch vụ + (Đơn giá x Khoảng cách) ',
+                      textStyle: TextStyle(color: Colors.white),
+                      padding: EdgeInsets.all(8),
+                      margin: EdgeInsets.all(5),
+                      waitDuration: Duration(seconds: 1),
+                      showDuration: Duration(seconds: 7),
+                      child: Icon(Icons.info),
+                    ),
+                  ],
+                ),
+                CustomText(
+                  text: '300.000đ',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ],
+            ),
+          ],
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: orderDetails.map((orderDetail) {
+            return FutureBuilder<Map<String, dynamic>>(
+              future: fetchServiceNameAndQuantity(
+                  orderDetail['serviceId']), // Fetch service name and quantity
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  final name = snapshot.data?['name'] ?? 'Name not available';
+                  final quantity = orderDetail['quantity'] ?? 0;
+                  final price = snapshot.data?['price'] ?? 0;
+                  final total = orderDetail['tOtal'] ?? 0.0;
+                  // Accumulate the total quantity and total amount
+                  totalQuantity = quantity as int;
+                  totalAmount = total as int;
+                  final formatter =
+                      NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
+                  final formattedTotal = formatter.format(price);
+
+                  return Column(
                     children: [
-                      CustomText(
-                        text: 'Khoảng cách',
-                        fontSize: 16,
+                      _buildInfoRow(
+                        '$name (Đơn giá/km) ',
+                        Text(
+                          '$formattedTotal',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
-                      Text('${totalQuantity.toString()} km',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14)),
                     ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildPaymentMethod(_payment?.method ?? '', ''),
-                      Text(currencyFormat.format(totalAmount),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 17)),
-                    ],
-                  ),
-                ],
-              );
-            } else if (snapshot.hasError) {
-              return Text('Error fetching service name and quantity');
-            } else {
-              return CircularProgressIndicator(); // Show a loading indicator
-            }
-          },
-        );
-      }).toList(),
+                  );
+                } else if (snapshot.hasError) {
+                  return Text('Error fetching service name and quantity');
+                } else {
+                  return CircularProgressIndicator(); // Show a loading indicator
+                }
+              },
+            );
+          }).toList(),
+        ),
+        _buildInfoRow(
+          'Khoảng cách',
+          Text(
+            '$totalQuantity km',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildPaymentMethod(_payment?.method ?? '', ''),
+            Text(currencyFormat.format(totalAmount),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+          ],
+        ),
+      ],
     );
   }
 
