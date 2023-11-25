@@ -69,8 +69,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
   Future<void> _loadBooking(String orderId) async {
     try {
-      Booking updatedBooking =
-          await authService.fetchBookingById(widget.booking.id);
+      Booking updatedBooking = await authService.fetchBookingById(orderId);
       setState(() {
         _currentBooking = updatedBooking;
         _isLoading = false;
@@ -143,6 +142,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   }
 
   Future<void> _calculateTotal(String orderId) async {
+    setState(() {
+      total = 0;
+    });
     final List<Service> services = await _loadServicesOfCustomer(orderId);
     for (var service in services) {
       setState(() {
@@ -155,6 +157,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     final orderProvider = OrderProvider();
     List<String> imgData = await orderProvider.getUrlImages(id);
     setState(() {
+      _imageUrls.clear();
       _imageUrls = imgData;
     });
   }
@@ -240,8 +243,12 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     final upload = FirBaseStorageProvider();
 
     if (pickedImages != []) {
-      _imageUrls.clear();
+      setState(() {
+        _imageUrls.clear();
+      });
+
       for (int index = 0; index < pickedImages.length; index++) {
+        print(pickedImages.length);
         String? imageUrl =
             await upload.uploadImageToFirebaseStorage(pickedImages[index]);
         print(imageUrl);
@@ -256,8 +263,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       }
       setState(() {
         pickedImages.clear();
-        _loadImageOrders(widget.booking.id);
       });
+      await _loadImageOrders(widget.booking.id);
     } else {
       print('No image selected.');
     }
@@ -419,7 +426,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           height: 200.0,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: 5, // fixed to 5 slots for images
+            itemCount: 20, // fixed to 5 slots for images
             itemBuilder: (context, index) {
               // If there's an image at this index, show it
               if (index < allImages.length) {
@@ -889,16 +896,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                   if (_imageUrls.isNotEmpty) {
                                     await updateOrder(widget.booking.id,
                                         techNoteController.text, _imageUrls);
-                                    await _loadImageOrders(widget.booking.id);
+                                    // await _loadImageOrders(widget.booking.id);
                                     await _loadTechInfo(
                                         widget.booking.technicianId);
-                                    await _loadBooking(widget.booking.id);    
+                                    await _loadBooking(widget.booking.id);
                                     setState(() {
                                       techNoteController.clear();
                                       _loadCustomerInfo(
                                           widget.booking.customerId);
                                       _calculateTotal(widget.booking.id);
-                                      
                                     });
                                   } else {
                                     print("Image empty");
@@ -908,7 +914,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                   }
                                 } else {
                                   print("Note or pickedImages empty");
-                                  notifyMessage.showToast("Cần có ảnh và ghi chú");
+                                  notifyMessage
+                                      .showToast("Cần có ảnh và ghi chú");
                                   setState(() {
                                     _isLoading = false;
                                   });
@@ -930,6 +937,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
   @override
   void dispose() {
+    _imageUrls.clear();
     techNoteController.dispose();
     super.dispose();
   }
