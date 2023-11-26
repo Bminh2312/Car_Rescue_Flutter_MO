@@ -1,13 +1,58 @@
+import 'dart:convert';
+
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
-import 'package:CarRescue/src/presentation/view/car_owner_view/car_view/widgets/car_status.dart';
+import 'package:CarRescue/src/models/car_model.dart';
+import 'package:CarRescue/src/models/customer_car.dart';
+import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/car_view/widgets/car_status.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/car_view/widgets/update_car_view.dart';
 import 'package:flutter/material.dart';
-import '../../../../../models/vehicle_item.dart';
+import 'package:http/http.dart' as http;
 
-class CarCard extends StatelessWidget {
-  final Vehicle vehicle;
+class CarCard extends StatefulWidget {
+  final CustomerCar customerCar;
+  final String userId;
+  final String accountId;
+  CarCard(
+      {required this.customerCar,
+      required this.userId,
+      required this.accountId});
 
-  CarCard({required this.vehicle});
+  @override
+  State<CarCard> createState() => _CarCardState();
+}
+
+class _CarCardState extends State<CarCard> {
+  CarModel? carModel;
+  @override
+  void initState() {
+    super.initState();
+    fetchCarModel(widget.customerCar.modelId ?? "");
+  }
+
+  Future<void> fetchCarModel(String modelId) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Model/Get?id=$modelId';
+
+    final response = await http.get(Uri.parse(apiUrl));
+    try {
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = json.decode(response.body);
+        var dataField = data['data'];
+        CarModel carModelAPI = CarModel.fromJson(
+            dataField); // Convert the map to a CarModel object
+        print('a : $carModelAPI');
+        setState(() {
+          carModel = carModelAPI;
+        });
+      } else {
+        throw Exception('Failed to load data from API');
+      }
+    } catch (e) {
+      print('Error parsing CarModel: $e');
+      // Handle the error appropriately
+    }
+  }
 
   void _showCarDetails(BuildContext context, String id) {
     // Assuming that you have properly initialized the 'car' object
@@ -35,7 +80,9 @@ class CarCard extends StatelessWidget {
                   ),
                   child: Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: Image(image: NetworkImage(vehicle.image ?? '')),
+                    child: Image(
+                        image: NetworkImage(widget.customerCar.image ??
+                            'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/vehicle%2Fimages%2Fcar.png?alt=media&token=4a112258-d73c-4f2e-9f2f-bf46aa204790')),
                   ),
                 ),
                 SizedBox(height: 16),
@@ -56,7 +103,7 @@ class CarCard extends StatelessWidget {
                         Expanded(
                           child: Align(
                             alignment: Alignment.centerRight,
-                            child: CarStatus(status: vehicle.status),
+                            child: CarStatus(status: widget.customerCar.status),
                           ),
                         ),
                       ],
@@ -64,66 +111,41 @@ class CarCard extends StatelessWidget {
                     SizedBox(
                       height: 8,
                     ),
-                    _buildDetailItem('Nhà sản xuất', vehicle.manufacturer),
-                    _buildDetailItem('Số khung', vehicle.vinNumber),
-                    _buildDetailItem('Biển số xe', vehicle.licensePlate),
-                    _buildDetailItem('Màu sắc', vehicle.color),
                     _buildDetailItem(
-                        'Năm sản xuất', vehicle.manufacturingYear.toString()),
-                    _buildDetailItem('Loại xe', vehicle.type),
+                        'Nhà sản xuất', widget.customerCar.manufacturer),
+                    _buildDetailItem('Số khung', widget.customerCar.vinNumber),
+                    _buildDetailItem(
+                        'Biển số xe', widget.customerCar.licensePlate),
+                    _buildDetailItem('Màu sắc', widget.customerCar.color),
+                    _buildDetailItem('Năm sản xuất',
+                        widget.customerCar.manufacturingYear.toString()),
+                    _buildDetailItem('Loại xe', carModel?.model1 ?? 'unknown'),
                   ],
                 ),
                 SizedBox(height: 16),
                 Center(
-                  child: vehicle.status.toUpperCase() == 'ACTIVE'
-                      ? TextButton(
-                          onPressed: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => HomeView(
-                            //       vehicle: vehicle,
-                            //     ),
-                            //   ),
-                            // );
-                          },
-                          child: Text(
-                            'Chọn',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
-                          ),
-                          style: TextButton.styleFrom(
-                            backgroundColor: FrontendConfigs.kIconColor,
-                            minimumSize: Size(double.infinity, 48),
-                          ),
-                        )
-                      : vehicle.status.toUpperCase() == 'WAITING_APPROVAL'
-                          ? TextButton(
-                              onPressed: () {},
-                              child: Text(
-                                'Cập nhật',
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 18),
-                              ),
-                              style: TextButton.styleFrom(
-                                backgroundColor: FrontendConfigs.kIconColor,
-                                minimumSize: Size(double.infinity, 48),
-                              ),
-                            )
-                          : IgnorePointer(
-                              ignoring: true,
-                              child: TextButton(
-                                onPressed: () {},
-                                child: Text(
-                                  'Chọn',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                style: TextButton.styleFrom(
-                                  backgroundColor: Colors.grey,
-                                  minimumSize: Size(double.infinity, 48),
-                                ),
-                              ),
-                            ),
-                )
+                    child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => UpdateCarScreen(
+                          userId: widget.userId,
+                          accountId: widget.accountId,
+                          car: widget.customerCar,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Cập nhật',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                  style: TextButton.styleFrom(
+                    backgroundColor: FrontendConfigs.kIconColor,
+                    minimumSize: Size(double.infinity, 48),
+                  ),
+                ))
               ],
             ),
           ),
@@ -137,60 +159,69 @@ class CarCard extends StatelessWidget {
     return SingleChildScrollView(
       child: GestureDetector(
         onTap: () {
-          _showCarDetails(context, vehicle.id);
+          _showCarDetails(context, widget.customerCar.id);
         },
-        child: Card(
-          margin: EdgeInsets.all(20),
-          elevation: 6,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
+        child: Container(
+          margin: EdgeInsets.symmetric(vertical: 5),
+          color: Colors.white,
           child: ListTile(
             contentPadding: EdgeInsets.all(16),
             leading: Container(
               width: 80,
-              height: 80,
+              height: 160,
               decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
                 image: DecorationImage(
-                  image: NetworkImage(vehicle.image ?? ''),
+                  image: NetworkImage(widget.customerCar.image ?? ''),
                   fit: BoxFit.cover,
                 ),
               ),
             ),
-            title: Text(
-              vehicle.manufacturer,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            title: CustomText(
+              text: carModel?.model1 ?? '',
+              fontWeight: FontWeight.normal,
+              color: Colors.grey,
+              fontSize: 18,
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(height: 4),
                 Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Color.fromARGB(134, 154, 154, 154),
-                      width: 2,
-                    ),
-                  ),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                    child: Text(
-                      vehicle.licensePlate,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: FrontendConfigs.kPrimaryColor,
-                      ),
-                    ),
-                  ),
+                  child: CustomText(
+                      text:
+                          '${widget.customerCar.manufacturer} (${widget.customerCar.manufacturingYear})',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20),
                 ),
                 SizedBox(height: 10),
-                CarStatus(status: vehicle.status),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Color.fromARGB(134, 154, 154, 154),
+                          width: 2,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 4, horizontal: 8),
+                        child: Text(
+                          widget.customerCar.licensePlate,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: FrontendConfigs.kPrimaryColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                    CarStatus(status: widget.customerCar.status),
+                  ],
+                ),
               ],
             ),
           ),

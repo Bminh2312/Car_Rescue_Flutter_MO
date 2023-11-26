@@ -42,7 +42,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
   List<Booking> assignedBookings = [];
   DateTime? _selectedDay;
   CurrentWeek? _currentWeek;
-
+  CurrentWeek? _nextWeek;
   String? selectedShift;
   DateTime selectedDate = DateTime.now();
   List<WorkShift> weeklyShifts = [];
@@ -63,6 +63,26 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
       }
     });
     loadCurrentWeek();
+  }
+
+  Future<void> loadNextWeek(DateTime startDate) async {
+    try {
+      final CurrentWeek nextWeekFromAPI =
+          await AuthService().getNextWeek(startDate);
+
+      // Sort the list by the latest date (assuming WorkShift has a date property)
+      // nextWeekFromAPI.sort((a, b) => a.date.compareTo(b.date));
+
+      // Update the state variable with the sorted data
+      setState(() {
+        _nextWeek = nextWeekFromAPI;
+        print(_nextWeek);
+      });
+      loadWeeklyShift(_nextWeek!.id, widget.userId);
+    } catch (e) {
+      // Handle the error or return an empty list based on your requirements
+      print('Error loading next weeks: $e');
+    }
   }
 
   Future<void> loadCurrentWeek() async {
@@ -141,8 +161,8 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
           setState(() {
             completedBookings = feedbackData.count!;
             averageRating = feedbackData.rating!;
-            print("Inside setState - Setting Rating: ${completedBookings}");
-            print("Inside setState - Setting Count: ${averageRating}");
+            print("Inside setState - Setting Rating: $completedBookings");
+            print("Inside setState - Setting Count: $averageRating");
           });
         } else {
           print("feedbackData.count or feedbackData.rating is null.");
@@ -155,11 +175,9 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
     }
   }
 
-
   Future<void> fetchBookings() async {
     try {
-      final bookingsFromApi =
-          await authService.fetchBookings(widget.userId);
+      final bookingsFromApi = await authService.fetchBookings(widget.userId);
       completedBookings = bookingsFromApi
           .where((booking) => booking.status == 'COMPLETED')
           .length;
@@ -345,15 +363,26 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
 
   Widget buildWeeklyTaskSchedule() {
     DateTime now = DateTime.now();
+    DateTime nowPlus14Hours = now.add(Duration(hours: 14));
+
     DateTime today = DateTime(now.year, now.month, now.day);
     DateTime tomorrow = DateTime(now.year, now.month, now.day + 1);
+
     List<WorkShift> filteredShifts = weeklyShifts.where((shift) {
       DateTime shiftDate =
           DateTime(shift.date.year, shift.date.month, shift.date.day);
       return shiftDate == today || shiftDate == tomorrow;
     }).toList();
     if (weeklyShifts.length < 2) {
-      return Center(child: LoadingState());
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Center(
+            child: CustomText(
+          text: 'Hiện tại không có lịch làm việc',
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        )),
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

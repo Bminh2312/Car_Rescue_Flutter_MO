@@ -1,7 +1,10 @@
 import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/customerInfo.dart';
+import 'package:CarRescue/src/models/customer_car.dart';
 import 'package:CarRescue/src/models/order.dart';
 import 'package:CarRescue/src/models/service.dart';
 import 'package:CarRescue/src/models/technician.dart';
@@ -25,6 +28,8 @@ import '../widgets/customer_info.dart';
 import '../../../../../models/booking.dart';
 import '../../../../../models/payment.dart';
 import 'package:intl/intl.dart';
+import 'package:CarRescue/src/models/car_model.dart';
+import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/customer_car_info.dart';
 
 class BookingDetailsBody extends StatefulWidget {
   final Booking booking;
@@ -50,6 +55,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   Technician? technicianInfo;
   Booking? _currentBooking;
   Payment? _payment;
+  CustomerCar? _car;
+  CarModel? _carModel;
   List<String> _imageUrls = [];
   List<String> pickedImages = [];
   List<String> _updateImage = [];
@@ -65,6 +72,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     _calculateTotal(widget.booking.id);
     _loadPayment(widget.booking.id);
     _loadBooking(widget.booking.id);
+    getCarData(widget.booking.carId ?? '');
     // _imageUrls.clear();
   }
 
@@ -164,22 +172,45 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     });
   }
 
-  void _showImageDialog(BuildContext context, String imageUrl) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          child: Container(
-            width: 400, // Set the width of the dialog as needed
-            height: 400, // Set the height of the dialog as needed
-            child: Image.network(
-              imageUrl, // Display the tapped image
-              fit: BoxFit.contain, // Fit the image to the dialog
-            ),
-          ),
-        );
-      },
-    );
+  Future<CustomerCar> getCarData(String carId) async {
+    final String fetchCarUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Car/Get?id=$carId'; // Replace with your actual API endpoint for fetching car data
+
+    final response = await http.get(Uri.parse(fetchCarUrl));
+    try {
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = json.decode(response.body);
+        var dataField = data['data'];
+        final carFromAPI = CustomerCar.fromJson(dataField);
+        print(carFromAPI);
+        setState(() {
+          _car = carFromAPI;
+        });
+        _loadCarModel(_car!.modelId!);
+        // Assuming the response data is in the format you need
+        return CustomerCar.fromJson(
+            dataField); // Convert the data to a CustomerCar object
+      } else {
+        throw Exception('Failed to get car data from API');
+      }
+    } catch (e) {
+      print('Error fetching CarModel: $e');
+      throw Exception('Error fetching CarModel: $e');
+    }
+  }
+
+  Future<void> _loadCarModel(String modelId) async {
+    try {
+      CarModel carModelAPI = await authService.fetchCarModel(modelId);
+      // Use carModelAPI as needed
+      setState(() {
+        _carModel = carModelAPI;
+      });
+    } catch (e) {
+      // Handle the exception
+      print('Error loading CarModel: $e');
+      // Optionally, implement additional error handling logic here
+    }
   }
 
   void _openImageDialog(
@@ -702,6 +733,12 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           phone: customerInfo?.phone ?? '',
                           avatar: customerInfo?.avatar ?? '',
                         ),
+                        CustomerCarInfoRow(
+                          manufacturer: _car?.manufacturer ?? 'Không có',
+                          type: _carModel?.model1 ?? 'Không có',
+                          licensePlate: _car?.licensePlate ?? 'Không có',
+                          image: _car?.image ?? 'Không có',
+                        ),
                       ],
                     ),
                   ),
@@ -737,6 +774,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         _buildInfoRow(
                             "Ghi chú",
                             Text(widget.booking.customerNote,
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        _buildInfoRow(
+                            "Lí do hủy đơn",
+                            Text(
+                                widget.booking.cancellationReason ?? 'Không có',
                                 style: TextStyle(fontWeight: FontWeight.bold))),
                       ],
                     ),
@@ -791,7 +833,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSectionTitle("Thời gian"),
-                        if (widget.booking.status != "ASSIGNED")
+                        if (widget.booking.status != "ASSIGNED" &&
+                            widget.booking.startTime != null)
                           _buildInfoRow(
                             "Bắt đầu",
                             Text(
@@ -900,7 +943,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                     await _loadTechInfo(
                                         widget.booking.technicianId);
                                     await _loadBooking(widget.booking.id);
+
                                     await _loadImageOrders(widget.booking.id);
+
                                     setState(() {
                                       techNoteController.clear();
                                       _loadCustomerInfo(

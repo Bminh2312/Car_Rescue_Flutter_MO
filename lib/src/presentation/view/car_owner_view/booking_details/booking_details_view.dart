@@ -43,15 +43,16 @@ class _BookingDetailsViewState extends State<BookingDetailsView> {
         showText: true,
       ),
       body: BookingDetailsBody(
-          widget.userId,
-          widget.accountId,
-          widget.booking,
-          widget.addressesDepart,
-          widget.subAddressesDepart,
-          widget.addressesDesti,
-          widget.subAddressesDesti,
-          widget.updateTabCallback,
-          widget.reloadData),
+        widget.userId,
+        widget.accountId,
+        widget.booking,
+        widget.addressesDepart,
+        widget.subAddressesDepart,
+        widget.addressesDesti,
+        widget.subAddressesDesti,
+        widget.updateTabCallback,
+        widget.reloadData,
+      ),
     );
   }
 }

@@ -74,6 +74,12 @@ class BookingStatus extends StatelessWidget {
           return 'Đã điều phối';
         case 'INPROGRESS':
           return 'Đang hoạt động';
+        case 'CANCELLED':
+          return 'Đã hủy';
+        case 'COMPLETED':
+          return 'Hoàn thành';
+        case 'NEW':
+          return 'Mới';
         default:
           return '';
       }

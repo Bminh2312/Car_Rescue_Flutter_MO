@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:CarRescue/src/models/car_model.dart';
+import 'package:CarRescue/src/models/customer_car.dart';
+import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/customer_car_info.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/booking.dart';
@@ -37,6 +40,7 @@ class BookingDetailsBody extends StatefulWidget {
   final Map<String, String> subAddressesDesti;
   final Function? updateTabCallback;
   final Function? reloadData;
+
   BookingDetailsBody(
     this.userId,
     this.accountId,
@@ -59,6 +63,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   CustomerInfo? customerInfo;
   Vehicle? vehicleInfo;
   Payment? _payment;
+  CustomerCar? _car;
+  CarModel? _carModel;
   int desiredTabIndex = 0;
   List<String> _imageUrls = [];
   List<String> pickedImages = [];
@@ -136,6 +142,47 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     throw Exception('Failed to load service name and quantity from API');
   }
 
+  Future<CustomerCar> getCarData(String carId) async {
+    final String fetchCarUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Car/Get?id=$carId'; // Replace with your actual API endpoint for fetching car data
+
+    final response = await http.get(Uri.parse(fetchCarUrl));
+    try {
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = json.decode(response.body);
+        var dataField = data['data'];
+        final carFromAPI = CustomerCar.fromJson(dataField);
+        print(carFromAPI);
+        setState(() {
+          _car = carFromAPI;
+        });
+        _loadCarModel(_car!.modelId!);
+        // Assuming the response data is in the format you need
+        return CustomerCar.fromJson(
+            dataField); // Convert the data to a CustomerCar object
+      } else {
+        throw Exception('Failed to get car data from API');
+      }
+    } catch (e) {
+      print('Error fetching CarModel: $e');
+      throw Exception('Error fetching CarModel: $e');
+    }
+  }
+
+  Future<void> _loadCarModel(String modelId) async {
+    try {
+      CarModel carModelAPI = await authService.fetchCarModel(modelId);
+      // Use carModelAPI as needed
+      setState(() {
+        _carModel = carModelAPI;
+      });
+    } catch (e) {
+      // Handle the exception
+      print('Error loading CarModel: $e');
+      // Optionally, implement additional error handling logic here
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -145,47 +192,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     _loadCustomerInfo(widget.booking.customerId);
     _loadVehicleInfo(widget.booking.vehicleId ?? '');
     _loadImageUrls();
-
+    getCarData(widget.booking.carId ?? '');
     _loadPayment(widget.booking.id);
   }
-
-  // void calculateTotals() {
-  //   int totalQuantity = 0;
-  //   double totalAmount = 0.0;
-
-  //   for (var order in orderDetails) {
-  //     int quantity = order['quantity'] ?? 0; // Giả định 'quantity' là một int
-  //     double total = double.tryParse(order['tOtal'].toString()) ??
-  //         0.0; // Chuyển 'total' sang double
-
-  //     totalQuantity += quantity;
-  //     totalAmount += total;
-  //   }
-
-  //   // Cập nhật state với tổng số lượng và tổng giá trị
-  //   setState(() {
-  //     this.totalQuantity = totalQuantity;
-  //     this.totalAmount = totalAmount;
-  //   });
-  // }
-
-  // Future<List<Service>> _loadServicesOfCustomer(String orderId) async {
-  //   try {
-  //     final List<String> listId =
-  //         await AuthService().getServiceIdInOrderDetails(orderId);
-  //     if (listId.isNotEmpty) {
-  //       final List<Service> listService =
-  //           await AuthService().getServiceById(listId);
-
-  //       return listService;
-  //     } else {
-  //       return [];
-  //     }
-  //   } catch (e) {
-  //     print("Error: $e");
-  //     return [];
-  //   }
-  // }
 
   Future<void> _loadImageUrls() async {
     setState(() {
@@ -251,19 +260,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     }
   }
 
-  void _addImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      // Add the file path to your imageUrls list
-      setState(() {
-        _imageUrls.add(pickedFile.path);
-      });
-    } else {
-      print('No image selected.');
-    }
-  }
+ 
 
   void _openImageDialog(
       BuildContext context, int index, List<String> allImages) {
@@ -350,10 +347,22 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   margin: EdgeInsets.symmetric(vertical: 4),
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   color: Colors.white,
-                  child: CustomerInfoRow(
-                    name: customerInfo?.fullname ?? '',
-                    phone: customerInfo?.phone ?? 'Chưa thêm số điện thoại',
-                    avatar: customerInfo?.avatar ?? '',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle('Khách hàng'),
+                      CustomerInfoRow(
+                        name: customerInfo?.fullname ?? '',
+                        phone: customerInfo?.phone ?? 'Chưa thêm số điện thoại',
+                        avatar: customerInfo?.avatar ?? '',
+                      ),
+                      CustomerCarInfoRow(
+                        manufacturer: _car?.manufacturer ?? 'Không có',
+                        type: _carModel?.model1 ?? 'Không có',
+                        licensePlate: _car?.licensePlate ?? 'Không có',
+                        image: _car?.image ?? 'Không có',
+                      ),
+                    ],
                   ),
                 ),
 
@@ -361,11 +370,17 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   margin: EdgeInsets.symmetric(vertical: 4),
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   color: Colors.white,
-                  child: VehicleInfoRow(
-                    manufacturer: vehicleInfo?.manufacturer ?? '',
-                    type: vehicleInfo?.type ?? '',
-                    licensePlate: vehicleInfo?.licensePlate ?? '',
-                    image: vehicleInfo?.image ?? '',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _buildSectionTitle('Cứu hộ'),
+                      VehicleInfoRow(
+                        manufacturer: vehicleInfo?.manufacturer ?? '',
+                        type: vehicleInfo?.type ?? '',
+                        licensePlate: vehicleInfo?.licensePlate ?? '',
+                        image: vehicleInfo?.image ?? '',
+                      ),
+                    ],
                   ),
                 ),
 
@@ -376,7 +391,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionTitle('Thông tin đơn hàng'),
+                      _buildSectionTitle('Đơn hàng'),
                       _buildInfoRow(
                           "Trạng thái",
                           BookingStatus(
@@ -802,6 +817,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildSectionTitle('Đơn giá'),
         _buildOrderItemSection(),
         SizedBox(
           height: 8,
@@ -859,9 +875,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     if (title == 'Banking') {
       displayTitle = 'Trả bằng chuyển khoản';
     } else if (title == 'Cash') {
-      displayTitle = 'Tiền mặt';
+      displayTitle = 'Trả bằng tiền mặt';
     } else {
-      displayTitle = 'Thanh toán';
+      displayTitle = 'Tổng cộng';
     }
 
     return Padding(
@@ -880,21 +896,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               if (displayTitle == 'Trả bằng chuyển khoản')
                 Image.asset(
                   'assets/images/banking.png',
-                  height: 25,
-                  width: 25,
+                  height: 20,
+                  width: 20,
                 )
-              else if (displayTitle == 'Tiền mặt')
+              else if (displayTitle == 'Trả bằng tiền mặt')
                 Image.asset(
                   'assets/images/money.png', // Replace with your cash image asset
-                  height: 25,
-                  width: 25,
+                  height: 20,
+                  width: 20,
                 )
-              else
-                Image.asset(
-                  'assets/images/money.png', // Replace with your desired asset
-                  height: 25,
-                  width: 25,
-                ),
             ],
           ),
           CustomText(
@@ -961,6 +971,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   // Accumulate the total quantity and total amount
                   totalQuantity = quantity as int;
                   totalAmount = total as int;
+
                   final formatter =
                       NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
                   final formattedTotal = formatter.format(price);
@@ -974,6 +985,32 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
+                      _buildInfoRow(
+                        'Khoảng cách',
+                        Text(
+                          '$totalQuantity km',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildPaymentMethod('Tổng cộng', ''),
+                          Text(currencyFormat.format(totalAmount),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 17)),
+                        ],
+                      ),
+                      Container(
+                          decoration: BoxDecoration(
+                              color: Color.fromARGB(97, 164, 164, 164),
+                              borderRadius: BorderRadius.circular(8)),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildPaymentMethod(_payment?.method ?? '', ''),
+                            ],
+                          )),
                     ],
                   );
                 } else if (snapshot.hasError) {
@@ -984,21 +1021,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               },
             );
           }).toList(),
-        ),
-        _buildInfoRow(
-          'Khoảng cách',
-          Text(
-            '$totalQuantity km',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildPaymentMethod(_payment?.method ?? '', ''),
-            Text(currencyFormat.format(totalAmount),
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-          ],
         ),
       ],
     );

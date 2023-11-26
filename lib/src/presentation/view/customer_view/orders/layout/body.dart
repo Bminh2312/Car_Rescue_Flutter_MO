@@ -179,11 +179,12 @@ class _OrderListState extends State<OrderList> {
 
                                     trailing: Column(
                                       children: [
+                                        SizedBox(
+                                          height: 10,
+                                        ),
                                         BookingStatus(
-
                                           fontSize: 16,
                                           status: order.status,
-
                                         ),
                                         Expanded(
                                           child:

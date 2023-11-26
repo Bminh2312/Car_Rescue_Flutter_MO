@@ -548,7 +548,7 @@ class _BookingListBodyState extends State<BookingListBody>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 2),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               Row(
                                 children: [
@@ -559,7 +559,7 @@ class _BookingListBodyState extends State<BookingListBody>
                                     width: 10,
                                   ),
                                   CustomText(
-                                      text: '$quantity',
+                                      text: '$quantity km',
                                       fontWeight: FontWeight.w600,
                                       color: FrontendConfigs.kAuthColor)
                                 ],

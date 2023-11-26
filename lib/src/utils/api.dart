@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:CarRescue/src/models/car_model.dart';
 import 'package:CarRescue/src/models/current_week.dart';
 import 'package:CarRescue/src/models/feedback.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
@@ -31,6 +32,8 @@ class LoginResult {
     required this.role,
   });
 }
+
+final String apiKey = 'AIzaSyBv0RoGulA7l1v9-d8uD5pgG8EsOPZbFLU';
 
 class AuthService {
   //TECHNICIAN API
@@ -568,8 +571,7 @@ class AuthService {
 
     // Check if departure coordinates are available
     if (latDeparture != null && longDeparture != null) {
-      const String apiKey =
-          'AIzaSyB3pfcWmEJDtpO6Kjy3OfikhN4bRP1ORjc'; // Replace with your actual API key
+      // Replace with your actual API key
       final String urlDeparture =
           'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=$apiKey';
 
@@ -596,8 +598,7 @@ class AuthService {
 
     // Check if destination coordinates are available
     if (latDestination != null && longDestination != null) {
-      const String apiKey =
-          'AIzaSyB3pfcWmEJDtpO6Kjy3OfikhN4bRP1ORjc'; // Replace with your actual API key
+      // Replace with your actual API key
       final String urlDestination =
           'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=$apiKey';
 
@@ -855,6 +856,64 @@ class AuthService {
       }),
     );
     final List userImage = [frontImageUrl, backImageUrl, vehicleUrl];
+    print(userImage);
+    if (response.statusCode == 200) {
+      print('Successfully created the car ${response.body}');
+      return true; //
+    } else {
+      print('Failed to create the car: ${response.body}');
+      return false; // Failed to create the car
+    }
+  }
+
+  Future<bool> createCarforCustomer(String? id,
+      {required String customerId,
+      required String licensePlate,
+      required String manufacturer,
+      required String status,
+      required String vinNumber,
+      required String modelId,
+      required String color,
+      required int manufacturingYear,
+      required File vehicleImage}) async {
+    var uuid = Uuid();
+    id ??= uuid.v4();
+
+    String? vehicleUrl =
+        await uploadImageToFirebase(vehicleImage, 'vehicle/images');
+
+    if (vehicleUrl == null) {
+      // Hiển thị lỗi
+      print('ko co hinh');
+      return false;
+    } // If id is null, generate a random UUID
+    final String apiUrl =
+        "https://rescuecapstoneapi.azurewebsites.net/api/Car/Create"; // Replace with your endpoint URL
+
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {
+        "Content-Type": "application/json",
+        // Add other headers if needed, like authorization headers
+      },
+      body: json.encode({
+        'id': id,
+        'customerId': customerId,
+        'licensePlate': licensePlate,
+        'manufacturer': manufacturer,
+        'status': status,
+        'vinNumber': vinNumber,
+        'modelId': modelId,
+        'color': color,
+        'manufacturingYear': manufacturingYear,
+
+        'image': vehicleUrl
+        // Note: Handling image uploads would require a multipart request.
+        // For simplicity, this example does not cover image uploads.
+        // You might need a separate API or endpoint to handle the image upload.
+      }),
+    );
+    final List userImage = [vehicleUrl];
     print(userImage);
     if (response.statusCode == 200) {
       print('Successfully created the car ${response.body}');
@@ -1298,5 +1357,27 @@ class AuthService {
       // Failed to create the car
     }
     return false;
+  }
+
+  Future<CarModel> fetchCarModel(String modelId) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Model/Get?id=$modelId';
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = json.decode(response.body);
+        var dataField = data['data'];
+        CarModel carModelAPI = CarModel.fromJson(
+            dataField); // Convert the map to a CarModel object
+        return carModelAPI;
+      } else {
+        throw Exception('Failed to load data from API: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching or parsing CarModel: $e');
+      throw Exception('Error fetching or parsing CarModel: $e');
+    }
   }
 }

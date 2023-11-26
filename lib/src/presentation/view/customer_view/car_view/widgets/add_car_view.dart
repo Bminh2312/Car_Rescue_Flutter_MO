@@ -1,14 +1,18 @@
+import 'dart:convert';
+
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/models/car_model.dart';
+import 'package:CarRescue/src/presentation/elements/car_brand.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
-import 'package:CarRescue/src/presentation/view/car_owner_view/car_view/car_view.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/car_view/car_view.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-// ... other necessary imports ...
+import 'package:http/http.dart' as http;
 
 class AddCarScreen extends StatefulWidget {
   final String userId;
@@ -26,23 +30,29 @@ class _AddCarScreenState extends State<AddCarScreen> {
           .toList();
   final _formKey = GlobalKey<FormState>();
   AuthService authService = AuthService();
-  File? _carRegistrationFontImage;
-  File? _carRegistrationBackImage;
+
   File? vehicleImage;
   String _manufacturer = '';
   String _licensePlate = '';
-  String _status = '';
+  String _status = 'ACTIVE';
   String _vinNumber = '';
-  String _selectedType = '';
+
   String _color = '';
   int _manufacturingYear = 0;
   bool _isLoading = false;
   bool _isValidate = false;
+  List<CarModel> carModelList = [];
+  Map<String, String> modelNameToId = {};
+  String _selectedType = '';
+  String _selectedModelId = '';
+  List<CarBrand> _brands = [];
+  String? _selectedBrand;
   final titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
   final inputDecoration = InputDecoration(
     border: OutlineInputBorder(),
     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
   );
+
   void _submitForm() async {
     var uuid = Uuid();
     String randomId = uuid.v4();
@@ -54,17 +64,15 @@ class _AddCarScreenState extends State<AddCarScreen> {
       });
 
       try {
-        bool isSuccess = await authService.createCarApproval(randomId,
-            rvoid: widget.userId,
+        bool isSuccess = await authService.createCarforCustomer(randomId,
+            customerId: widget.userId,
             licensePlate: _licensePlate,
             manufacturer: _manufacturer,
             status: _status,
             vinNumber: _vinNumber,
-            type: _selectedType,
+            modelId: _selectedModelId,
             color: _color,
             manufacturingYear: _manufacturingYear,
-            carRegistrationFontImage: _carRegistrationFontImage!,
-            carRegistrationBackImage: _carRegistrationBackImage!,
             vehicleImage: vehicleImage!);
 
         if (isSuccess) {
@@ -118,8 +126,83 @@ class _AddCarScreenState extends State<AddCarScreen> {
     }
   }
 
+  Future<List<CarModel>> fetchModel() async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Model/GetAll';
+
+    final response = await http.get(Uri.parse(apiUrl));
+
+    try {
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = json.decode(response.body);
+        var dataField = data['data'];
+
+        // Check if 'dataField' is a list before parsing
+        if (dataField is List) {
+          List<CarModel> carModelListAPI = dataField
+              .map((modelData) => CarModel(
+                    id: modelData['id'],
+                    model1: modelData['model1'],
+                    status: modelData['status'],
+                  ))
+              .toList();
+          setState(() {
+            carModelList = carModelListAPI;
+          });
+
+// After fetching car models
+          for (var model in carModelListAPI) {
+            modelNameToId[model.model1!] = model.id!;
+          }
+
+          print('ab:$carModelList');
+          return carModelListAPI;
+        } else {
+          // Handle the case where 'dataField' is not a list
+          throw Exception('Data is not in the expected format');
+        }
+      } else {
+        // Handle the case where the response status code is not 200
+        throw Exception('Failed to load data from API');
+      }
+    } catch (e) {
+      // Handle any errors that occur during parsing or HTTP request
+      throw Exception('Error: $e');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchModel();
+    fetchVehicleBrands().then((brands) {
+      setState(() {
+        _brands = brands;
+      });
+    });
+  }
+
+  Future<List<CarBrand>> fetchVehicleBrands() async {
+    const String apiUrl =
+        'https://carapi.app/api/makes'; // Replace with actual API URL
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      Map<String, dynamic> responseBody = json.decode(response.body);
+      List<dynamic> brandsJson =
+          responseBody['data']; // Access the 'data' field
+
+      return brandsJson.map((json) => CarBrand.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load vehicle brands');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    String? _selectedType =
+        carModelList.isNotEmpty ? carModelList[0].model1 : '';
+
     return Stack(children: [
       Scaffold(
         appBar: customAppBar(context, text: 'Đăng kí xe mới', showText: true),
@@ -151,23 +234,25 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                       },
                                     ),
                                     SizedBox(height: 12),
-                                    TextFormField(
-                                      decoration: inputDecoration.copyWith(
-                                        icon: Icon(Icons.drive_eta),
-                                        labelText: 'Hãng xe',
+                                    DropdownButtonFormField<String>(
+                                      value: _selectedBrand,
+                                      onChanged: (newValue) {
+                                        setState(() {
+                                          _manufacturer = newValue!;
+                                        });
+                                      },
+                                      items: _brands
+                                          .map<DropdownMenuItem<String>>(
+                                              (CarBrand brand) {
+                                        return DropdownMenuItem<String>(
+                                          value: brand.name,
+                                          child: Text(brand.name),
+                                        );
+                                      }).toList(),
+                                      decoration: InputDecoration(
+                                        labelText: 'Chọn hãng xe',
                                       ),
-                                      validator: (value) {
-                                        if (value == null ||
-                                            value.trim().isEmpty) {
-                                          return 'Vui lòng nhập hãng xe';
-                                        }
-                                        _isValidate = true;
-                                        return null;
-                                      },
-                                      onSaved: (value) {
-                                        _manufacturer = value!;
-                                      },
-                                    ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -229,27 +314,31 @@ class _AddCarScreenState extends State<AddCarScreen> {
                               }
                               return null;
                             },
-                            onSaved: (value) {
-                              _selectedType = value!;
-                            },
                             onChanged: (value) {
                               setState(() {
-                                _selectedType = value!;
+                                _selectedType = value ?? '';
+                                _selectedModelId =
+                                    modelNameToId[_selectedType] ?? '';
                               });
                             },
-                            items: <String>[
-                              'Xe kéo',
-                              'Xe cẩu',
-                              'Xe chở'
-                            ] // Replace with your types of xe
-                                .map<DropdownMenuItem<String>>((String value) {
+                            onSaved: (value) {
+                              _selectedType = value ?? '';
+                              _selectedModelId =
+                                  modelNameToId[_selectedType] ?? '';
+                            },
+                            value: _selectedType,
+                            items: carModelList.map<DropdownMenuItem<String>>(
+                                (CarModel model) {
                               return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
+                                value: model.model1,
+                                child: Text('${model.model1}'),
                               );
                             }).toList(),
                             hint: Text('Chọn loại xe'),
                           ),
+                          SizedBox(height: 20),
+                          Text('Loại xe đã chọn: $_selectedType'),
+                          Text('ModelId tương ứng: $_selectedModelId'),
                           SizedBox(height: 16),
                           Row(
                             children: [
@@ -319,54 +408,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 16),
-                          Text('Hình ảnh đăng kí xe',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          Divider(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _buildImageField(
-                                label: 'Ảnh mặt trước',
-                                imageFile: _carRegistrationFontImage,
-                                onImageChange: (file) {
-                                  if (file!.lengthSync() > 3 * 1024 * 1024) {
-                                    // 3MB in bytes
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.')),
-                                    );
-                                  } else {
-                                    setState(() {
-                                      _carRegistrationFontImage = file;
-                                    });
-                                  }
-                                },
-                                key: Key('front'),
-                              ),
-                              // SizedBox(width: 25),
-                              _buildImageField(
-                                label: 'Ảnh mặt sau',
-                                imageFile: _carRegistrationBackImage,
-                                onImageChange: (file) {
-                                  if (file!.lengthSync() > 3 * 1024 * 1024) {
-                                    // 3MB in bytes
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.')),
-                                    );
-                                  } else {
-                                    setState(() {
-                                      _carRegistrationBackImage = file;
-                                    });
-                                  }
-                                },
-                                key: Key('back'),
-                              ),
-                            ],
+                          SizedBox(
+                            height: 10,
                           ),
                           Container(
                             alignment: Alignment
@@ -529,11 +572,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
             icon: Icon(Icons.remove_circle, color: Colors.red),
             onPressed: () {
               setState(() {
-                if (key == Key('front')) {
-                  _carRegistrationFontImage = null;
-                } else if (key == Key('back')) {
-                  _carRegistrationBackImage = null;
-                } else if (key == Key('avatar')) {
+                if (key == Key('avatar')) {
                   vehicleImage = null;
                 }
               });
