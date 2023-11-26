@@ -3,6 +3,7 @@ import 'package:CarRescue/src/models/order_detail.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
 
 class Booking {
+  final String? carId;
   final String id;
   final String customerId;
   final String technicianId;
@@ -28,6 +29,7 @@ class Booking {
   int? quantity;
   int? total;
   Booking({
+    required this.carId,
     required this.id,
     required this.customerId,
     required this.technicianId,
@@ -50,6 +52,7 @@ class Booking {
   });
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
+      carId: json['carId'] as String?,
       id: json['id'],
       customerId: json['customerId'],
       technicianId: json['technicianId'] ?? '',

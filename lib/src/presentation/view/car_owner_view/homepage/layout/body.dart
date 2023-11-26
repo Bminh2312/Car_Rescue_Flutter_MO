@@ -477,7 +477,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Hiệu suất làm việc trong tuần',
+            'Hiệu suất làm việc',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,

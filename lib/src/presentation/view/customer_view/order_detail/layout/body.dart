@@ -1,6 +1,10 @@
 import 'dart:io';
-
+import 'dart:convert';
+import 'package:CarRescue/src/models/vehicle_item.dart';
+import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/vehicle_info.dart';
+import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/models/customer.dart';
+import 'package:CarRescue/src/models/customer_car.dart';
 import 'package:CarRescue/src/models/feedback_customer.dart';
 import 'package:CarRescue/src/models/order.dart';
 import 'package:CarRescue/src/models/service.dart';
@@ -21,6 +25,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:intl/intl.dart';
+import 'package:CarRescue/src/models/car_model.dart';
+import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/customer_car_info.dart';
 
 class OrderDetailBody extends StatefulWidget {
   final String orderId;
@@ -38,7 +44,12 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   FeedbackCustomer? feedbackCustomer;
   double ratingParse = 0.0;
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
+  CustomerCar? _car;
+  CarModel? _carModel;
+  Vehicle? vehicleInfo;
+  late Future<Order> _orderFuture;
   int total = 0;
+  Order? _order;
   List<String> _imageUrls = [];
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
   @override
@@ -51,7 +62,84 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
     _loadImageOrders(widget.orderId);
     _calculateTotal(widget.orderId);
     fetchFeedback(widget.orderId);
+
+    _orderFuture = fetchOrderDetail(widget.orderId).then((order) {
+      _loadVehicleInfo(order.vehicleId ?? '').then((vehicle) {
+        setState(() {
+          vehicleInfo = vehicle;
+        });
+      });
+      return order;
+    });
+    _orderFuture = fetchOrderDetail(widget.orderId).then((order) {
+      getCarData(order.carId!).then((carData) {
+        setState(() {
+          _car = carData;
+        });
+      });
+      return order;
+    });
     super.initState();
+  }
+
+  Future<Vehicle> _loadVehicleInfo(String vehicleId) async {
+    try {
+      Vehicle fetchedVehicleInfo =
+          await authService.fetchVehicleInfo(vehicleId);
+      print('Fetched vehicle: $fetchedVehicleInfo');
+
+      setState(() {
+        vehicleInfo = fetchedVehicleInfo;
+      });
+
+      return fetchedVehicleInfo;
+    } catch (e) {
+      print('Error loading vehicle info: $e');
+      // Handle the exception as appropriate for your app
+      // For example, return a default Vehicle object or rethrow the exception
+      throw Exception('Failed to load vehicle info');
+    }
+  }
+
+  Future<CustomerCar> getCarData(String carId) async {
+    final String fetchCarUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Car/Get?id=$carId'; // Replace with your actual API endpoint for fetching car data
+
+    final response = await http.get(Uri.parse(fetchCarUrl));
+    try {
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = json.decode(response.body);
+        var dataField = data['data'];
+        final carFromAPI = CustomerCar.fromJson(dataField);
+        print(carFromAPI);
+        setState(() {
+          _car = carFromAPI;
+        });
+        _loadCarModel(_car!.modelId!);
+        // Assuming the response data is in the format you need
+        return CustomerCar.fromJson(
+            dataField); // Convert the data to a CustomerCar object
+      } else {
+        throw Exception('Failed to get car data from API');
+      }
+    } catch (e) {
+      print('Error fetching CarModel: $e');
+      throw Exception('Error fetching CarModel: $e');
+    }
+  }
+
+  Future<void> _loadCarModel(String modelId) async {
+    try {
+      CarModel carModelAPI = await authService.fetchCarModel(modelId);
+      // Use carModelAPI as needed
+      setState(() {
+        _carModel = carModelAPI;
+      });
+    } catch (e) {
+      // Handle the exception
+      print('Error loading CarModel: $e');
+      // Optionally, implement additional error handling logic here
+    }
   }
 
   Future<void> fetchFeedback(String idOrder) async {
@@ -178,11 +266,11 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Order>(
-      future: fetchOrderDetail(widget.orderId),
+      future: _orderFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           // Display loading indicator or placeholder text
-          return CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           // Handle error
           return Text('Error: ${snapshot.error}');
@@ -191,6 +279,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
           return Text('Data is null');
         } else {
           Order order = snapshot.data!;
+
           print(order.id);
           return SingleChildScrollView(
             child: Column(
@@ -226,23 +315,63 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (widget.techId != '' && widget.techId != null)
+                      // if (widget.techId != '' && widget.techId != null)
 
+                      // Use the 'order' object as needed
+
+                      // Example: Text(order.id),
+
+                      // if (widget.techId != '' && widget.techId != null)
+                      _buildSectionTitle("Khách hàng"),
+                      // if (widget.techId != '' && widget.techId != null)
+                      CustomerCarInfoRow(
+                        manufacturer: _car?.manufacturer ?? 'Không có',
+                        type: _carModel?.model1 ?? 'Không có',
+                        licensePlate: _car?.licensePlate ?? 'Không có',
+                        image: _car?.image ?? 'Không có',
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _buildSectionTitle('Cứu hộ'),
+                      VehicleInfoRow(
+                        manufacturer: vehicleInfo?.manufacturer ?? '',
+                        type: vehicleInfo?.type ?? '',
+                        licensePlate: vehicleInfo?.licensePlate ?? '',
+                        image: vehicleInfo?.image ?? '',
+                      ),
+                    ],
+                  ),
+                ),
+                if (widget.techId != '' && widget.techId != null)
+                  Container(
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         // Use the 'order' object as needed
 
                         // Example: Text(order.id),
 
-                        if (widget.techId != '' && widget.techId != null)
-                          _buildSectionTitle("Thông tin kĩ thuật viên"),
-                      if (widget.techId != '' && widget.techId != null)
+                        _buildSectionTitle("Thông tin kĩ thuật viên"),
+
                         CustomerInfoRow(
                           name: technicianInfo?.fullname ?? "",
                           phone: technicianInfo?.phone ?? "",
                           avt: technicianInfo?.avatar ?? "",
                         ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
                 if (feedbackCustomer?.status == "COMPLETED")
                   Container(
                       margin: EdgeInsets.symmetric(vertical: 4),

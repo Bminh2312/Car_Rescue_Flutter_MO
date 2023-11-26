@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:CarRescue/src/models/car_model.dart';
 import 'package:CarRescue/src/models/current_week.dart';
 import 'package:CarRescue/src/models/feedback.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
@@ -864,7 +865,8 @@ class AuthService {
       return false; // Failed to create the car
     }
   }
-Future<bool> createCarforCustomer(String? id,
+
+  Future<bool> createCarforCustomer(String? id,
       {required String customerId,
       required String licensePlate,
       required String manufacturer,
@@ -921,6 +923,7 @@ Future<bool> createCarforCustomer(String? id,
       return false; // Failed to create the car
     }
   }
+
   Future<String?> getDeviceToken() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
@@ -1354,5 +1357,27 @@ Future<bool> createCarforCustomer(String? id,
       // Failed to create the car
     }
     return false;
+  }
+
+  Future<CarModel> fetchCarModel(String modelId) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Model/Get?id=$modelId';
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = json.decode(response.body);
+        var dataField = data['data'];
+        CarModel carModelAPI = CarModel.fromJson(
+            dataField); // Convert the map to a CarModel object
+        return carModelAPI;
+      } else {
+        throw Exception('Failed to load data from API: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching or parsing CarModel: $e');
+      throw Exception('Error fetching or parsing CarModel: $e');
+    }
   }
 }

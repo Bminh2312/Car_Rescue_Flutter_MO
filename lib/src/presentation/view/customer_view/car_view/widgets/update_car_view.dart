@@ -223,28 +223,17 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
     }
   }
 
-  Future<void> fetchCarModel(String modelId) async {
-    final String apiUrl =
-        'https://rescuecapstoneapi.azurewebsites.net/api/Model/Get?id=$modelId';
-
-    final response = await http.get(Uri.parse(apiUrl));
+  Future<void> _loadCarModel(String modelId) async {
     try {
-      if (response.statusCode == 200) {
-        Map<String, dynamic> data = json.decode(response.body);
-        var dataField = data['data'];
-        CarModel carModelAPI = CarModel.fromJson(
-            dataField); // Convert the map to a CarModel object
-        print('a : $carModelAPI');
-        setState(() {
-          carModel = carModelAPI;
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load data from API');
-      }
+      CarModel carModelAPI = await authService.fetchCarModel(modelId);
+      // Use carModelAPI as needed
+      setState(() {
+        carModel = carModelAPI;
+      });
     } catch (e) {
-      print('Error parsing CarModel: $e');
-      // Handle the error appropriately
+      // Handle the exception
+      print('Error loading CarModel: $e');
+      // Optionally, implement additional error handling logic here
     }
   }
 
@@ -252,7 +241,7 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
   void initState() {
     super.initState();
     fetchModel();
-    fetchCarModel(widget.car!.modelId!);
+    _loadCarModel(widget.car!.modelId!);
   }
 
   @override

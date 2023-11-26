@@ -1,4 +1,5 @@
 class Order {
+  final String? carId;
   final String id;
   final String customerId;
   final String? technicianId;
@@ -18,6 +19,7 @@ class Order {
   int area;
 
   Order({
+    required this.carId,
     required this.id,
     required this.customerId,
     required this.technicianId,
@@ -39,34 +41,32 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
+      carId: json['carId'],
       id: json['id'],
       customerId: json['customerId'],
       technicianId: json['technicianId'] ?? "",
-      managerId: json['managerId']  ?? "",
-      vehicleId: json['vehicleId']  ?? "",
-      paymentId: json['paymentId']  ?? "",
-      customerNote: json['customerNote']  ?? "",
-      departure: json['departure']  ?? "",
-      destination: json['destination']  ?? "",
-      rescueType: json['rescueType']  ?? "",
-      staffNote: json['staffNote']  ?? "",
-      cancellationReason: json['cancellationReason']  ?? "",
-      startTime: json['startTime']  != null
-          ? DateTime.parse(json['startTime'])
-          : null,
-      endTime: json['endTime']  != null
-          ? DateTime.parse(json['endTime'])
-          : null,
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
-          : null,
-      status: json['status']  ?? "",
-      area: json['area']  ?? "",
+      managerId: json['managerId'] ?? "",
+      vehicleId: json['vehicleId'] ?? "",
+      paymentId: json['paymentId'] ?? "",
+      customerNote: json['customerNote'] ?? "",
+      departure: json['departure'] ?? "",
+      destination: json['destination'] ?? "",
+      rescueType: json['rescueType'] ?? "",
+      staffNote: json['staffNote'] ?? "",
+      cancellationReason: json['cancellationReason'] ?? "",
+      startTime:
+          json['startTime'] != null ? DateTime.parse(json['startTime']) : null,
+      endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
+      createdAt:
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      status: json['status'] ?? "",
+      area: json['area'] ?? "",
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'carId': carId,
       'id': id,
       'customerId': customerId,
       'technicianId': technicianId,
