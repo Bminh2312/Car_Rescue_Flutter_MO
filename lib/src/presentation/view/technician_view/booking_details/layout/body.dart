@@ -59,6 +59,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   CarModel? _carModel;
   List<String> _imageUrls = [];
   List<String> pickedImages = [];
+  List<String> _updateImage = [];
   bool checkUpdate = false;
   NotifyMessage notifyMessage = NotifyMessage();
   @override
@@ -77,8 +78,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
   Future<void> _loadBooking(String orderId) async {
     try {
-      Booking updatedBooking =
-          await authService.fetchBookingById(widget.booking.id);
+      Booking updatedBooking = await authService.fetchBookingById(orderId);
       setState(() {
         _currentBooking = updatedBooking;
         _isLoading = false;
@@ -151,6 +151,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   }
 
   Future<void> _calculateTotal(String orderId) async {
+    setState(() {
+      total = 0;
+    });
     final List<Service> services = await _loadServicesOfCustomer(orderId);
     for (var service in services) {
       setState(() {
@@ -162,7 +165,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   Future<void> _loadImageOrders(String id) async {
     final orderProvider = OrderProvider();
     List<String> imgData = await orderProvider.getUrlImages(id);
+    print("Loaded: ${imgData.length}");
     setState(() {
+      _imageUrls.clear();
       _imageUrls = imgData;
     });
   }
@@ -271,14 +276,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     final upload = FirBaseStorageProvider();
 
     if (pickedImages != []) {
-      _imageUrls.clear();
       for (int index = 0; index < pickedImages.length; index++) {
+        print(pickedImages.length);
         String? imageUrl =
             await upload.uploadImageToFirebaseStorage(pickedImages[index]);
         print(imageUrl);
         if (imageUrl != null) {
           setState(() {
-            _imageUrls.add(imageUrl);
+            
+            _updateImage.add(imageUrl);
           });
           print('Image uploaded successfully. URL: $imageUrl');
         } else {
@@ -287,8 +293,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       }
       setState(() {
         pickedImages.clear();
-        _loadImageOrders(widget.booking.id);
       });
+      
     } else {
       print('No image selected.');
     }
@@ -328,6 +334,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     List<String> imageUrls,
   ) async {
     Future<bool> checkUpdateFuture = Future.value(false);
+    print("UpdateOrder img: ${imageUrls.length}");
     try {
       final update = OrderProvider();
       checkUpdateFuture =
@@ -441,7 +448,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
   Widget _buildImageSection(List<String> imageUrls) {
     final allImages = [...imageUrls, ...pickedImages];
-
+    print("Tong so anh:  ${allImages.length}");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -450,7 +457,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           height: 200.0,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: 5, // fixed to 5 slots for images
+            itemCount: 10, // fixed to 5 slots for images
             itemBuilder: (context, index) {
               // If there's an image at this index, show it
               if (index < allImages.length) {
@@ -931,11 +938,14 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
                                   if (_imageUrls.isNotEmpty) {
                                     await updateOrder(widget.booking.id,
-                                        techNoteController.text, _imageUrls);
-                                    await _loadImageOrders(widget.booking.id);
+                                        techNoteController.text, _updateImage);
+                                    // await _loadImageOrders(widget.booking.id);
                                     await _loadTechInfo(
                                         widget.booking.technicianId);
                                     await _loadBooking(widget.booking.id);
+
+                                    await _loadImageOrders(widget.booking.id);
+
                                     setState(() {
                                       techNoteController.clear();
                                       _loadCustomerInfo(
@@ -973,6 +983,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
   @override
   void dispose() {
+    _imageUrls.clear();
     techNoteController.dispose();
     super.dispose();
   }
