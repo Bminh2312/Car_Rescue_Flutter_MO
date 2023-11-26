@@ -159,7 +159,9 @@ class _WalletBodyState extends State<WalletBody> {
                                     details: 'details',
                                     type: walletTrans.type,
                                     createdAt: DateFormat('dd-MM-yyyy | hh:mm')
-                                        .format(walletTrans.createdAt),
+                                        .format(walletTrans.createdAt
+                                            .toUtc()
+                                            .add(Duration(hours: 14))),
                                     description: walletTrans.description,
                                     totalAmount: walletTrans.totalAmount,
                                     status: walletTrans.status,

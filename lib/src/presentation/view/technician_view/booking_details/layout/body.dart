@@ -731,6 +731,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                             "Ghi chú",
                             Text(widget.booking.customerNote,
                                 style: TextStyle(fontWeight: FontWeight.bold))),
+                        _buildInfoRow(
+                            "Lí do hủy đơn",
+                            Text(
+                                widget.booking.cancellationReason ?? 'Không có',
+                                style: TextStyle(fontWeight: FontWeight.bold))),
                       ],
                     ),
                   ),
@@ -784,7 +789,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSectionTitle("Thời gian"),
-                        if (widget.booking.status != "ASSIGNED")
+                        if (widget.booking.status != "ASSIGNED" &&
+                            widget.booking.startTime != null)
                           _buildInfoRow(
                             "Bắt đầu",
                             Text(
@@ -892,13 +898,12 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                     await _loadImageOrders(widget.booking.id);
                                     await _loadTechInfo(
                                         widget.booking.technicianId);
-                                    await _loadBooking(widget.booking.id);    
+                                    await _loadBooking(widget.booking.id);
                                     setState(() {
                                       techNoteController.clear();
                                       _loadCustomerInfo(
                                           widget.booking.customerId);
                                       _calculateTotal(widget.booking.id);
-                                      
                                     });
                                   } else {
                                     print("Image empty");
@@ -908,7 +913,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                   }
                                 } else {
                                   print("Note or pickedImages empty");
-                                  notifyMessage.showToast("Cần có ảnh và ghi chú");
+                                  notifyMessage
+                                      .showToast("Cần có ảnh và ghi chú");
                                   setState(() {
                                     _isLoading = false;
                                   });

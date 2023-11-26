@@ -55,6 +55,7 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
   );
   Future<bool> updateCarApproval({
+    required String id,
     required String rvoid,
     required String licensePlate,
     required String manufacturer,
@@ -123,6 +124,7 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
 
       try {
         bool isSuccess = await updateCarApproval(
+            id: widget.vehicle!.id,
             rvoid: widget.userId,
             licensePlate: _licensePlate,
             manufacturer: _manufacturer,

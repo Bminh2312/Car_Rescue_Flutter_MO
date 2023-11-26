@@ -32,6 +32,8 @@ class LoginResult {
   });
 }
 
+final String apiKey = 'AIzaSyBv0RoGulA7l1v9-d8uD5pgG8EsOPZbFLU';
+
 class AuthService {
   //TECHNICIAN API
   Future<LoginResult?> login(
@@ -568,8 +570,7 @@ class AuthService {
 
     // Check if departure coordinates are available
     if (latDeparture != null && longDeparture != null) {
-      const String apiKey =
-          'AIzaSyB3pfcWmEJDtpO6Kjy3OfikhN4bRP1ORjc'; // Replace with your actual API key
+      // Replace with your actual API key
       final String urlDeparture =
           'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=$apiKey';
 
@@ -596,8 +597,7 @@ class AuthService {
 
     // Check if destination coordinates are available
     if (latDestination != null && longDestination != null) {
-      const String apiKey =
-          'AIzaSyB3pfcWmEJDtpO6Kjy3OfikhN4bRP1ORjc'; // Replace with your actual API key
+      // Replace with your actual API key
       final String urlDestination =
           'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=$apiKey';
 
@@ -864,7 +864,63 @@ class AuthService {
       return false; // Failed to create the car
     }
   }
+Future<bool> createCarforCustomer(String? id,
+      {required String customerId,
+      required String licensePlate,
+      required String manufacturer,
+      required String status,
+      required String vinNumber,
+      required String modelId,
+      required String color,
+      required int manufacturingYear,
+      required File vehicleImage}) async {
+    var uuid = Uuid();
+    id ??= uuid.v4();
 
+    String? vehicleUrl =
+        await uploadImageToFirebase(vehicleImage, 'vehicle/images');
+
+    if (vehicleUrl == null) {
+      // Hiển thị lỗi
+      print('ko co hinh');
+      return false;
+    } // If id is null, generate a random UUID
+    final String apiUrl =
+        "https://rescuecapstoneapi.azurewebsites.net/api/Car/Create"; // Replace with your endpoint URL
+
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {
+        "Content-Type": "application/json",
+        // Add other headers if needed, like authorization headers
+      },
+      body: json.encode({
+        'id': id,
+        'customerId': customerId,
+        'licensePlate': licensePlate,
+        'manufacturer': manufacturer,
+        'status': status,
+        'vinNumber': vinNumber,
+        'modelId': modelId,
+        'color': color,
+        'manufacturingYear': manufacturingYear,
+
+        'image': vehicleUrl
+        // Note: Handling image uploads would require a multipart request.
+        // For simplicity, this example does not cover image uploads.
+        // You might need a separate API or endpoint to handle the image upload.
+      }),
+    );
+    final List userImage = [vehicleUrl];
+    print(userImage);
+    if (response.statusCode == 200) {
+      print('Successfully created the car ${response.body}');
+      return true; //
+    } else {
+      print('Failed to create the car: ${response.body}');
+      return false; // Failed to create the car
+    }
+  }
   Future<String?> getDeviceToken() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 

@@ -37,6 +37,7 @@ class BookingDetailsBody extends StatefulWidget {
   final Map<String, String> subAddressesDesti;
   final Function? updateTabCallback;
   final Function? reloadData;
+
   BookingDetailsBody(
     this.userId,
     this.accountId,
@@ -802,6 +803,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildSectionTitle('Đơn giá'),
         _buildOrderItemSection(),
         SizedBox(
           height: 8,
@@ -859,9 +861,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     if (title == 'Banking') {
       displayTitle = 'Trả bằng chuyển khoản';
     } else if (title == 'Cash') {
-      displayTitle = 'Tiền mặt';
+      displayTitle = 'Trả bằng tiền mặt';
     } else {
-      displayTitle = 'Thanh toán';
+      displayTitle = 'Tổng cộng';
     }
 
     return Padding(
@@ -880,21 +882,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               if (displayTitle == 'Trả bằng chuyển khoản')
                 Image.asset(
                   'assets/images/banking.png',
-                  height: 25,
-                  width: 25,
+                  height: 20,
+                  width: 20,
                 )
-              else if (displayTitle == 'Tiền mặt')
+              else if (displayTitle == 'Trả bằng tiền mặt')
                 Image.asset(
                   'assets/images/money.png', // Replace with your cash image asset
-                  height: 25,
-                  width: 25,
+                  height: 20,
+                  width: 20,
                 )
-              else
-                Image.asset(
-                  'assets/images/money.png', // Replace with your desired asset
-                  height: 25,
-                  width: 25,
-                ),
             ],
           ),
           CustomText(
@@ -961,6 +957,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   // Accumulate the total quantity and total amount
                   totalQuantity = quantity as int;
                   totalAmount = total as int;
+
                   final formatter =
                       NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
                   final formattedTotal = formatter.format(price);
@@ -974,6 +971,32 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
+                      _buildInfoRow(
+                        'Khoảng cách',
+                        Text(
+                          '$totalQuantity km',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildPaymentMethod('Tổng cộng', ''),
+                          Text(currencyFormat.format(totalAmount),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 17)),
+                        ],
+                      ),
+                      Container(
+                          decoration: BoxDecoration(
+                              color: Color.fromARGB(97, 164, 164, 164),
+                              borderRadius: BorderRadius.circular(8)),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildPaymentMethod(_payment?.method ?? '', ''),
+                            ],
+                          )),
                     ],
                   );
                 } else if (snapshot.hasError) {
@@ -984,21 +1007,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               },
             );
           }).toList(),
-        ),
-        _buildInfoRow(
-          'Khoảng cách',
-          Text(
-            '$totalQuantity km',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildPaymentMethod(_payment?.method ?? '', ''),
-            Text(currencyFormat.format(totalAmount),
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-          ],
         ),
       ],
     );

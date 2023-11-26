@@ -1,4 +1,3 @@
-import 'dart:ffi';
 import 'dart:io';
 
 import 'package:CarRescue/src/models/customer.dart';
@@ -41,6 +40,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
   int total = 0;
   List<String> _imageUrls = [];
+  final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
   @override
   void initState() {
     print(widget.orderId);
@@ -193,222 +193,308 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
           Order order = snapshot.data!;
           print(order.id);
           return SingleChildScrollView(
-            padding: EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 // Header
-                Column(
-                  children: [
-                    Center(
-                      child: CustomText(
-                        text: "Mã đơn hàng:",
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Center(
+                    child: Column(
+                      children: [
+                        CustomText(
+                          text: "Mã đơn hàng",
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        CustomText(
+                          text: " ${widget.orderId}",
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ],
                     ),
-                    Center(
-                      child: CustomText(
-                        text: "${widget.orderId}",
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-                if (widget.techId != '' && widget.techId != null)
-                  Divider(thickness: 3),
-                // Use the 'order' object as needed
-                // Example: Text(order.id),
-                if (widget.techId != '' && widget.techId != null)
-                  _buildSectionTitle("Thông tin kĩ thuật viên"),
-                if (widget.techId != '' && widget.techId != null)
-                  CustomerInfoRow(
-                    name: technicianInfo?.fullname ?? "",
-                    phone: technicianInfo?.phone ?? "",
-                    avt: technicianInfo?.avatar ?? "",
+
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.techId != '' && widget.techId != null)
+
+                        // Use the 'order' object as needed
+
+                        // Example: Text(order.id),
+
+                        if (widget.techId != '' && widget.techId != null)
+                          _buildSectionTitle("Thông tin kĩ thuật viên"),
+                      if (widget.techId != '' && widget.techId != null)
+                        CustomerInfoRow(
+                          name: technicianInfo?.fullname ?? "",
+                          phone: technicianInfo?.phone ?? "",
+                          avt: technicianInfo?.avatar ?? "",
+                        ),
+                    ],
                   ),
+                ),
                 if (feedbackCustomer?.status == "COMPLETED")
-                  Divider(thickness: 3),
-                if (feedbackCustomer?.status == "COMPLETED")
-                  _buildSectionTitle("Đánh giá"),
-                if (feedbackCustomer?.status == "COMPLETED")
-                  Center(
-                    child: RatingBar.builder(
-                      initialRating: ratingParse,
-                      minRating: 1,
-                      direction: Axis.horizontal,
-                      allowHalfRating: false,
-                      itemCount: 5,
-                      itemSize: 50,
-                      itemPadding: EdgeInsets.symmetric(horizontal: 2.0),
-                      itemBuilder: (context, _) => Icon(
-                        Icons.star,
-                        color: Colors.amber,
+                  Container(
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle("Đánh giá"),
+                          if (feedbackCustomer?.status == "COMPLETED")
+                            Center(
+                              child: RatingBar.builder(
+                                initialRating: ratingParse,
+                                minRating: 1,
+                                direction: Axis.horizontal,
+                                allowHalfRating: false,
+                                itemCount: 5,
+                                itemSize: 30,
+                                itemPadding:
+                                    EdgeInsets.symmetric(horizontal: 2.0),
+                                itemBuilder: (context, _) => Icon(
+                                  Icons.star,
+                                  color: Colors.amber,
+                                ),
+                                onRatingUpdate: (newRating) {
+                                  // Handle the updated rating if needed
+                                },
+                                ignoreGestures: true,
+                              ),
+                            ),
+                          if (feedbackCustomer?.status == "COMPLETED")
+                            _buildInfoRow(
+                                "Nội dung đánh giá",
+                                Text(feedbackCustomer?.note ?? '',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold))),
+                          SizedBox(height: 2.0),
+                        ],
+                      )),
+
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle("Thông tin đơn hàng"),
+                      _buildInfoRow(
+                          "Trạng thái",
+                          BookingStatus(
+                            status: order.status,
+                            fontSize: 14,
+                          )),
+                      _buildInfoRow(
+                          "Loại dịch vụ",
+                          Text(order.rescueType ?? '',
+                              style: TextStyle(fontWeight: FontWeight.bold))),
+                      FutureBuilder<String>(
+                        future: getPlaceDetails(order.departure ?? ''),
+                        builder: (context, addressSnapshot) {
+                          if (addressSnapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            // Display loading indicator or placeholder text
+                            return CircularProgressIndicator();
+                          } else if (addressSnapshot.hasError) {
+                            // Handle error
+                            return Text('Error: ${addressSnapshot.error}');
+                          } else {
+                            String departureAddress =
+                                addressSnapshot.data ?? '';
+                            return _buildInfoRow(
+                              "Điểm đi",
+                              Flexible(
+                                child: Text(
+                                  departureAddress,
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            );
+                          }
+                        },
                       ),
-                      onRatingUpdate: (newRating) {
-                        // Handle the updated rating if needed
-                      },
-                      ignoreGestures: true,
+                      if (order.rescueType == "Towing")
+                        FutureBuilder<String>(
+                          future: getPlaceDetails(order.destination ?? ''),
+                          builder: (context, addressSnapshot) {
+                            if (addressSnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              // Display loading indicator or placeholder text
+                              return CircularProgressIndicator();
+                            } else if (addressSnapshot.hasError) {
+                              // Handle error
+                              return Text('Error: ${addressSnapshot.error}');
+                            } else {
+                              String destinationAddress =
+                                  addressSnapshot.data ?? '';
+                              return _buildInfoRow(
+                                "Điểm đến",
+                                Flexible(
+                                  child: Text(
+                                    destinationAddress,
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      _buildInfoRow(
+                          "Ghi chú",
+                          Text(order.customerNote ?? '',
+                              style: TextStyle(fontWeight: FontWeight.bold))),
+                    ],
+                  ),
+                ),
+
+                if (_imageUrls.isNotEmpty)
+                  Container(
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle("Hình ảnh hiện trường"),
+                        _buildImageSection(_imageUrls),
+                        SizedBox(height: 15.0),
+                      ],
                     ),
                   ),
-                _buildInfoRow(
-                    "Nội dung",
-                    Text(feedbackCustomer?.note ?? '',
-                        style: TextStyle(fontWeight: FontWeight.bold))),
-                Divider(thickness: 3),
+
                 SizedBox(height: 15.0),
-                _buildSectionTitle("Thông tin đơn hàng"),
-                _buildInfoRow(
-                    "Trạng thái",
-                    BookingStatus(
-                      status: order.status,fontSize: 14,
-                    )),
-                _buildInfoRow(
-                    "Loại dịch vụ",
-                    Text(order.rescueType ?? '',
-                        style: TextStyle(fontWeight: FontWeight.bold))),
-                FutureBuilder<String>(
-                  future: getPlaceDetails(order.departure ?? ''),
-                  builder: (context, addressSnapshot) {
-                    if (addressSnapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      // Display loading indicator or placeholder text
-                      return CircularProgressIndicator();
-                    } else if (addressSnapshot.hasError) {
-                      // Handle error
-                      return Text('Error: ${addressSnapshot.error}');
-                    } else {
-                      String departureAddress = addressSnapshot.data ?? '';
-                      return _buildInfoRow(
-                        "Điểm đi",
-                        Flexible(
-                          child: Text(
-                            departureAddress,
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.techId != '' && widget.techId != null)
+                        _buildSectionTitle("Ghi chú của kĩ thuật viên"),
+                      if (widget.techId != '' && widget.techId != null)
+                        _buildInfoRow(
+                            "Ghi chú",
+                            Text(order.staffNote!,
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                      if (widget.techId != '' && widget.techId != null)
+                        SizedBox(height: 15.0),
+                    ],
+                  ),
+                ),
+
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle("Thời gian"),
+                      if (order.status != "ASSIGNED" && order.startTime != null)
+                        _buildInfoRow(
+                          "Bắt đầu",
+                          Text(
+                            DateFormat('dd-MM-yyyy | HH:mm').format(order
+                                .startTime!
+                                .toUtc()
+                                .add(Duration(hours: 14))),
                             style: TextStyle(fontWeight: FontWeight.bold),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      );
-                    }
-                  },
-                ),
-
-                if (order.rescueType == "Towing")
-                  FutureBuilder<String>(
-                    future: getPlaceDetails(order.destination ?? ''),
-                    builder: (context, addressSnapshot) {
-                      if (addressSnapshot.connectionState ==
-                          ConnectionState.waiting) {
-                        // Display loading indicator or placeholder text
-                        return CircularProgressIndicator();
-                      } else if (addressSnapshot.hasError) {
-                        // Handle error
-                        return Text('Error: ${addressSnapshot.error}');
-                      } else {
-                        String destinationAddress = addressSnapshot.data ?? '';
-                        return _buildInfoRow(
-                          "Điểm đến",
-                          Flexible(
-                            child: Text(
-                              destinationAddress,
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                      if (order.status != "ASSIGNED" && order.endTime != null)
+                        _buildInfoRow(
+                          "Kết thúc ",
+                          Text(
+                            DateFormat('dd-MM-yyyy | HH:mm').format(order
+                                .endTime!
+                                .toUtc()
+                                .add(Duration(hours: 14))),
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                        );
-                      }
-                    },
-                  ),
-                _buildInfoRow(
-                    "Ghi chú",
-                    Text(order.customerNote ?? '',
-                        style: TextStyle(fontWeight: FontWeight.bold))),
-                if (_imageUrls.isNotEmpty)
-                  _buildSectionTitle("Hình ảnh chứng thực"),
-                if (_imageUrls.isNotEmpty)
-                  Card(
-                    elevation: 5,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15.0),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          _buildImageSection(_imageUrls),
-                          SizedBox(height: 15.0),
-                          Divider(thickness: 1),
-                        ],
+                        ),
+                      _buildInfoRow(
+                        "Được tạo lúc",
+                        Text(
+                          DateFormat('dd-MM-yyyy | HH:mm').format(order
+                              .createdAt!
+                              .toUtc()
+                              .add(Duration(hours: 14))),
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
-                    ),
-                  ),
-                Divider(thickness: 3),
-                SizedBox(height: 15.0),
-                if (widget.techId != '' && widget.techId != null)
-                  _buildSectionTitle("Ghi chú của kĩ thuật viên"),
-                if (widget.techId != '' && widget.techId != null)
-                  _buildInfoRow(
-                      "Ghi chú",
-                      Text(order.staffNote!,
-                          style: TextStyle(fontWeight: FontWeight.bold))),
-                if (widget.techId != '' && widget.techId != null)
-                  Divider(thickness: 3),
-                SizedBox(height: 15.0),
-                _buildSectionTitle("Thời gian"),
-                if (order.status != "ASSIGNED")
-                  _buildInfoRow(
-                    "Bắt đầu",
-                    Text(
-                      DateFormat('yyyy-MM-dd HH:mm:ss')
-                          .format(order.startTime ?? DateTime.now()),
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                if (order.status != "ASSIGNED")
-                  _buildInfoRow(
-                    "Kết thúc ",
-                    Text(
-                      DateFormat('yyyy-MM-dd HH:mm:ss')
-                          .format(order.endTime ?? DateTime.now()),
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                _buildInfoRow(
-                  "Được tạo lúc",
-                  Text(
-                    DateFormat('yyyy-MM-dd HH:mm:ss')
-                        .format(order.createdAt ?? DateTime.now()),
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    ],
                   ),
                 ),
 
-                SizedBox(height: 24.0),
-                Divider(thickness: 3),
                 SizedBox(height: 8.0),
-                _buildOrderItemSection(),
-                SizedBox(height: 24.0),
-                Divider(thickness: 3),
-                if (order.status != "CANCELLED")
-                  _buildSectionTitle("Thanh toán"),
-                if (order.status != "CANCELLED")
-                  _buildInfoRow(
-                      "Người trả",
-                      Text('${customer.fullname}',
-                          style: TextStyle(fontWeight: FontWeight.bold))),
-                if (order.status != "CANCELLED")
-                  _buildInfoRow(
-                      "Người nhận",
-                      Text('${technicianInfo?.fullname ?? ''}',
-                          style: TextStyle(fontWeight: FontWeight.bold))),
-                if (order.status != "CANCELLED")
-                  _buildInfoRow(
-                      "Tổng tiền",
-                      Text('${total} vnd',
-                          style: TextStyle(fontWeight: FontWeight.bold))),
-                SizedBox(height: 24.0),
+                Container(
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.white,
+                    child: Column(
+                      children: [
+                        _buildOrderItemSection(),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        if (order.status != "CANCELLED")
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              CustomText(
+                                text: 'Tổng cộng',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              ),
+                              Text(currencyFormat.format(total),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 19)),
+                            ],
+                          ),
+                      ],
+                    )),
+                if (order.status != "CANCELLED" && order.rescueType != 'Towing')
+                  Container(
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle("Thanh toán"),
+                        _buildInfoRow(
+                            "Người trả",
+                            Text('${customer.fullname}',
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        _buildInfoRow(
+                            "Người nhận",
+                            Text('${technicianInfo?.fullname ?? ''}',
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        SizedBox(height: 24.0),
+                      ],
+                    ),
+                  ),
                 if (order.status == "COMPLETED" &&
                     feedbackCustomer?.status == "WAITING")
                   AppButton(
@@ -438,7 +524,6 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle("Hình ảnh"),
         Container(
           height: 200.0,
           child: ListView.builder(
@@ -492,25 +577,34 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   Widget _buildSectionTitle(String title) {
     return Padding(
         padding: EdgeInsets.symmetric(vertical: 8.0),
-        child: Center(
-          child: CustomText(
-            text: title,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+        child: CustomText(
+          text: title,
+          fontWeight: FontWeight.bold,
+          fontSize: 24,
         ));
   }
 
-  Widget _buildInfoRow(String label, Widget value) {
+  Widget _buildInfoRow(
+    String label,
+    Widget value,
+  ) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           Flexible(
-              child: Text(
-            label,
-          )),
+            child: Row(
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 16.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
           SizedBox(width: 8.0), // Add spacing between label and value
           value
         ],
@@ -540,7 +634,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
 
               if (serviceList.isEmpty) {
                 // Xử lý trường hợp danh sách dịch vụ rỗng
-                return Text('No services found.');
+                return Text('Không có dịch vụ.');
               }
 
               // Sử dụng ListView.builder ở đây để danh sách dịch vụ có thể cuộn một cách linh hoạt

@@ -136,14 +136,15 @@ class _ServiceBodyState extends State<ServiceBody> {
                 label: 'Xe của tôi',
                 icon: CupertinoIcons.car_detailed,
                 onPressed: () {
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //     builder: (context) => CarListView(
-                  //       userId: customer.id,
-                  //     ),
-                  //   ),
-                  // );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CarListView(
+                        userId: customer.id,
+                        accountId: customer.accountId,
+                      ),
+                    ),
+                  );
                 },
               ),
               // QuickAccessButton(
@@ -327,11 +328,9 @@ class _ServiceBodyState extends State<ServiceBody> {
                                 Text(formattedStartTime), // Order creation date
                             // Rescue type
                             trailing: BookingStatus(
-
-                                          status: order.status,
-                                          fontSize: 16,
-
-                                        ), // Order status
+                              status: order.status,
+                              fontSize: 16,
+                            ), // Order status
                             onTap: () {
                               // Action to view details or cancel the order
                             },
