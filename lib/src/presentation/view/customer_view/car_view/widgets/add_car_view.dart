@@ -409,7 +409,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                             ],
                           ),
                           SizedBox(
-                            height: 10,
+                            height: 170,
                           ),
                           Container(
                             alignment: Alignment

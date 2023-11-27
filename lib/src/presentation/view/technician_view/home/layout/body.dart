@@ -17,6 +17,7 @@ import 'package:CarRescue/src/presentation/elements/quick_access_buttons.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/notification/notification_view.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class TechncianHomePageBody extends StatefulWidget {
   final String userId;
@@ -218,6 +219,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                   for (var booking in assignedBookings)
                     ActiveBookingCard(
                       userId: booking.technicianId,
+                      phone: _tech?.phone ?? '',
                       avatar: 'assets/images/avatars-2.png',
                       booking: booking,
                     ),
@@ -363,15 +365,16 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
 
   Widget buildWeeklyTaskSchedule() {
     DateTime now = DateTime.now();
-    DateTime nowPlus14Hours = now.add(Duration(hours: 14));
 
     DateTime today = DateTime(now.year, now.month, now.day);
     DateTime tomorrow = DateTime(now.year, now.month, now.day + 1);
-
+    DateTime tomorrow2 = DateTime(now.year, now.month, now.day + 2);
     List<WorkShift> filteredShifts = weeklyShifts.where((shift) {
       DateTime shiftDate =
           DateTime(shift.date.year, shift.date.month, shift.date.day);
-      return shiftDate == today || shiftDate == tomorrow;
+      return shiftDate == today ||
+          shiftDate == tomorrow ||
+          shiftDate == tomorrow2;
     }).toList();
     if (weeklyShifts.length < 2) {
       return Padding(
@@ -402,7 +405,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
           ),
         ),
         Container(
-          height: 300,
+          height: 400,
           child: ListView.builder(
             physics: NeverScrollableScrollPhysics(),
             itemCount: filteredShifts.length,

@@ -257,25 +257,7 @@ class _BookingListBodyState extends State<BookingListBody>
     booking.vehicleInfo = vehicleInfoFromAPI;
   }
 
-  void _reloadBookingList() async {
-    // Call the API to fetch the latest booking list
-    List<Booking> inprogressOnlyBookings =
-        await authService.fetchCarOwnerBookingByInprogress(widget.userId);
-    inprogressOnlyBookings.sort((a, b) {
-      if (a.startTime == null) return 1;
-      if (b.startTime == null) return -1;
-      return b.startTime!.compareTo(a.startTime!);
-    });
-    for (Booking booking in inprogressOnlyBookings) {
-      Vehicle vehicleInfoFromAPI =
-          await authService.fetchVehicleInfo(booking.vehicleId ?? '');
-      booking.vehicleInfo = vehicleInfoFromAPI;
-    }
-    // Update the local list of bookings with the fetched data
-    setState(() {
-      inprogressBookings = inprogressOnlyBookings;
-    });
-  }
+  
 
   void fetchUserProfileData() async {
     try {
@@ -623,8 +605,8 @@ class _BookingListBodyState extends State<BookingListBody>
                         ButtonBar(
                           children: <Widget>[
                             TextButton(
-                              onPressed: () async {
-                                var result = await Navigator.push(
+                              onPressed: () {
+                                Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => BookingDetailsView(

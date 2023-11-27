@@ -395,6 +395,31 @@ class AuthService {
       throw Exception('Error fetching bookings: $e');
     }
   }
+  Future<List<Booking>> fetchTechBookingByAssigned(String userId) async {
+    try {
+      final apiUrl = Uri.parse(
+          'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetAllOrderAssignedOfTech?id=$userId');
+      final response = await http.get(apiUrl);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        // If 'data' key exists and it's not null
+        if (!jsonData.containsKey('data') || jsonData['data'] == null) {
+          return []; // Return an empty list if 'data' key is missing or null
+        } else {
+          List<dynamic> bookingsData = jsonData['data'];
+          return bookingsData
+              .map((booking) => Booking.fromJson(booking))
+              .toList();
+        }
+      } else {
+        throw Exception('Failed to load bookings');
+      }
+    } catch (e) {
+      throw Exception('Error fetching bookings: $e');
+    }
+  }
 
   Future<List<Booking>> fetchTechBookingByCompleted(String userId) async {
     try {

@@ -16,12 +16,12 @@ class ActiveBookingCard extends StatefulWidget {
   final String userId;
   final String avatar;
   final Booking booking;
-
-  ActiveBookingCard({
-    required this.userId,
-    required this.avatar,
-    required this.booking,
-  });
+  final String phone;
+  ActiveBookingCard(
+      {required this.userId,
+      required this.avatar,
+      required this.booking,
+      required this.phone});
 
   @override
   State<ActiveBookingCard> createState() => _ActiveBookingCardState();
@@ -57,6 +57,21 @@ class _ActiveBookingCardState extends State<ActiveBookingCard> {
       return CustomerInfo.fromJson(userProfile);
     }
     return null;
+  }
+
+  void launchDialPad(String phoneNumber) async {
+    String uri = 'tel:$phoneNumber';
+
+    try {
+      if (await canLaunch(uri)) {
+        await launch(uri);
+      } else {
+        throw 'Could not launch $uri';
+      }
+    } catch (e) {
+      print('Error launching dial pad: $e');
+      throw 'Could not launch $uri';
+    }
   }
 
   @override
@@ -208,20 +223,8 @@ class _ActiveBookingCardState extends State<ActiveBookingCard> {
                         borderRadius: BorderRadius.circular(10.0),
                       ),
                     ),
-                    onPressed: () async {
-                      try {
-                        final Uri telUri = Uri(
-                            scheme: 'tel',
-                            path:
-                                '${customerInfo?.phone ?? ''}'); // Replace with actual number
-                        if (await canLaunchUrl(telUri)) {
-                          await launchUrl(telUri);
-                        } else {
-                          print('Could not launch $telUri');
-                        }
-                      } catch (e) {
-                        print('Failed to make a call because: $e');
-                      }
+                    onPressed: () {
+                      launchDialPad(customerInfo?.phone ?? '');
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,

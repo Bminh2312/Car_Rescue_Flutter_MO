@@ -60,7 +60,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   List<String> _imageUrls = [];
   List<String> pickedImages = [];
   List<String> _updateImage = [];
+  // num totalQuantity = 0;
+  // num totalAmount = 0;
+  List<Map<String, dynamic>> orderDetails = [];
   bool checkUpdate = false;
+  final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
   NotifyMessage notifyMessage = NotifyMessage();
   @override
   void initState() {
@@ -73,6 +77,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     _loadPayment(widget.booking.id);
     _loadBooking(widget.booking.id);
     getCarData(widget.booking.carId ?? '');
+    fetchServiceData(widget.booking.id);
     // _imageUrls.clear();
   }
 
@@ -170,6 +175,52 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       _imageUrls.clear();
       _imageUrls = imgData;
     });
+  }
+
+  Future<void> fetchServiceData(String orderId) async {
+    final apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
+
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('data') && responseData['data'] is List) {
+        setState(() {
+          orderDetails = List<Map<String, dynamic>>.from(responseData['data']);
+          print(orderDetails);
+        });
+        fetchServiceNameAndQuantity(
+            orderDetails[0]['serviceId']); // Get the first serviceId
+      } else {
+        throw Exception('API response does not contain a valid list of data.');
+      }
+    } else {
+      throw Exception('Failed to load data from API');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchServiceNameAndQuantity(
+      String serviceId) async {
+    final apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Service/Get?id=$serviceId';
+
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
+        final Map<String, dynamic> responseData = data['data'];
+        final String name = responseData['name'];
+        final int price = responseData['price'];
+        final int quantity = orderDetails
+            .firstWhere((order) => order['serviceId'] == serviceId)['quantity'];
+
+        return {'name': name, 'quantity': quantity, 'price': price};
+      }
+    }
+    throw Exception('Failed to load service name and quantity from API');
   }
 
   Future<CustomerCar> getCarData(String carId) async {
@@ -283,7 +334,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         print(imageUrl);
         if (imageUrl != null) {
           setState(() {
-            
             _updateImage.add(imageUrl);
           });
           print('Image uploaded successfully. URL: $imageUrl');
@@ -294,7 +344,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       setState(() {
         pickedImages.clear();
       });
-      
     } else {
       print('No image selected.');
     }
@@ -532,75 +581,64 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     );
   }
 
-  Widget _buildOrderItemSection() {
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 4),
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CustomText(
-            text: 'Tạm tính',
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-          FutureBuilder<List<Service>>(
-            future: _loadServicesOfCustomer(widget.booking.id),
-            builder: (context, serviceSnapshot) {
-              if (serviceSnapshot.connectionState == ConnectionState.waiting) {
-                // Trạng thái đợi khi tải dữ liệu
+  // Widget _buildOrderItemSection() {
+  //   return Container(
+  //     margin: EdgeInsets.symmetric(vertical: 4),
+  //     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  //     color: Colors.white,
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         CustomText(
+  //           text: 'Tạm tính',
+  //           fontWeight: FontWeight.bold,
+  //           fontSize: 20,
+  //         ),
+  //         FutureBuilder<List<Service>>(
+  //           future: _loadServicesOfCustomer(widget.booking.id),
+  //           builder: (context, serviceSnapshot) {
+  //             if (serviceSnapshot.connectionState == ConnectionState.waiting) {
+  //               // Trạng thái đợi khi tải dữ liệu
 
-                return CircularProgressIndicator();
-              } else if (serviceSnapshot.hasError) {
-                // Xử lý lỗi nếu có
-                return Text('Error: ${serviceSnapshot.error}');
-              } else {
-                final List<Service> serviceList = serviceSnapshot.data!;
+  //               return CircularProgressIndicator();
+  //             } else if (serviceSnapshot.hasError) {
+  //               // Xử lý lỗi nếu có
+  //               return Text('Error: ${serviceSnapshot.error}');
+  //             } else {
+  //               final List<Service> serviceList = serviceSnapshot.data!;
 
-                if (serviceList.isEmpty) {
-                  // Xử lý trường hợp danh sách dịch vụ rỗng
-                  return Text('No services found.');
-                }
+  //               if (serviceList.isEmpty) {
+  //                 // Xử lý trường hợp danh sách dịch vụ rỗng
+  //                 return Text('No services found.');
+  //               }
 
-                // Sử dụng ListView.builder ở đây để danh sách dịch vụ có thể cuộn một cách linh hoạt
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics:
-                      ScrollPhysics(), // Tắt tính năng cuộn của ListView này
-                  itemCount: serviceList.length,
-                  itemBuilder: (context, index) {
-                    final service = serviceList[index];
-                    final formattedPrice =
-                        NumberFormat('#,##0₫', 'vi_VN').format(service.price);
+  //               // Sử dụng ListView.builder ở đây để danh sách dịch vụ có thể cuộn một cách linh hoạt
+  //               return ListView.builder(
+  //                 shrinkWrap: true,
+  //                 physics:
+  //                     ScrollPhysics(), // Tắt tính năng cuộn của ListView này
+  //                 itemCount: serviceList.length,
+  //                 itemBuilder: (context, index) {
+  //                   final service = serviceList[index];
+  //                   final formattedPrice =
+  //                       NumberFormat('#,##0₫', 'vi_VN').format(service.price);
 
-                    return _buildInfoRow(
-                      "${service.name}",
-                      Text(
-                        formattedPrice, // Sử dụng giá đã được định dạng
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    );
-                  },
-                );
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-        padding: EdgeInsets.symmetric(vertical: 8.0),
-        child: CustomText(
-          text: title,
-          fontWeight: FontWeight.bold,
-          fontSize: 24,
-        ));
-  }
-
+  //                   return _buildInfoRow(
+  //                     "${service.name}",
+  //                     Text(
+  //                       formattedPrice, // Sử dụng giá đã được định dạng
+  //                       style: TextStyle(fontWeight: FontWeight.bold),
+  //                     ),
+  //                   );
+  //                 },
+  //               );
+  //             }
+  //           },
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
   Widget _buildPaymentMethod(String title, String total) {
     // Check if the title is 'Momo' and change it to 'Chuyen khoan' if it is
     String displayTitle = title == 'Momo' ? 'Trả bằng chuyển khoản' : title;
@@ -641,6 +679,141 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         ],
       ),
     );
+  }
+
+  Widget _buildOrderItemSection() {
+    int totalQuantity = 0; // Initialize total quantity
+    int totalAmount = 0; // Initialize total amount
+    return Column(
+      children: [
+        // Column(
+        //   children: [
+        //     Row(
+        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //       children: [
+        //         Row(
+        //           children: [
+        //             CustomText(
+        //               text: 'Phí dịch vụ',
+        //               fontSize: 16,
+        //             ),
+        //             SizedBox(
+        //               width: 7,
+        //             ),
+        //             Tooltip(
+        //               triggerMode: TooltipTriggerMode.tap,
+        //               message:
+        //                   'Phí dịch vụ mặc định được tính 300.000đ mỗi đơn hàng\n\nTổng cộng = Phí dịch vụ + (Đơn giá x Khoảng cách) ',
+        //               textStyle: TextStyle(color: Colors.white),
+        //               padding: EdgeInsets.all(8),
+        //               margin: EdgeInsets.all(5),
+        //               waitDuration: Duration(seconds: 1),
+        //               showDuration: Duration(seconds: 7),
+        //               child: Icon(Icons.info),
+        //             ),
+        //           ],
+        //         ),
+        //         CustomText(
+        //           text: '300.000đ',
+        //           fontWeight: FontWeight.bold,
+        //           fontSize: 14,
+        //         ),
+        //       ],
+        //     ),
+        //   ],
+        // ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: orderDetails.map((orderDetail) {
+            return FutureBuilder<Map<String, dynamic>>(
+              future: fetchServiceNameAndQuantity(
+                  orderDetail['serviceId']), // Fetch service name and quantity
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  final name = snapshot.data?['name'] ?? 'Name not available';
+                  final quantity = orderDetail['quantity'] ?? 0;
+                  final price = snapshot.data?['price'] ?? 0;
+                  final total = orderDetail['tOtal'] ?? 0.0;
+                  // Accumulate the total quantity and total amount
+                  // totalQuantity = quantity as int;
+                  // totalAmount = total as int;
+                  totalQuantity += quantity as int;
+                  totalAmount += total as int;
+
+                  final formatter =
+                      NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
+                  final formattedTotal = formatter.format(total);
+
+                  return Column(
+                    children: [
+                      _buildInfoRow(
+                        '$name (Số lượng: $quantity) ',
+                        Text(
+                          '$formattedTotal',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      // _buildInfoRow(
+                      //   'Khoảng cách',
+                      //   Text(
+                      //     '$totalQuantity km',
+                      //     style: TextStyle(fontWeight: FontWeight.bold),
+                      //   ),
+                      // ),
+                      // Row(
+                      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      //   children: [
+                      //     _buildPaymentMethod('Tổng cộng', ''),
+                      //     Text(currencyFormat.format(totalAmount),
+                      //         style: TextStyle(
+                      //             fontWeight: FontWeight.bold, fontSize: 17)),
+                      //   ],
+                      // ),
+                      // Container(
+                      //     decoration: BoxDecoration(
+                      //         color: Color.fromARGB(97, 164, 164, 164),
+                      //         borderRadius: BorderRadius.circular(8)),
+                      //     child: Row(
+                      //       mainAxisAlignment: MainAxisAlignment.center,
+                      //       children: [
+                      //         _buildPaymentMethod(_payment?.method ?? '', ''),
+                      //       ],
+                      //     )),
+                    ],
+                  );
+                } else if (snapshot.hasError) {
+                  return Text('Error fetching service name and quantity');
+                } else {
+                  return CircularProgressIndicator(); // Show a loading indicator
+                }
+              },
+            );
+          }).toList(),
+        ),
+        // Row(
+        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //   children: [
+        //     CustomText(text: 'Tổng cộng', fontSize: 16),
+        //     CustomText(
+        //       text:
+        //           '${NumberFormat.currency(symbol: '₫', locale: 'vi_VN').format(totalAmount)}',
+        //       fontWeight: FontWeight.bold,
+        //       fontSize: 16,
+        //     ),
+        //   ],
+        // ),
+      ],
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: CustomText(
+          text: title,
+          fontWeight: FontWeight.bold,
+          fontSize: 24,
+        ));
   }
 
   Widget _buildInfoRow(String label, Widget value) {
@@ -878,6 +1051,18 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        _buildSectionTitle("Đơn giá"),
+                        _buildOrderItemSection(),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         _buildSectionTitle("Thanh toán"),
                         _buildInfoRow(
                             "Người trả",
@@ -901,7 +1086,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildOrderItemSection(),
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     color: Colors.white,
@@ -912,7 +1096,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           children: [
                             _buildPaymentMethod(
                               _payment?.method ?? '',
-                              NumberFormat('#,##0₫', 'vi_VN').format(total),
+                              NumberFormat('#,##0₫', 'vi_VN')
+                                  .format(_payment?.amount ?? ''),
                             ),
                           ],
                         ),
