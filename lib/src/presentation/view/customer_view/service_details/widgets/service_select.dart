@@ -36,27 +36,27 @@ class _ServiceSelectionPageState extends State<ServiceSelectionPage> {
       appBar: customAppBar(context, text: 'Chọn dịch vụ', showText: true),
       body: Column(
         children: [
-          Expanded(
-            child: FutureBuilder<List<Service>>(
-              future: availableServices,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('Không có dữ liệu.'));
-                } else {
-                  return ListView.builder(
-                    itemCount: snapshot.data!.length,
-                    itemBuilder: (context, index) {
-                      return ServiceCard(service: snapshot.data![index]);
-                    },
-                  );
-                }
-              },
-            ),
-          ),
+          // Expanded(
+          //   child: FutureBuilder<List<Service>>(
+          //     future: availableServices,
+          //     builder: (context, snapshot) {
+          //       if (snapshot.connectionState == ConnectionState.waiting) {
+          //         return Center(child: CircularProgressIndicator());
+          //       } else if (snapshot.hasError) {
+          //         return Center(child: Text('Error: ${snapshot.error}'));
+          //       } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          //         return Center(child: Text('Không có dữ liệu.'));
+          //       } else {
+          //         return ListView.builder(
+          //           itemCount: snapshot.data!.length,
+          //           itemBuilder: (context, index) {
+          //             return ServiceCard(service: snapshot.data![index], onSelected: (bool ) {  }, isSelected: ,);
+          //           },
+          //         );
+          //       }
+          //     },
+          //   ),
+          // ),
           Container(
             color: Colors.white,
             padding: EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 10),
@@ -111,49 +111,83 @@ class _ServiceSelectionPageState extends State<ServiceSelectionPage> {
   }
 }
 
-class ServiceCard extends StatelessWidget {
+class ServiceCard extends StatefulWidget {
   final Service service;
+  final bool isSelected;
+  final Function(bool) onSelected;
 
-  const ServiceCard({required this.service});
+  const ServiceCard({
+    Key? key,
+    required this.service,
+    required this.isSelected,
+    required this.onSelected,
+  }) : super(key: key);
 
+  @override
+  _ServiceCardState createState() => _ServiceCardState();
+}
+
+class _ServiceCardState extends State<ServiceCard> {
+  bool localSelected = false;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    localSelected = widget.isSelected;
+  }
   @override
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat('#,##0₫', 'vi_VN');
+
     return SingleChildScrollView(
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
         margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          color: Colors.white,
+          color: localSelected
+              ? FrontendConfigs.kPrimaryColorCustomer
+              : Colors.white,
           boxShadow: [
             BoxShadow(
               color: const Color.fromARGB(64, 158, 158, 158).withOpacity(0.5),
               spreadRadius: 1,
               blurRadius: 1,
-              offset: Offset(0, 2), // changes position of shadow
+              offset: Offset(0, 2),
             ),
           ],
         ),
         child: ListTile(
-          leading:
-              Icon(Icons.auto_fix_high_rounded), // Replace with actual icon
+          leading: Icon(Icons.auto_fix_high_rounded),
           title: Text(
-            service.name,
+            widget.service.name,
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
           trailing: Text(
-            currencyFormat.format(service.price),
+            currencyFormat.format(widget.service.price),
             style: TextStyle(
-                color: FrontendConfigs.kActiveColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 17),
+              color: FrontendConfigs.kAuthColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 17,
+            ),
           ),
           onTap: () {
-            // Handle tap event
+             print("Current isSelected: ${widget.isSelected}");
+            setState(() {
+              localSelected = !localSelected;
+              
+            });
+            widget.onSelected(localSelected);  
+            // Toggle isSelected
           },
         ),
       ),
     );
   }
 }
+
+
+
+
+

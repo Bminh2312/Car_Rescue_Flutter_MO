@@ -94,6 +94,9 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
 
       return fetchedVehicleInfo;
     } catch (e) {
+      setState(() {
+        vehicleInfo = null;
+      });
       print('Error loading vehicle info: $e');
       // Handle the exception as appropriate for your app
       // For example, return a default Vehicle object or rethrow the exception
@@ -120,9 +123,15 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
         return CustomerCar.fromJson(
             dataField); // Convert the data to a CustomerCar object
       } else {
+        setState(() {
+          _car = null;
+        });
         throw Exception('Failed to get car data from API');
       }
     } catch (e) {
+      setState(() {
+          _car = null;
+        });
       print('Error fetching CarModel: $e');
       throw Exception('Error fetching CarModel: $e');
     }
@@ -131,12 +140,21 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   Future<void> _loadCarModel(String modelId) async {
     try {
       CarModel carModelAPI = await authService.fetchCarModel(modelId);
-      // Use carModelAPI as needed
-      setState(() {
+      if(carModelAPI.id != null){
+        setState(() {
         _carModel = carModelAPI;
       });
+      }else{
+        setState(() {
+          _carModel = null;
+        });
+      }
+      // Use carModelAPI as needed
     } catch (e) {
       // Handle the exception
+      setState(() {
+          _carModel = null;
+        });
       print('Error loading CarModel: $e');
       // Optionally, implement additional error handling logic here
     }
@@ -324,6 +342,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                       // if (widget.techId != '' && widget.techId != null)
                       _buildSectionTitle("Khách hàng"),
                       // if (widget.techId != '' && widget.techId != null)
+                      if(_car != null)
                       CustomerCarInfoRow(
                         manufacturer: _car?.manufacturer ?? 'Không có',
                         type: _carModel?.model1 ?? 'Không có',
@@ -333,6 +352,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                     ],
                   ),
                 ),
+                if(vehicleInfo != null)
                 Container(
                   margin: EdgeInsets.symmetric(vertical: 4),
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),

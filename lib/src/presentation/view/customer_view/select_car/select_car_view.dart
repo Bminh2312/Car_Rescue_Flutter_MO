@@ -1,85 +1,58 @@
+// view/select_car_view.dart
+import 'package:CarRescue/src/presentation/view/customer_view/select_car/layout/body.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:CarRescue/src/presentation/elements/app_button.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
-import 'package:CarRescue/src/presentation/elements/custom_text.dart';
-import 'package:CarRescue/src/presentation/view/customer_view/searching_driver/searching_driver_view.dart';
-import '../../../../configuration/frontend_configs.dart';
-import 'layout/body.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/home/home_view.dart';
+  // Import the body
 
-class SelectCarView extends StatelessWidget {
-  const SelectCarView({Key? key}) : super(key: key);
+class SelectCarView extends StatefulWidget {
+  final String rescueType;
+  const SelectCarView({Key? key, required this.rescueType}) : super(key: key);
 
+  @override
+  _SelectCarViewState createState() => _SelectCarViewState();
+}
+
+class _SelectCarViewState extends State<SelectCarView> {
+  String _carId = "";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: customAppBar(context, text: "Select your Car", showText: true),
-      body: const SelectCarBody(),
+      appBar: customAppBar(context, text: "Xe của bạn", showText: true),
+      body: SelectCarBody(
+        onCarSelected: (carId) {
+          print("Selected car ID: $carId");
+          setState(() {
+            _carId = carId;
+          });
+        },
+      ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 18.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Card(
-              shape: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide.none),
-              elevation: 0.5,
-              child: Padding(
-                padding: const EdgeInsets.only(
-                    right: 12.0, left: 12, top: 30, bottom: 30),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        SvgPicture.asset("assets/svg/location_icon.svg"),
-                        const SizedBox(
-                          width: 7,
-                        ),
-                        CustomText(text: '4.8 km')
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        // ignore: deprecated_member_use
-                        SvgPicture.asset(
-                          "assets/svg/watch_icon.svg",
-                          color: FrontendConfigs.kIconColor,
-                        ),
-                        const SizedBox(
-                          width: 7,
-                        ),
-                        CustomText(text: '4.8 km')
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        SvgPicture.asset("assets/svg/amount_icon.svg"),
-                        const SizedBox(
-                          width: 7,
-                        ),
-                        CustomText(text: '4.8 km')
-                      ],
-                    )
-                  ],
-                ),
-              ),
-            ),
             const SizedBox(
               height: 8,
             ),
             AppButton(
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SearchingDriverView()));
-                },
-                btnLabel: 'Continue'),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HomeView(
+                      rescueType: widget.rescueType,
+                      carId: _carId,
+                    ),
+                  ),
+                );
+              },
+              btnLabel: 'Continue',
+            ),
             const SizedBox(
               height: 10,
-            )
+            ),
           ],
         ),
       ),

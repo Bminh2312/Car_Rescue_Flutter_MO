@@ -27,9 +27,9 @@ import 'layout/widget/home_field.dart';
 // import 'package:google_maps_webservice/places.dart';
 
 class HomeView extends StatefulWidget {
-  final String services;
-
-  HomeView({required this.services});
+  final String rescueType;
+  final String carId;
+   HomeView({required this.carId, required this.rescueType});
 
   @override
   State<HomeView> createState() => HomeViewState();
@@ -254,6 +254,7 @@ class HomeViewState extends State<HomeView> {
   @override
   void initState() {
     super.initState();
+    print(widget.carId);
     _isMounted = true;
     predictions = Future.value([]);
     predictionsPlaces = Future.value(
@@ -301,7 +302,7 @@ class HomeViewState extends State<HomeView> {
           ),
           if (position != null)
             Positioned(
-              bottom: widget.services == 'Fixing' ? 270 : 400,
+              bottom: widget.rescueType == 'Fixing' ? 270 : 400,
               right: 16,
               child: FloatingActionButton(
                 backgroundColor: FrontendConfigs.kPrimaryColor,
@@ -321,8 +322,8 @@ class HomeViewState extends State<HomeView> {
             ),
           SlidingUpPanel(
             controller: _pc,
-            minHeight: widget.services == 'Fixing' ? 200 : 300,
-            maxHeight: widget.services == 'Fixing' ? 250 : 400,
+            minHeight: widget.rescueType == 'Fixing' ? 200 : 300,
+            maxHeight: widget.rescueType == 'Fixing' ? 250 : 400,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(12),
               topRight: Radius.circular(12),
@@ -342,7 +343,7 @@ class HomeViewState extends State<HomeView> {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  if (widget.services == "Towing" &&
+                  if (widget.rescueType == "Towing" &&
                       _latLngDrop != LatLng(0, 0))
                     FutureBuilder<double>(
                       future: calculateDistance(_latLng,
@@ -400,7 +401,7 @@ class HomeViewState extends State<HomeView> {
                     onTextChanged: getListPredictions,
                   ),
                   const SizedBox(height: 18),
-                  if (widget.services == "Towing")
+                  if (widget.rescueType == "Towing")
                     HomeField(
                       onTap: () {
                         setState(() {
@@ -513,10 +514,11 @@ class HomeViewState extends State<HomeView> {
                             builder: (context) => OrderView(
                                   latLngPick: _latLng,
                                   addressPick: _pickUpController.text,
-                                  serviceType: widget.services,
+                                  serviceType: widget.rescueType,
                                   latLngDrop: _latLngDrop,
                                   addressDrop: _dropLocationController.text,
                                   distance: formattedDistance,
+                                  carId: widget.carId,
                                 )),
                       );
                     },

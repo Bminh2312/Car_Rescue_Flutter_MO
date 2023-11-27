@@ -35,28 +35,39 @@ class _CarListViewState extends State<CarListView> {
     super.initState();
 
     fetchCustomerCar(widget.userId).then((data) {
-      final carList = (data['data'] as List<dynamic>)
-          .map((carData) => CustomerCar(
-              id: carData['id'],
-              customerId: carData['customerId'],
-              manufacturer: carData['manufacturer'],
-              licensePlate: carData['licensePlate'],
-              status: carData['status'],
-              vinNumber: carData['vinNumber'],
-              // type: carData['type'],
-              color: carData['color'],
-              manufacturingYear: carData['manufacturingYear'],
-              modelId: carData['modelId'],
-              // carRegistrationFont: carData['carRegistrationFont'],
-              // carRegistrationBack: carData['carRegistrationBack'],
-              image: carData['image'] ??
-                  'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/vehicle%2Fimages%2Fcar.png?alt=media&token=4a112258-d73c-4f2e-9f2f-bf46aa204790'))
-          .toList();
+      if (data['data'] != null) {
+        final carList = (data['data'] as List<dynamic>)
+            .map((carData) => CustomerCar(
+                id: carData['id'],
+                customerId: carData['customerId'],
+                manufacturer: carData['manufacturer'],
+                licensePlate: carData['licensePlate'],
+                status: carData['status'],
+                vinNumber: carData['vinNumber'],
+                color: carData['color'],
+                manufacturingYear: carData['manufacturingYear'],
+                modelId: carData['modelId'],
+                image: carData['image'] ??
+                    'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/vehicle%2Fimages%2Fcar.png?alt=media&token=4a112258-d73c-4f2e-9f2f-bf46aa204790'))
+            .toList();
 
-      setState(() {
-        carData = carList;
-        isLoading = false;
-      });
+        setState(() {
+          carData = carList;
+          isLoading = false;
+        });
+      } else {
+        // Handle the case where 'data['data']' is null.
+        // You can set a default value for carData or take other actions.
+        setState(() {
+          carData =
+              []; // Set an empty list as a default value or choose an appropriate default.
+          isLoading = false;
+        });
+
+        // Alternatively, you can display a message to the user or log the issue.
+        // Example: showSnackBar('No car data available');
+        // Example: log('Warning: Car data is null');
+      }
     });
   }
 

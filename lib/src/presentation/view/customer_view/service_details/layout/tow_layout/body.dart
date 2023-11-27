@@ -22,14 +22,15 @@ class TowBody extends StatefulWidget {
   final LatLng latLngDrop;
   final String addressDrop;
   final String distance;
-
+  final String carId;
   const TowBody(
       {super.key,
       required this.latLng,
       required this.address,
       required this.latLngDrop,
       required this.addressDrop,
-      required this.distance});
+      required this.distance,
+      required this.carId});
 
   @override
   State<TowBody> createState() => _TowBodyState();
@@ -431,7 +432,7 @@ class _TowBodyState extends State<TowBody> {
                   children: <Widget>[
                     Expanded(
                       child: DropdownButton<String>(
-                        isExpanded: true, // Set this property to true
+                        isExpanded: true,
                         value: selectedPaymentMethod,
                         onChanged: (String? newValue) {
                           if (newValue != null) {
@@ -442,18 +443,17 @@ class _TowBodyState extends State<TowBody> {
                         },
                         items: <String>['Chuyển khoản', 'Tiền mặt']
                             .map<DropdownMenuItem<String>>((String value) {
+                          String mappedValue =
+                              value == 'Chuyển khoản' ? 'BANKING' : 'CASH';
+
                           return DropdownMenuItem<String>(
-                            value: value,
+                            value: mappedValue,
                             child: Row(
                               children: <Widget>[
                                 Image.asset(
                                   getImageAsset(value),
-                                  width: value == 'Chuyển khoản'
-                                      ? 25
-                                      : 24, // Larger width for banking.png
-                                  height: value == 'Chuyển khoản'
-                                      ? 25
-                                      : 24, // Larger height for banking.png
+                                  width: value == 'Chuyển khoản' ? 25 : 24,
+                                  height: value == 'Chuyển khoản' ? 25 : 24,
                                 ),
                                 SizedBox(width: 10),
                                 Text(value),
@@ -530,8 +530,6 @@ class _TowBodyState extends State<TowBody> {
   }
 
   Widget buildServiceList() {
-    // A map of icons for each service, for example purposes
-
     return Container(
       color: FrontendConfigs.kBackgrColor,
       child: Column(
@@ -568,52 +566,6 @@ class _TowBodyState extends State<TowBody> {
               ],
             ),
           )
-          // if (selectedServices?.isEmpty ?? true)
-          //   Padding(
-          //     padding: EdgeInsets.only(bottom: 10),
-          //     child: Text(
-          //       "Hãy chọn ít nhất 1 dịch vụ",
-          //       style: TextStyle(
-          //         color: Colors.red,
-          //         fontWeight: FontWeight.bold,
-          //         fontSize: 14,
-          //       ),
-          //     ),
-          //   ),
-          // Wrap(
-          //   spacing: 10, // Horizontal space between chips
-          //   runSpacing: 10, // Vertical space between chips
-          //   children: availableServices.map((service) {
-          //     bool isSelected =
-          //         selectedServices?.contains(service.name) ?? false;
-          //     return ChoiceChip(
-          //       label: Text('${service.name} (${service.price}vnd)'),
-          //       avatar: Icon(
-          //         serviceIcons[service
-          //             .name], // Use the corresponding icon for each service
-          //         color: isSelected ? Colors.white : Colors.black54,
-          //       ),
-          //       selected: isSelected,
-          //       onSelected: (value) {
-          //         setState(() {
-          //           if (value) {
-          //             selectedServices?.add(service.name);
-          //             totalPrice += service.price;
-          //           } else {
-          //             selectedServices?.remove(service.name);
-          //             totalPrice -= service.price;
-          //           }
-          //         });
-          //       },
-          //       backgroundColor: Colors.grey[200],
-          //       selectedColor: Theme.of(context).primaryColor,
-          //       labelStyle: TextStyle(
-          //         color: isSelected ? Colors.white : Colors.black,
-          //       ),
-          //       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          //     );
-          //   }).toList(),
-          // ),
         ],
       ),
     );

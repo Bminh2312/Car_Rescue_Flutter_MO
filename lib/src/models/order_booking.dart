@@ -55,6 +55,7 @@ class OrderBookServiceTowing {
 }
 
 class OrderBookServiceFixing {
+  late String carId;
   late String paymentMethod;
   late String customerNote;
   late String departure;
@@ -66,6 +67,7 @@ class OrderBookServiceFixing {
   late int area;
 
   OrderBookServiceFixing({
+    required this.carId,
     required this.paymentMethod,
     required this.customerNote,
     required this.departure,
@@ -79,6 +81,7 @@ class OrderBookServiceFixing {
 
   factory OrderBookServiceFixing.fromJson(Map<String, dynamic> json) {
     return OrderBookServiceFixing(
+      carId: json['carId'] ?? "",
       paymentMethod: json['paymentMethod'] ?? "",
       customerNote: json['customerNote'] ?? "",
       departure: json['departure'] ?? "",
@@ -93,6 +96,7 @@ class OrderBookServiceFixing {
   
   Map<String, dynamic> toJson() {
   return {
+    'carId': carId,
     'paymentMethod': paymentMethod,
     'customerNote': customerNote,
     'departure': departure,

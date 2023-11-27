@@ -12,7 +12,8 @@ class OrderView extends StatelessWidget {
   final String addressDrop;
   final String distance;
   final String serviceType;
-  const OrderView({Key? key, required this.latLngPick, required this.addressPick, required this.serviceType, required this.latLngDrop, required this.addressDrop, required this.distance})
+  final String carId;
+  const OrderView({Key? key, required this.latLngPick, required this.addressPick, required this.serviceType, required this.latLngDrop, required this.addressDrop, required this.distance, required this.carId})
       : super(key: key);
 
   @override
@@ -20,9 +21,9 @@ class OrderView extends StatelessWidget {
     Widget body;
     
     if (serviceType == "Fixing") {
-      body = RepairBody(latLng: latLngPick, address: addressPick);
+      body = RepairBody(latLng: latLngPick, address: addressPick, carId: carId,);
     } else if (serviceType == "Towing") {
-      body = TowBody(latLng: latLngPick, address: addressPick, latLngDrop: latLngDrop, addressDrop: addressDrop, distance: distance,);
+      body = TowBody(latLng: latLngPick, address: addressPick, latLngDrop: latLngDrop, addressDrop: addressDrop, distance: distance, carId: carId,);
     } else {
       // Handle other cases or provide a default body.
       body = Text("Invalid service type");
