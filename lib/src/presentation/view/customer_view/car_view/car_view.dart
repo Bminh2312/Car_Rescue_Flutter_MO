@@ -5,6 +5,7 @@ import 'package:CarRescue/src/models/car_model.dart';
 import 'package:CarRescue/src/models/customer_car.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/car_view/widgets/add_car_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/car_view/widgets/car_card.dart';
 
@@ -179,7 +180,12 @@ class _CarListViewState extends State<CarListView> {
             size: 20,
           ),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => BottomNavBarView(
+                          page: 0,
+                        )));
           },
         ),
         title: Text(

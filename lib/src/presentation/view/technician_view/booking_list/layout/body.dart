@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:CarRescue/src/models/customer.dart';
 import 'package:CarRescue/src/presentation/elements/booking_status.dart';
+import 'package:CarRescue/src/presentation/elements/empty_state.dart';
+import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/widgets/selection_location_widget.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:CarRescue/src/models/booking.dart';
@@ -14,6 +16,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:geocoding/geocoding.dart'; // Import the geocoding package
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class BookingListBody extends StatefulWidget {
   final List<Booking> bookings; // Define the list of bookings
@@ -47,12 +51,14 @@ class _BookingListBodyState extends State<BookingListBody> {
   List<Booking> completedBookings = [];
   bool isCompletedEmpty = false;
   bool isCanceledEmpty = false;
+  bool isAssiginedEmpty = false;
   @override
   void initState() {
     super.initState();
-    separateBookings();
+    // separateBookings();
     loadCompletedBookings();
     loadCanceledBookings();
+    loadAssignedBookings();
   }
 
   // Future<void> fetchData() async {
@@ -70,8 +76,53 @@ class _BookingListBodyState extends State<BookingListBody> {
     booking.note = feedbackForBooking?['note'];
   }
 
+  Future<Map<String, dynamic>> fetchServiceData(String orderId) async {
+    final apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      print(response.statusCode);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        print('abc : $responseData');
+
+        if (responseData.containsKey('data') && responseData['data'] is List) {
+          final List<dynamic> data = responseData['data'];
+          print(data);
+
+          if (data.isNotEmpty) {
+            final Map<String, dynamic> orderData = data[0];
+            final int quantity = orderData['quantity'];
+            final int total = orderData['tOtal'];
+
+            return {
+              'quantity': quantity,
+              'total': total,
+            };
+          }
+        }
+      }
+
+      // Return a specific result for cases where an exception is caught
+      return {
+        'error': 'Failed to load data from API',
+      };
+    } catch (e) {
+      // Return a specific result for cases where an exception is thrown
+      return {
+        'error': 'Exception: $e',
+      };
+    }
+  }
+
   void loadCompletedBookings() async {
     try {
+      setState(() {
+        // This seems like a naming error. You might want to change this to canceledBookings.
+        isDataLoaded = false;
+      });
       final List<Booking> completedBookingsFromAPI =
           await AuthService().fetchTechBookingByCompleted(widget.userId);
 
@@ -87,7 +138,12 @@ class _BookingListBodyState extends State<BookingListBody> {
       for (Booking booking in completedBookingsFromAPI) {
         vehicleAndFeedbackTasks.add(_fetchFeedbacks(booking, apiFeedbacks));
       }
-
+      // for (int i = 0; i < completedBookingsFromAPI.length; i++) {
+      //   final Map<String, dynamic> serviceData =
+      //       await fetchServiceData(completedBookingsFromAPI[i].id);
+      //   completedBookingsFromAPI[i].quantity = serviceData['quantity'];
+      //   completedBookingsFromAPI[i].total = serviceData['total'];
+      // }
       await Future.wait(vehicleAndFeedbackTasks);
 
       setState(() {
@@ -103,7 +159,51 @@ class _BookingListBodyState extends State<BookingListBody> {
     }
   }
 
+  void loadAssignedBookings() async {
+    try {
+      setState(() {
+        // This seems like a naming error. You might want to change this to canceledBookings.
+        isDataLoaded = false;
+      });
+      final List<Booking> assignedBookingsFromAPI =
+          await AuthService().fetchTechBookingByAssigned(widget.userId);
+
+      final apiFeedbacks =
+          await authService.fetchTechFeedbackRatings(widget.userId);
+      assignedBookingsFromAPI.sort((a, b) {
+        if (a.createdAt == null) return 1;
+        if (b.createdAt == null) return -1;
+        return b.createdAt!.compareTo(a.createdAt!);
+      });
+      List<Future> vehicleAndFeedbackTasks = [];
+
+      for (Booking booking in assignedBookingsFromAPI) {
+        vehicleAndFeedbackTasks.add(_fetchFeedbacks(booking, apiFeedbacks));
+      }
+      for (int i = 0; i < assignedBookingsFromAPI.length; i++) {
+        final Map<String, dynamic> serviceData =
+            await fetchServiceData(assignedBookingsFromAPI[i].id);
+        assignedBookingsFromAPI[i].quantity = serviceData['quantity'];
+        assignedBookingsFromAPI[i].total = serviceData['total'];
+      }
+      await Future.wait(vehicleAndFeedbackTasks);
+
+      setState(() {
+        assignedBookings = assignedBookingsFromAPI;
+        isDataLoaded = true;
+      });
+      if (assignedBookings.isEmpty) {}
+    } catch (e) {
+      // Handle any exceptions that occur during the API request
+      print('Error loading bookings: $e');
+    }
+  }
+
   void loadCanceledBookings() async {
+    setState(() {
+      // This seems like a naming error. You might want to change this to canceledBookings.
+      isDataLoaded = false;
+    });
     try {
       setState(() {
         // This seems like a naming error. You might want to change this to canceledBookings.
@@ -132,36 +232,34 @@ class _BookingListBodyState extends State<BookingListBody> {
     }
   }
 
-  void separateBookings() async {
-    try {
+  // void separateBookings() async {
+  //   try {
+  //     final List<Booking> data =
+  //         await AuthService().fetchBookings(widget.userId);
 
-      final List<Booking> data = await AuthService()
-          .fetchBookings(widget.userId);
+  //     // data.sort((a, b) {
+  //     //   if (a.createdAt == null && b.createdAt == null)
+  //     //     return 0; // Both are null, so they're considered equal
+  //     //   if (a.createdAt == null)
+  //     //     return 1; // a is null, so it should come after b
+  //     //   if (b.createdAt == null)
+  //     //     return -1; // b is null, so it should come after a
+  //     //   return b.createdAt!.compareTo(
+  //     //       a.createdAt!); // Both are non-null, proceed with the comparison
+  //     // });
+  //     // Sort by startTime
+  //     setState(() {
+  //       assignedBookings = data.where((booking) {
+  //         final status = booking.status.trim().toUpperCase();
+  //         return status == 'ASSIGNED';
+  //       }).toList();
+  //     });
 
-
-      // data.sort((a, b) {
-      //   if (a.createdAt == null && b.createdAt == null)
-      //     return 0; // Both are null, so they're considered equal
-      //   if (a.createdAt == null)
-      //     return 1; // a is null, so it should come after b
-      //   if (b.createdAt == null)
-      //     return -1; // b is null, so it should come after a
-      //   return b.createdAt!.compareTo(
-      //       a.createdAt!); // Both are non-null, proceed with the comparison
-      // });
-      // Sort by startTime
-      setState(() {
-        assignedBookings = data.where((booking) {
-          final status = booking.status.trim().toUpperCase();
-          return status == 'ASSIGNED';
-        }).toList();
-      });
-
-      print('ASSIGNED Bookings: $inprogressBookings');
-    } catch (e) {
-      print('Error: $e');
-    }
-  }
+  //     print('ASSIGNED Bookings: $inprogressBookings');
+  //   } catch (e) {
+  //     print('Error: $e');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -212,7 +310,11 @@ class _BookingListBodyState extends State<BookingListBody> {
                 color: FrontendConfigs.kBackgrColor,
                 child: TabBarView(
                   children: [
-                    _buildBookingListView(assignedBookings),
+                    !isDataLoaded
+                        ? LoadingState()
+                        : isAssiginedEmpty
+                            ? EmptyState()
+                            : _buildBookingListView(assignedBookings),
                     _buildBookingListView(completedBookings),
                     _buildBookingListView(canceledBookings),
                   ],
@@ -230,7 +332,8 @@ class _BookingListBodyState extends State<BookingListBody> {
       itemCount: bookings.length,
       itemBuilder: (context, index) {
         final booking = bookings[index];
-
+        final int quantity = booking.quantity ?? 0;
+        final int total = booking.total ?? 0;
         String formattedStartTime = DateFormat('dd/MM/yyyy | HH:mm')
             .format(booking.createdAt ?? DateTime.now());
 
@@ -363,7 +466,7 @@ class _BookingListBodyState extends State<BookingListBody> {
                                   width: 10,
                                 ),
                                 CustomText(
-                                  text: "\$56.00",
+                                  text: '$total',
                                   fontWeight: FontWeight.w600,
                                 )
                               ],

@@ -42,7 +42,7 @@ class _BottomNavBarViewState extends State<BottomNavBarView> {
         type: BottomNavigationBarType.fixed,
         showSelectedLabels: true,
         showUnselectedLabels: true,
-        selectedItemColor: Colors.green,
+        selectedItemColor: FrontendConfigs.kActiveColor,
         unselectedItemColor: FrontendConfigs.kIconColor,
         backgroundColor: Colors.white,
         selectedLabelStyle: TextStyle(
@@ -70,7 +70,7 @@ class _BottomNavBarViewState extends State<BottomNavBarView> {
                   'assets/svg/home_icon.svg',
                   // ignore: deprecated_member_use
                   color: _currentIndex == 0
-                      ? Colors.green
+                      ? FrontendConfigs.kActiveColor
                       : FrontendConfigs.kIconColor,
                 ),
               ),
@@ -78,13 +78,13 @@ class _BottomNavBarViewState extends State<BottomNavBarView> {
           BottomNavigationBarItem(
               icon: Padding(
                 padding: const EdgeInsets.only(bottom: 3),
-                child: SvgPicture.asset(
+                child: Image.asset(
                   height: 18,
                   width: 18,
-                  'assets/svg/message.svg',
+                  'assets/icons/order.png',
                   // ignore: deprecated_member_use
                   color: _currentIndex == 1
-                      ? Colors.green
+                      ? FrontendConfigs.kActiveColor
                       : FrontendConfigs.kIconColor,
                 ),
               ),
@@ -96,7 +96,7 @@ class _BottomNavBarViewState extends State<BottomNavBarView> {
                   'assets/svg/person_icon.svg',
                   // ignore: deprecated_member_use
                   color: _currentIndex == 2
-                      ? Colors.green
+                      ? FrontendConfigs.kActiveColor
                       : FrontendConfigs.kIconColor,
                   height: 18,
                   width: 18,
