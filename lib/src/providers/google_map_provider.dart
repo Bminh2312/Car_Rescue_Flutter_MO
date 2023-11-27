@@ -238,6 +238,8 @@ Future<RouteResponse> fetchRoutes(LatLng latLngDep, LatLng latLngDes) async {
 
   final String apiUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
 
+  DateTime futureTime = DateTime.now().toUtc().add(Duration(hours: 1));
+
   final Map<String, dynamic> requestData = {
     "origin": {
       "location": {
@@ -257,7 +259,7 @@ Future<RouteResponse> fetchRoutes(LatLng latLngDep, LatLng latLngDes) async {
     },
     "travelMode": "DRIVE",
     "routingPreference": "TRAFFIC_AWARE",
-    "departureTime": DateFormat("yyyy-MM-ddTHH:mm:ss.SSSSSSSSS'Z'").format(DateTime.now().toUtc()),
+    "departureTime": DateFormat("yyyy-MM-ddTHH:mm:ss.SSSSSSSSS'Z'").format(futureTime),
     "computeAlternativeRoutes": false,
     "routeModifiers": {
       "avoidTolls": false,
