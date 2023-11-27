@@ -9,9 +9,8 @@ import 'package:http/http.dart' as http;
 import 'widgets/select_car.dart';
 
 class SelectCarBody extends StatefulWidget {
-  const SelectCarBody({Key? key, required this.onCarSelected})
-      : super(key: key);
-  final Function(String) onCarSelected;
+  const SelectCarBody({Key? key, required this.onCarSelected}) : super(key: key);
+  final Function(String?) onCarSelected;
 
   @override
   State<SelectCarBody> createState() => _SelectCarBodyState();
@@ -20,7 +19,7 @@ class SelectCarBody extends StatefulWidget {
 class _SelectCarBodyState extends State<SelectCarBody> {
   List<CustomerCar> carData = [];
   bool isLoading = true;
-  String selectedCarId = "";
+  String? selectedCarId;
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
 
   @override
@@ -48,17 +47,10 @@ class _SelectCarBodyState extends State<SelectCarBody> {
           isLoading = false;
         });
       } else {
-        // Handle the case where 'data['data']' is null.
-        // You can set a default value for carData or take other actions.
         setState(() {
-          carData =
-              []; // Set an empty list as a default value or choose an appropriate default.
+          carData = [];
           isLoading = false;
         });
-
-        // Alternatively, you can display a message to the user or log the issue.
-        // Example: showSnackBar('No car data available');
-        // Example: log('Warning: Car data is null');
       }
     });
   }
@@ -101,29 +93,29 @@ class _SelectCarBodyState extends State<SelectCarBody> {
               const SizedBox(
                 height: 14,
               ),
-              carData.isEmpty ? 
-              Center(
-                child: Text("Không có xe nào..."),
-              )
-              :
-              isLoading
-                  ? CircularProgressIndicator() // Show loading indicator while data is being fetched
-                  : Column(
-                      children: carData.map((car) {
-                        return SelectCarWidget(
-                          licensePlate: car.licensePlate ,
-                          img: car.image!,
-                          name: car.manufacturer,
-                          onSelect: () {
-                            setState(() {
-                              selectedCarId = car.id; // Use car.id or choose an appropriate field
-                            });
-                            widget.onCarSelected(selectedCarId);
-                          },
-                        );
-                      }).toList(),
-                    ),
-              
+              carData.isEmpty
+                  ? Center(
+                      child: Text("Không có xe nào..."),
+                    )
+                  : isLoading
+                      ? CircularProgressIndicator()
+                      : Column(
+                          children: carData.map((car) {
+                            return SelectCarWidget(
+                              licensePlate: car.licensePlate,
+                              img: car.image!,
+                              name: car.manufacturer,
+                              isSelected: selectedCarId == car.id,
+                              onSelect: (isSelected) {
+                                setState(() {
+                                  selectedCarId =
+                                      selectedCarId == car.id ? null : car.id;
+                                });
+                                widget.onCarSelected(selectedCarId);
+                              },
+                            );
+                          }).toList(),
+                        ),
             ],
           ),
         ),

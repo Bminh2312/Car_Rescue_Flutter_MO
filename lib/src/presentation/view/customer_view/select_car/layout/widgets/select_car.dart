@@ -7,29 +7,27 @@ class SelectCarWidget extends StatefulWidget {
     Key? key,
     required this.img,
     required this.name,
-    required this.onSelect, required this.licensePlate, // Added callback
+    required this.onSelect,
+    required this.licensePlate,
+    required this.isSelected, // Added isSelected parameter
   }) : super(key: key);
 
   final String img;
   final String name;
   final String licensePlate;
-  final VoidCallback onSelect; // Callback to be triggered when the widget is tapped
+  final ValueChanged<bool> onSelect; // Callback to be triggered when the widget is tapped
+  final bool isSelected; // Parameter to determine if the car is selected
 
   @override
   State<SelectCarWidget> createState() => _SelectCarWidgetState();
 }
 
 class _SelectCarWidgetState extends State<SelectCarWidget> {
-  bool isShow = false;
-
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        setState(() {
-          isShow = !isShow;
-          widget.onSelect(); // Trigger the callback when the widget is tapped
-        });
+        widget.onSelect(!widget.isSelected); // Toggle the selection state
       },
       child: Card(
         shape: OutlineInputBorder(
@@ -72,7 +70,7 @@ class _SelectCarWidgetState extends State<SelectCarWidget> {
               ),
               Column(
                 children: [
-                  if (isShow)
+                  if (widget.isSelected)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: SizedBox(
@@ -94,14 +92,6 @@ class _SelectCarWidgetState extends State<SelectCarWidget> {
                   Container(
                     height: 10,
                   ),
-                  // SizedBox(
-                  //   height: 20,
-                  //   child: CustomText(
-                  //     text: widget.amount,
-                  //     fontSize: 16,
-                  //     fontWeight: FontWeight.w600,
-                  //   ),
-                  // ),
                 ],
               ),
             ],

@@ -1,4 +1,5 @@
 // view/select_car_view.dart
+import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_car/layout/body.dart';
 import 'package:flutter/material.dart';
 import 'package:CarRescue/src/presentation/elements/app_button.dart';
@@ -15,7 +16,8 @@ class SelectCarView extends StatefulWidget {
 }
 
 class _SelectCarViewState extends State<SelectCarView> {
-  String _carId = "";
+  String? _carId;
+  NotifyMessage notifyMessage = NotifyMessage();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,15 +40,20 @@ class _SelectCarViewState extends State<SelectCarView> {
             ),
             AppButton(
               onPressed: () {
-                Navigator.push(
+                if(_carId != null){
+                  Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => HomeView(
                       rescueType: widget.rescueType,
-                      carId: _carId,
+                      carId: _carId!,
                     ),
                   ),
                 );
+                }else{
+                  notifyMessage.showToast("Hãy chọn 1 xe.");
+                }
+                
               },
               btnLabel: 'Continue',
             ),

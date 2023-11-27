@@ -8,6 +8,7 @@ import 'package:CarRescue/src/presentation/elements/app_button.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/home/layout/home_selection_widget.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/order_status/order_processing.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
 import 'package:CarRescue/src/providers/car_customer_profile_provider.dart';
 import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
@@ -189,7 +190,7 @@ class _RepairBodyState extends State<RepairBody> {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
-              builder: (context) => BottomNavBarView(page: 0),
+              builder: (context) => OrderProcessingScreen(),
             ),
             (route) => false, // Loại bỏ tất cả các màn hình khỏi ngăn xếp
           );
@@ -536,12 +537,57 @@ class _RepairBodyState extends State<RepairBody> {
               const SizedBox(
                 height: 10,
               ),
-              AppButton(
-                onPressed: () => createOrder(),
-                btnLabel: isLoading
-                    ? 'Đang tạo đơn hàng...'
-                    : "Đặt cứu hộ (Giá ${totalPrice})",
-              ),
+              Container(
+                  color: Colors.white,
+                  padding:
+                      EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 10),
+                  width: double.infinity,
+                  child: Column(
+                    mainAxisSize: MainAxisSize
+                        .min, // Đặt cột để không chiếm quá nhiều không gian
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Tổng cộng:',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            '${totalPrice}₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                          height: 20), // Khoảng cách giữa tổng cộng tiền và nút
+                      SizedBox(
+                        width: double
+                            .infinity, // Đặt chiều rộng bằng với Container
+                        height: 50, // Đặt chiều cao cố định cho nút
+                        child: ElevatedButton(
+                          child: Text(
+                            isLoading ? 'Đang tạo đơn hàng...' : "Tạo đơn",
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: FrontendConfigs
+                                .kIconColor, // Đảm bảo rằng màu này được định nghĩa trong FrontendConfigs
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                  8), // Góc bo tròn cho nút
+                            ),
+                          ),
+                          onPressed: () {
+                            createOrder();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),

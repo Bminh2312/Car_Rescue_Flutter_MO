@@ -9,6 +9,7 @@ class CustomerCar {
   final String licensePlate;
   final String status;
   final String? image;
+  bool isSelected;
   CustomerCar({
     required this.image,
     required this.id,
@@ -20,6 +21,7 @@ class CustomerCar {
     required this.manufacturingYear,
     required this.licensePlate,
     required this.status,
+    this.isSelected= false,
   });
 
   // Optionally, you can add a factory constructor to create an instance from a map
