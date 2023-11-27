@@ -101,8 +101,6 @@ class _CalendarViewState extends State<CalendarView> {
     });
   }
 
- 
-
   String getTimeRange(String type) {
     switch (type) {
       case 'Night':
@@ -558,7 +556,7 @@ class _CalendarViewState extends State<CalendarView> {
     required String type,
   }) async {
     final String apiUrl =
-        "https://rescuecapstoneapi.azurewebsites.net/api/Schedule/CreateShift";
+        "https://rescuecapstoneapi.azurewebsites.net/api/Schedule/CreateShiftForTechnician";
     try {
       final response = await http.post(
         Uri.parse('$apiUrl'), // Replace with your actual API endpoint
@@ -573,7 +571,7 @@ class _CalendarViewState extends State<CalendarView> {
           "type": type,
         }),
       );
-
+      print(response.statusCode);
       if (response.statusCode == 200) {
         // Successfully created the weekly shift
         print('Weekly shift created successfully.');

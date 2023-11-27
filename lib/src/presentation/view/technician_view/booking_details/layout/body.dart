@@ -237,7 +237,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         setState(() {
           _car = carFromAPI;
         });
-        _loadCarModel(_car!.modelId!);
+        _loadCarModel(_car?.modelId ?? '');
         // Assuming the response data is in the format you need
         return CustomerCar.fromJson(
             dataField); // Convert the data to a CustomerCar object

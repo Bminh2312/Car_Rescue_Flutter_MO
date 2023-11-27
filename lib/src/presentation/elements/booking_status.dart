@@ -51,6 +51,14 @@ class BookingStatus extends StatelessWidget {
           fontSize: fontSize,
         );
         break;
+      case 'faild':
+        statusColor = Color.fromARGB(255, 251, 201, 201);
+        statusTextStyle = TextStyle(
+          color: Color.fromARGB(255, 219, 39, 39),
+          fontWeight: FontWeight.bold,
+          fontSize: fontSize,
+        );
+        break;
       case 'inprogress':
         statusColor = Color.fromARGB(255, 251, 247, 201);
         statusTextStyle = TextStyle(
@@ -80,6 +88,8 @@ class BookingStatus extends StatelessWidget {
           return 'Hoàn thành';
         case 'NEW':
           return 'Mới';
+        case 'FAILD':
+          return 'Thất bại';
         default:
           return '';
       }

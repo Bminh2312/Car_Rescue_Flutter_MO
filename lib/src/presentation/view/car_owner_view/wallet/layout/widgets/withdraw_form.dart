@@ -29,6 +29,7 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
   int? _amount;
   String? _dropdownError;
   String? radioGroupValue;
+  String? _bankNumber;
   List<BankingInfo> bankings =
       []; // Make sure to fetch or pass this data as required
   TextEditingController _amountController = TextEditingController();
@@ -45,7 +46,9 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
       // Now numericValue should have the correct value, and you can use it in your create function
       createWithdrawRequest(
         walletId: widget.wallet.id,
-        accountInfo: radioGroupValue == 'Momo' ? _phoneNumber! : _accountName!,
+        accountInfo: radioGroupValue == 'Momo'
+            ? _phoneNumber!
+            : _accountName! + _bankNumber!,
         bank: radioGroupValue == 'Momo' ? 'Momo' : _selectedBanking!,
         amount: numericValue,
       );
@@ -352,6 +355,37 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                       SizedBox(
                         height: 10,
                       ),
+                      if (radioGroupValue == 'Ngân hàng')
+                        CustomText(
+                          text: 'Số tài khoản',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      if (radioGroupValue == 'Ngân hàng')
+                        TextFormField(
+                          onSaved: (value) => _bankNumber = value,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Nhập số tài khoản';
+                            }
+                            // Additional validation logic here
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Nhập số tài khoản',
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: FrontendConfigs.kActiveColor,
+                                  width:
+                                      2.0), // Change the color and width to fit your needs
+                            ),
+                          ),
+                          style: TextStyle(fontSize: 16, color: Colors.black),
+                          cursorColor: FrontendConfigs.kActiveColor,
+                        ),
                       if (radioGroupValue == 'Momo' ||
                           radioGroupValue == 'Ngân hàng')
                         CustomText(
