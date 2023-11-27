@@ -3,37 +3,37 @@ import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import '../../../../../../configuration/frontend_configs.dart';
 
 class SelectCarWidget extends StatefulWidget {
-  SelectCarWidget(
-      {Key? key,
-      required this.svg,
-      required this.name,
-      required this.distance,
-      required this.amount})
-      : super(key: key);
-  final String svg;
+  SelectCarWidget({
+    Key? key,
+    required this.img,
+    required this.name,
+    required this.onSelect,
+    required this.licensePlate,
+    required this.isSelected, // Added isSelected parameter
+  }) : super(key: key);
+
+  final String img;
   final String name;
-  final String distance;
-  final String amount;
+  final String licensePlate;
+  final ValueChanged<bool> onSelect; // Callback to be triggered when the widget is tapped
+  final bool isSelected; // Parameter to determine if the car is selected
 
   @override
   State<SelectCarWidget> createState() => _SelectCarWidgetState();
 }
 
 class _SelectCarWidgetState extends State<SelectCarWidget> {
-  bool isShow = false;
-
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        setState(() {
-          isShow = !isShow;
-        });
+        widget.onSelect(!widget.isSelected); // Toggle the selection state
       },
       child: Card(
         shape: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
-            borderSide: BorderSide.none),
+          borderRadius: BorderRadius.circular(6),
+          borderSide: BorderSide.none,
+        ),
         elevation: 0.5,
         child: Padding(
           padding: const EdgeInsets.all(10.0),
@@ -42,8 +42,8 @@ class _SelectCarWidgetState extends State<SelectCarWidget> {
             children: [
               Row(
                 children: [
-                  Image.asset(
-                    widget.svg,
+                  Image.network(
+                    widget.img,
                     height: 62,
                     width: 62,
                   ),
@@ -59,27 +59,28 @@ class _SelectCarWidgetState extends State<SelectCarWidget> {
                         fontWeight: FontWeight.w600,
                       ),
                       CustomText(
-                        text: widget.distance,
+                        text: widget.licensePlate,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: FrontendConfigs.kIconColor,
+                        color: FrontendConfigs.kAuthColor,
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
               Column(
                 children: [
-                  if (isShow)
+                  if (widget.isSelected)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: SizedBox(
-                          height: 10,
-                          child: Icon(
-                            Icons.check_circle,
-                            color: FrontendConfigs.kPrimaryColor,
-                            size: 16,
-                          )),
+                        height: 10,
+                        child: Icon(
+                          Icons.check_circle,
+                          color: FrontendConfigs.kPrimaryColor,
+                          size: 16,
+                        ),
+                      ),
                     )
                   else
                     Padding(
@@ -91,16 +92,8 @@ class _SelectCarWidgetState extends State<SelectCarWidget> {
                   Container(
                     height: 10,
                   ),
-                  SizedBox(
-                    height: 20,
-                    child: CustomText(
-                      text: widget.amount,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
                 ],
-              )
+              ),
             ],
           ),
         ),

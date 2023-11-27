@@ -1,6 +1,7 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/customer.dart';
+import 'package:CarRescue/src/models/customer_car.dart';
 import 'package:CarRescue/src/models/order_booking.dart';
 import 'package:CarRescue/src/models/service.dart';
 import 'package:CarRescue/src/presentation/elements/app_button.dart';
@@ -9,10 +10,12 @@ import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bot
 import 'package:CarRescue/src/presentation/view/customer_view/home/layout/home_selection_widget.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/order_status/order_processing.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
+import 'package:CarRescue/src/providers/car_customer_profile_provider.dart';
 import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
 import 'package:CarRescue/src/providers/service_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -22,14 +25,15 @@ class TowBody extends StatefulWidget {
   final LatLng latLngDrop;
   final String addressDrop;
   final String distance;
-
+  final String carId;
   const TowBody(
       {super.key,
       required this.latLng,
       required this.address,
       required this.latLngDrop,
       required this.addressDrop,
-      required this.distance});
+      required this.distance,
+      required this.carId});
 
   @override
   State<TowBody> createState() => _TowBodyState();
@@ -42,6 +46,8 @@ class _TowBodyState extends State<TowBody> {
   FirBaseStorageProvider fb = FirBaseStorageProvider();
   NotifyMessage notifier = NotifyMessage();
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
+  CarCustomerProvider carCustomerProvider = CarCustomerProvider();
+  CustomerCar? _car;
   final List<Map<String, dynamic>> dropdownItems = [
     {"name": "Quận 1", "value": 1},
     {"name": "Quận 2", "value": 2},
@@ -53,6 +59,7 @@ class _TowBodyState extends State<TowBody> {
   List<String>? selectedServices;
   List<String>? urlImages;
   Future<List<Service>>? availableServices;
+  List<Service> selectedServiceCards = [];
   late String urlImage;
   late Map<String, dynamic> selectedDropdownItem;
   late String selectedPaymentOption;
@@ -61,14 +68,15 @@ class _TowBodyState extends State<TowBody> {
   bool isMomoSelected = false;
   bool isCashSelected = false;
   String? selectedPaymentMethod;
+  
   @override
   void initState() {
     selectedDropdownItem = dropdownItems[0];
-    selectedPaymentOption = "";
     urlImages = [];
     selectedServices = [];
     availableServices = loadService();
-    selectedPaymentMethod = 'Tiền mặt';
+    selectedPaymentMethod = 'CASH';
+    getCustomerCar();
     super.initState();
   }
 
@@ -91,6 +99,40 @@ class _TowBodyState extends State<TowBody> {
         isImageLoading = false;
       });
     }
+  }
+
+  void getCustomerCar() async {
+    final carData = await carCustomerProvider.getCar(widget.carId);
+    try {
+      setState(() {
+        _car = carData;
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void updateSelectedServices(Service service, bool isSelected) {
+    setState(() {
+      if (isSelected) {
+        selectedServiceCards.add(service);
+        caculateTotal();
+      } else {
+        selectedServiceCards.remove(service);
+        caculateTotal();
+      }
+    });
+  }
+
+  void caculateTotal() {
+    int total = 0;
+    for (Service service in selectedServiceCards) {
+    total += service.price;
+  }
+
+  setState(() {
+    totalPrice = total;
+  });
   }
 
   Future<List<Service>> loadService() async {
@@ -120,12 +162,13 @@ class _TowBodyState extends State<TowBody> {
       String rescueType = "Towing"; // Loại cứu hộ (ở đây là "repair")
       String customerId = customer.id; // ID của khách hàng
       List<String> url = urlImages ?? [];
-      List<String> service = selectedServices ?? [];
+      List<String> service = selectedServiceCards.map((service) => service.name).toList();;
       int area = selectedDropdownItem['value'] ?? 0;
       double distance = double.parse(widget.distance);
 
       // Bước 2: Tạo đối tượng Order
       OrderBookServiceTowing order = OrderBookServiceTowing(
+        carID: widget.carId,
         paymentMethod: paymentMethod,
         customerNote: customerNote,
         departure: departure,
@@ -249,7 +292,72 @@ class _TowBodyState extends State<TowBody> {
                     ),
                   ],
                 ),
-
+                const SizedBox(
+                height: 10,
+              ),
+                if (_car != null)
+                Card(
+                  shape: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6),
+                    borderSide: BorderSide.none,
+                  ),
+                  elevation: 0.5,
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Image.network(
+                              _car!.image!,
+                              height: 62,
+                              width: 62,
+                            ),
+                            const SizedBox(
+                              width: 11,
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                CustomText(
+                                  text: _car!.manufacturer,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                CustomText(
+                                  text: _car!.licensePlate,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: FrontendConfigs.kAuthColor,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            IconButton(
+                                onPressed: () {},
+                                icon: SvgPicture.asset(
+                                    'assets/svg/edit_icon.svg')),
+                            Container(
+                              height: 10,
+                            ),
+                            // SizedBox(
+                            //   height: 20,
+                            //   child: CustomText(
+                            //     text: widget.amount,
+                            //     fontSize: 16,
+                            //     fontWeight: FontWeight.w600,
+                            //   ),
+                            // ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(
                   height: 10,
                 ),
@@ -360,26 +468,40 @@ class _TowBodyState extends State<TowBody> {
                 const SizedBox(
                   height: 10,
                 ),
-                buildServiceList(),
-                // Tôi cần 1 cái drop dow các dịch vụ và chọn được nhìu lần
-                // FutureBuilder<List<Service>>(
-                //   future:
-                //       availableServices, // Thay bằng hàm lấy dữ liệu thích hợp
-                //   builder: (context, snapshot) {
-                //     if (snapshot.connectionState == ConnectionState.waiting) {
-                //       return CircularProgressIndicator();
-                //     } else if (snapshot.hasError) {
-                //       return Text('Error: ${snapshot.error}');
-                //     } else {
-                //       if (snapshot.hasData) {
-                //         List<Service> availableServices = snapshot.data!;
-                //         return buildServiceList(availableServices);
-                //       } else {
-                //         return Text('Không có dữ liệu.');
-                //       }
-                //     }
-                //   },
-                // ),
+                buildServiceList(context),
+              SizedBox(height: 10),
+              if (selectedServiceCards.isNotEmpty)
+                SingleChildScrollView(
+                  child: Container(
+                    height: 200, // Đặt chiều cao tùy ý cho Column
+                    child: ListView.builder(
+                      itemCount: selectedServiceCards.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(selectedServiceCards[index].name),
+                          subtitle: Text(
+                              'Giá: ${selectedServiceCards[index].price}₫'),
+                          trailing: IconButton(
+                            icon: Icon(Icons.clear),
+                            onPressed: () {
+                              // Create a copy of the list and remove the selected service
+                              List<Service> updatedList =
+                                  List.from(selectedServiceCards);
+                              updatedList.removeAt(index);
+                
+                              // Update the state with the new list
+                              setState(() {
+                                selectedServiceCards = updatedList;
+                                caculateTotal();
+                              });
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                
 
                 const SizedBox(
                   height: 10,
@@ -431,7 +553,7 @@ class _TowBodyState extends State<TowBody> {
                   children: <Widget>[
                     Expanded(
                       child: DropdownButton<String>(
-                        isExpanded: true, // Set this property to true
+                        isExpanded: true,
                         value: selectedPaymentMethod,
                         onChanged: (String? newValue) {
                           if (newValue != null) {
@@ -442,18 +564,17 @@ class _TowBodyState extends State<TowBody> {
                         },
                         items: <String>['Chuyển khoản', 'Tiền mặt']
                             .map<DropdownMenuItem<String>>((String value) {
+                          String mappedValue =
+                              value == 'Chuyển khoản' ? 'BANKING' : 'CASH';
+
                           return DropdownMenuItem<String>(
-                            value: value,
+                            value: mappedValue,
                             child: Row(
                               children: <Widget>[
                                 Image.asset(
                                   getImageAsset(value),
-                                  width: value == 'Chuyển khoản'
-                                      ? 25
-                                      : 24, // Larger width for banking.png
-                                  height: value == 'Chuyển khoản'
-                                      ? 25
-                                      : 24, // Larger height for banking.png
+                                  width: value == 'Chuyển khoản' ? 25 : 24,
+                                  height: value == 'Chuyển khoản' ? 25 : 24,
                                 ),
                                 SizedBox(width: 10),
                                 Text(value),
@@ -488,7 +609,7 @@ class _TowBodyState extends State<TowBody> {
                                 fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            '0₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
+                            '${totalPrice}₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold),
                           ),
@@ -529,9 +650,7 @@ class _TowBodyState extends State<TowBody> {
     );
   }
 
-  Widget buildServiceList() {
-    // A map of icons for each service, for example purposes
-
+  Widget buildServiceList(BuildContext context) {
     return Container(
       color: FrontendConfigs.kBackgrColor,
       child: Column(
@@ -548,11 +667,12 @@ class _TowBodyState extends State<TowBody> {
             ),
           ),
           InkWell(
-            onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ServiceSelectionPage(),
-                )),
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                builder: (context) => buildServiceSelection(context),
+              );
+            },
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -568,52 +688,79 @@ class _TowBodyState extends State<TowBody> {
               ],
             ),
           )
-          // if (selectedServices?.isEmpty ?? true)
-          //   Padding(
-          //     padding: EdgeInsets.only(bottom: 10),
-          //     child: Text(
-          //       "Hãy chọn ít nhất 1 dịch vụ",
-          //       style: TextStyle(
-          //         color: Colors.red,
-          //         fontWeight: FontWeight.bold,
-          //         fontSize: 14,
-          //       ),
-          //     ),
-          //   ),
-          // Wrap(
-          //   spacing: 10, // Horizontal space between chips
-          //   runSpacing: 10, // Vertical space between chips
-          //   children: availableServices.map((service) {
-          //     bool isSelected =
-          //         selectedServices?.contains(service.name) ?? false;
-          //     return ChoiceChip(
-          //       label: Text('${service.name} (${service.price}vnd)'),
-          //       avatar: Icon(
-          //         serviceIcons[service
-          //             .name], // Use the corresponding icon for each service
-          //         color: isSelected ? Colors.white : Colors.black54,
-          //       ),
-          //       selected: isSelected,
-          //       onSelected: (value) {
-          //         setState(() {
-          //           if (value) {
-          //             selectedServices?.add(service.name);
-          //             totalPrice += service.price;
-          //           } else {
-          //             selectedServices?.remove(service.name);
-          //             totalPrice -= service.price;
-          //           }
-          //         });
-          //       },
-          //       backgroundColor: Colors.grey[200],
-          //       selectedColor: Theme.of(context).primaryColor,
-          //       labelStyle: TextStyle(
-          //         color: isSelected ? Colors.white : Colors.black,
-          //       ),
-          //       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          //     );
-          //   }).toList(),
-          // ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildServiceSelection(BuildContext context) {
+    return Container(
+      height: double.infinity,
+      child: Column(
+        children: [
+          Expanded(
+            child: FutureBuilder<List<Service>>(
+              future: availableServices,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('Không có dữ liệu.'));
+                } else {
+                  return ListView.builder(
+                    itemCount: snapshot.data!.length,
+                    itemBuilder: (context, index) {
+                      final service = snapshot.data![index];
+                      final isSelected = selectedServiceCards.contains(service);
+                      return ServiceCard(
+                        service: service,
+                        onSelected: (isSelected) {
+                          updateSelectedServices(service, isSelected);
+                        },
+                        isSelected: isSelected,
+                      );
+                    },
+                  );
+                }
+              },
+            ),
+          ),
+          Container(
+            color: Colors.white,
+            padding: EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 10),
+            width: double.infinity,
+            child: Column(
+              mainAxisSize: MainAxisSize
+                  .min, // Đặt cột để không chiếm quá nhiều không gian
+              children: [
+                SizedBox(height: 20), // Khoảng cách giữa tổng cộng tiền và nút
+                SizedBox(
+                  width: double.infinity, // Đặt chiều rộng bằng với Container
+                  height: 50, // Đặt chiều cao cố định cho nút
+                  child: ElevatedButton(
+                    child: Text(
+                      'Tiếp tục',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: FrontendConfigs
+                          .kIconColor, // Đảm bảo rằng màu này được định nghĩa trong FrontendConfigs
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(8), // Góc bo tròn cho nút
+                      ),
+                    ),
+                    onPressed: () {
+                      print(selectedServiceCards.length);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/feedback/layout/body.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/select_service_view.dart';
 import 'package:flutter/material.dart';
@@ -79,7 +80,7 @@ class OrderProcessingScreen extends StatelessWidget {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ServiceView(),
+                          builder: (context) => BottomNavBarView(page: 0),
                         ),
                       );
                     },

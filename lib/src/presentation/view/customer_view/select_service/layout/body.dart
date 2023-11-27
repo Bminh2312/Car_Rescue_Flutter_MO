@@ -8,6 +8,7 @@ import 'package:CarRescue/src/presentation/view/customer_view/car_view/car_view.
 import 'package:CarRescue/src/presentation/view/customer_view/order_detail/order_detail_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/order_status/order_processing.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/orders/orders_view.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/select_car/select_car_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/animated_indicator.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/popup_service_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/selection_location_widget%20copy.dart';
@@ -200,15 +201,15 @@ class _ServiceBodyState extends State<ServiceBody> {
                     // Handle navigation logic here
                     if (selectedOption.title == 'Kéo xe cứu hộ') {
                       Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => HomeView(services: "Towing")));
+                          builder: (context) =>SelectCarView(rescueType: 'Towing',)));
                     } else if (selectedOption.title == 'Cứu hộ tại chỗ') {
                       Navigator.of(context).push(MaterialPageRoute(
                           builder: (context) =>
-                              HomeView(services: "OnSiteRescue")));
+                              SelectCarView(rescueType: 'OnSiteRescue',)));
                     } else if (selectedOption.title == 'Dịch vụ khác') {
                       Navigator.of(context).push(MaterialPageRoute(
                           builder: (context) =>
-                              HomeView(services: "OtherServices")));
+                              SelectCarView(rescueType: 'OtherServices',)));
                     }
                     // Add more conditions as necessary
                   },
@@ -222,21 +223,26 @@ class _ServiceBodyState extends State<ServiceBody> {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (context) =>
-                                  HomeView(services: "Towing")),
+                                  SelectCarView(rescueType: 'Towing',)),
                         );
                       } else if (selectedOption.title == 'Cứu hộ tại chỗ') {
                         // Navigate differently based on the option
+                        // Navigator.of(context).push(
+                        //   MaterialPageRoute(
+                        //       builder: (context) =>
+                        //           HomeView(services: "Fixing")),
+                        // );
                         Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (context) =>
-                                  HomeView(services: "Fixing")),
+                                  SelectCarView(rescueType: 'Fixing',)),
                         );
                       } else if (selectedOption.title == 'Dịch vụ khác') {
                         // Another navigation logic
                         Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (context) =>
-                                  HomeView(services: "Towing")),
+                                  SelectCarView(rescueType: 'Towing',)),
                         );
                       }
                       // Add more conditions as necessary
@@ -512,96 +518,96 @@ class _ServiceBodyState extends State<ServiceBody> {
     );
   }
 
-  Widget buildQuickBooking() {
-    return Container(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              // Loại dịch vụ 1
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (context) => HomeView(
-                              services: "Towing",
-                            )),
-                  );
-                },
-                child: Container(
-                  // Độ cao của loại dịch vụ
+  // Widget buildQuickBooking() {
+  //   return Container(
+  //     child: Card(
+  //       child: Padding(
+  //         padding: const EdgeInsets.symmetric(vertical: 16),
+  //         child: Row(
+  //           mainAxisAlignment: MainAxisAlignment.spaceAround,
+  //           children: [
+  //             // Loại dịch vụ 1
+  //             GestureDetector(
+  //               onTap: () {
+  //                 Navigator.of(context).push(
+  //                   MaterialPageRoute(
+  //                       builder: (context) => HomeView(
+  //                             services: "Towing",
+  //                           )),
+  //                 );
+  //               },
+  //               child: Container(
+  //                 // Độ cao của loại dịch vụ
 
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.directions_car,
-                        size: 24,
-                        color: Colors.white, // Màu biểu tượng
-                      ),
-                      SizedBox(
-                        width: 10,
-                      ),
-                      CustomText(
-                        text: 'Kéo xe',
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18, // Màu văn bản
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Loại dịch vụ 2
+  //                 child: Row(
+  //                   mainAxisAlignment: MainAxisAlignment.start,
+  //                   children: [
+  //                     Icon(
+  //                       Icons.directions_car,
+  //                       size: 24,
+  //                       color: Colors.white, // Màu biểu tượng
+  //                     ),
+  //                     SizedBox(
+  //                       width: 10,
+  //                     ),
+  //                     CustomText(
+  //                       text: 'Kéo xe',
+  //                       color: Colors.black,
+  //                       fontWeight: FontWeight.bold,
+  //                       fontSize: 18, // Màu văn bản
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //             // Loại dịch vụ 2
 
-              GestureDetector(
-                onTap: () {
-                  //  Navigator.of(context).pushReplacement(
-                  //   MaterialPageRoute(
-                  //       builder: (context) => HomeView(services: "repair",)),
-                  // );
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (context) => HomeView(
-                              services: "Fixing",
-                            )),
-                  );
-                },
-                child: Container(
-                  // Độ cao của loại dịch vụ
-                  decoration: BoxDecoration(
-                    // Màu nền trắng
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.build,
-                        size: 24,
-                        color: FrontendConfigs.kIconColor, // Màu biểu tượng
-                      ),
-                      SizedBox(
-                        width: 10,
-                      ),
-                      CustomText(
-                        text: 'Sửa chữa',
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18, // Màu văn bản
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  //             GestureDetector(
+  //               onTap: () {
+  //                 //  Navigator.of(context).pushReplacement(
+  //                 //   MaterialPageRoute(
+  //                 //       builder: (context) => HomeView(services: "repair",)),
+  //                 // );
+  //                 Navigator.of(context).push(
+  //                   MaterialPageRoute(
+  //                       builder: (context) => HomeView(
+  //                             services: "Fixing",
+  //                           )),
+  //                 );
+  //               },
+  //               child: Container(
+  //                 // Độ cao của loại dịch vụ
+  //                 decoration: BoxDecoration(
+  //                   // Màu nền trắng
+  //                   borderRadius: BorderRadius.circular(15),
+  //                 ),
+  //                 child: Row(
+  //                   mainAxisAlignment: MainAxisAlignment.center,
+  //                   children: [
+  //                     Icon(
+  //                       Icons.build,
+  //                       size: 24,
+  //                       color: FrontendConfigs.kIconColor, // Màu biểu tượng
+  //                     ),
+  //                     SizedBox(
+  //                       width: 10,
+  //                     ),
+  //                     CustomText(
+  //                       text: 'Sửa chữa',
+  //                       color: Colors.black,
+  //                       fontWeight: FontWeight.bold,
+  //                       fontSize: 18, // Màu văn bản
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             )
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget build(BuildContext context) {
     return SingleChildScrollView(
