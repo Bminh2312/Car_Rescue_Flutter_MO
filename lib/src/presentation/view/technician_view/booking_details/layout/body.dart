@@ -5,7 +5,6 @@ import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/customerInfo.dart';
 import 'package:CarRescue/src/models/customer_car.dart';
-import 'package:CarRescue/src/models/order.dart';
 import 'package:CarRescue/src/models/service.dart';
 import 'package:CarRescue/src/models/technician.dart';
 import 'package:CarRescue/src/presentation/elements/app_button.dart';
@@ -972,7 +971,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       ),
 
                     ),
-                  ),
+                  
                   // _buildImageSection(imageUrls!),
 
                   // Additional Details
