@@ -653,7 +653,19 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) => FeedbackScreen(
-                                      techId: widget.techId!,
+                                      techId: widget.techId,
+                                      orderId: widget.orderId,
+                                      customerId: customer.id,
+                                    )),
+                          );
+                        }
+
+                        if (vehicleInfo != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => FeedbackScreen(
+                                      vehicleInfo: vehicleInfo,
                                       orderId: widget.orderId,
                                       customerId: customer.id,
                                     )),
