@@ -25,7 +25,8 @@ class FeedBackProvider {
       final dynamic responseBody = convert.json.decode(response.body);
       // Assuming that the Feedback class has been defined
       final dynamic feedbackData = responseBody['data'];
-      final FeedbackCustomer filteredFeedback = FeedbackCustomer.fromJson(feedbackData);
+      final FeedbackCustomer filteredFeedback =
+          FeedbackCustomer.fromJson(feedbackData);
       print(filteredFeedback);
       return filteredFeedback;
     } else {
@@ -77,7 +78,7 @@ class FeedBackProvider {
       'rating': rating,
       'note': note,
     };
-
+    print('data: $feedbackData');
     try {
       final response = await http.post(
         Uri.parse(apiUrlCreateFeedBack),

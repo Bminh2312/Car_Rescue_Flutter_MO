@@ -64,7 +64,7 @@ class _RepairBodyState extends State<RepairBody> {
   @override
   void initState() {
     selectedDropdownItem = dropdownItems[0];
-    selectedPaymentOption = 'CASH';
+    selectedPaymentOption = 'Cash';
     urlImages = [];
     selectedServices = [];
     availableServices = loadService();
@@ -135,12 +135,12 @@ class _RepairBodyState extends State<RepairBody> {
   void caculateTotal() {
     int total = 0;
     for (Service service in selectedServiceCards) {
-    total += service.price;
-  }
+      total += service.price;
+    }
 
-  setState(() {
-    totalPrice = total;
-  });
+    setState(() {
+      totalPrice = total;
+    });
   }
 
   void createOrder() async {
@@ -165,7 +165,7 @@ class _RepairBodyState extends State<RepairBody> {
       // Bước 2: Tạo đối tượng Order
       OrderBookServiceFixing order = OrderBookServiceFixing(
         carId: widget.carId,
-        paymentMethod: paymentMethodController.text,
+        paymentMethod: selectedPaymentOption!,
         customerNote: customerNoteController.text,
         departure: departure,
         destination: destination,
@@ -369,6 +369,11 @@ class _RepairBodyState extends State<RepairBody> {
               const SizedBox(
                 height: 10,
               ),
+              CustomText(
+                text: 'Hình ảnh hiện trường',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
               ElevatedButton(
                 onPressed: () async {
                   if (!isImageLoading) {
@@ -448,7 +453,7 @@ class _RepairBodyState extends State<RepairBody> {
                               List<Service> updatedList =
                                   List.from(selectedServiceCards);
                               updatedList.removeAt(index);
-                
+
                               // Update the state with the new list
                               setState(() {
                                 selectedServiceCards = updatedList;
@@ -497,6 +502,14 @@ class _RepairBodyState extends State<RepairBody> {
               const SizedBox(
                 height: 10,
               ),
+              CustomText(
+                text: 'Phương thức thanh toán',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              const SizedBox(
+                height: 10,
+              ),
               Row(
                 children: <Widget>[
                   Expanded(
@@ -513,7 +526,7 @@ class _RepairBodyState extends State<RepairBody> {
                       items: <String>['Chuyển khoản', 'Tiền mặt']
                           .map<DropdownMenuItem<String>>((String value) {
                         String mappedValue =
-                            value == 'Chuyển khoản' ? 'BANKING' : 'CASH';
+                            value == 'Chuyển khoản' ? 'Banking' : 'Cash';
 
                         return DropdownMenuItem<String>(
                           value: mappedValue,
@@ -538,56 +551,56 @@ class _RepairBodyState extends State<RepairBody> {
                 height: 10,
               ),
               Container(
-                  color: Colors.white,
-                  padding:
-                      EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 10),
-                  width: double.infinity,
-                  child: Column(
-                    mainAxisSize: MainAxisSize
-                        .min, // Đặt cột để không chiếm quá nhiều không gian
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Tổng cộng:',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            '${totalPrice}₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                          height: 20), // Khoảng cách giữa tổng cộng tiền và nút
-                      SizedBox(
-                        width: double
-                            .infinity, // Đặt chiều rộng bằng với Container
-                        height: 50, // Đặt chiều cao cố định cho nút
-                        child: ElevatedButton(
-                          child: Text(
-                            isLoading ? 'Đang tạo đơn hàng...' : "Tạo đơn",
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: FrontendConfigs
-                                .kIconColor, // Đảm bảo rằng màu này được định nghĩa trong FrontendConfigs
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  8), // Góc bo tròn cho nút
-                            ),
-                          ),
-                          onPressed: () {
-                            createOrder();
-                          },
+                color: Colors.white,
+                padding:
+                    EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 10),
+                width: double.infinity,
+                child: Column(
+                  mainAxisSize: MainAxisSize
+                      .min, // Đặt cột để không chiếm quá nhiều không gian
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Tổng cộng (Tạm tính):',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
+                        Text(
+                          '${totalPrice}₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                        height: 20), // Khoảng cách giữa tổng cộng tiền và nút
+                    SizedBox(
+                      width:
+                          double.infinity, // Đặt chiều rộng bằng với Container
+                      height: 50, // Đặt chiều cao cố định cho nút
+                      child: ElevatedButton(
+                        child: Text(
+                          isLoading ? 'Đang tạo đơn hàng...' : "Tạo đơn",
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: FrontendConfigs
+                              .kIconColor, // Đảm bảo rằng màu này được định nghĩa trong FrontendConfigs
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(8), // Góc bo tròn cho nút
+                          ),
+                        ),
+                        onPressed: () {
+                          createOrder();
+                        },
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
             ],
           ),
         ),

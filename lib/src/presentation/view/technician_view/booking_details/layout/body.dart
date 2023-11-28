@@ -958,19 +958,18 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   ),
 
                   // Image
-                  if (widget.booking.status.toUpperCase() == 'ASSIGNED' &&
-                      _imageUrls.isNotEmpty)
-                    Container(
-                      margin: EdgeInsets.symmetric(vertical: 4),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      color: Colors.white,
-                      child: Column(
-                        children: [
-                          _buildImageSection(_imageUrls),
-                        ],
-                      ),
+                  // if (widget.booking.status.toUpperCase() == 'ASSIGNED' &&
+                  //     _imageUrls.isNotEmpty)
+                  Container(
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.white,
+                    child: Column(
+                      children: [
+                        _buildImageSection(_imageUrls),
+                      ],
                     ),
+                  ),
                   // _buildImageSection(imageUrls!),
 
                   // Additional Details

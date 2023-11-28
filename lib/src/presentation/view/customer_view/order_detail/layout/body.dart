@@ -49,7 +49,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   Vehicle? vehicleInfo;
   late Future<Order> _orderFuture;
   int total = 0;
-  Order? _order;
+
   List<String> _imageUrls = [];
   List<Map<String, dynamic>> orderDetails = [];
   num totalQuantity = 0;
@@ -59,6 +59,8 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   void initState() {
     print(widget.orderId);
     print(widget.techId);
+    print('a: ${feedbackCustomer?.status}');
+
     if (widget.techId != '' && widget.techId != null) {
       _loadTechInfo(widget.techId ?? '');
     }
@@ -475,9 +477,16 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                           if (feedbackCustomer?.status == "COMPLETED")
                             _buildInfoRow(
                                 "Nội dung đánh giá",
-                                Text(feedbackCustomer?.note ?? '',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold))),
+                                Container(
+                                  width: 200,
+                                  child: Text(
+                                    feedbackCustomer?.note ?? '',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 3,
+                                  ),
+                                )),
                           SizedBox(height: 2.0),
                         ],
                       )),
@@ -680,21 +689,26 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                   ),
                 if (order.status == "COMPLETED" &&
                     feedbackCustomer?.status == "WAITING")
-                  AppButton(
-                      onPressed: () {
-                        if (widget.techId != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => FeedbackScreen(
-                                      techId: widget.techId!,
-                                      orderId: widget.orderId,
-                                      customerId: customer.id,
-                                    )),
-                          );
-                        }
-                      },
-                      btnLabel: "Gửi đánh giá"),
+                  Container(
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.white,
+                    child: AppButton(
+                        onPressed: () {
+                          if (widget.techId != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => FeedbackScreen(
+                                        techId: widget.techId!,
+                                        orderId: widget.orderId,
+                                        customerId: customer.id,
+                                      )),
+                            );
+                          }
+                        },
+                        btnLabel: "Gửi đánh giá"),
+                  ),
               ],
             ),
           );
@@ -857,28 +871,28 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                   return Column(
                     children: [
                       _buildInfoRow(
-                        '$name (Đơn giá/km) ',
+                        '$name (Số lượng: $quantity) ',
                         Text(
                           '$formattedTotal',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
-                      _buildInfoRow(
-                        'Khoảng cách',
-                        Text(
-                          '$totalQuantity km',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildPaymentMethod('Tổng cộng', ''),
-                          Text(currencyFormat.format(totalAmount),
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 17)),
-                        ],
-                      ),
+                      // _buildInfoRow(
+                      //   'Khoảng cách',
+                      //   Text(
+                      //     '$totalQuantity km',
+                      //     style: TextStyle(fontWeight: FontWeight.bold),
+                      //   ),
+                      // ),
+                      // Row(
+                      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      //   children: [
+                      //     _buildPaymentMethod('Tổng cộng', ''),
+                      //     Text(currencyFormat.format(totalAmount),
+                      //         style: TextStyle(
+                      //             fontWeight: FontWeight.bold, fontSize: 17)),
+                      //   ],
+                      // ),
                       // Container(
                       //     decoration: BoxDecoration(
                       //         color: Color.fromARGB(97, 164, 164, 164),
