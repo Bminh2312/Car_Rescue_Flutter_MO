@@ -958,16 +958,19 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   ),
 
                   // Image
-                  // if (widget.booking.status.toUpperCase() == 'ASSIGNED' &&
-                  //     _imageUrls.isNotEmpty)
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      children: [
-                        _buildImageSection(_imageUrls),
-                      ],
+
+                  if (widget.booking.status.toUpperCase() == 'ASSIGNED')
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+                          _buildImageSection(_imageUrls),
+                        ],
+                      ),
+
                     ),
                   ),
                   // _buildImageSection(imageUrls!),
@@ -1120,32 +1123,24 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                     pickedImages.isNotEmpty) {
                                   await uploadImage();
 
-                                  if (_imageUrls.isNotEmpty) {
-                                    await updateOrder(widget.booking.id,
-                                        techNoteController.text, _updateImage);
-                                    // await _loadImageOrders(widget.booking.id);
-                                    await _loadTechInfo(
-                                        widget.booking.technicianId);
-                                    await _loadBooking(widget.booking.id);
+                                  await updateOrder(widget.booking.id,
+                                      techNoteController.text, _updateImage);
+                                  // await _loadImageOrders(widget.booking.id);
+                                  await _loadTechInfo(
+                                      widget.booking.technicianId);
+                                  await _loadBooking(widget.booking.id);
 
-                                    await _loadImageOrders(widget.booking.id);
+                                  await _loadImageOrders(widget.booking.id);
 
-                                    setState(() {
-                                      techNoteController.clear();
-                                      _loadCustomerInfo(
-                                          widget.booking.customerId);
-                                      _calculateTotal(widget.booking.id);
-                                    });
-                                  } else {
-                                    print("Image empty");
-                                    setState(() {
-                                      _isLoading = false;
-                                    });
-                                  }
+                                  setState(() {
+                                    techNoteController.clear();
+                                    _loadCustomerInfo(
+                                        widget.booking.customerId);
+                                    _calculateTotal(widget.booking.id);
+                                  });
                                 } else {
                                   print("Note or pickedImages empty");
-                                  notifyMessage
-                                      .showToast("Cần có ảnh và ghi chú");
+                                  notifyMessage.showToast("Cần ghi chú");
                                   setState(() {
                                     _isLoading = false;
                                   });

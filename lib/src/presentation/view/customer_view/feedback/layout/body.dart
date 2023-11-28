@@ -1,6 +1,7 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/technician.dart';
+import 'package:CarRescue/src/models/vehicle_item.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/providers/feedback_order.dart';
@@ -8,12 +9,14 @@ import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
 
 class FeedbackScreen extends StatefulWidget {
-  final String techId;
+  String? techId;
   final String orderId;
   final String customerId;
-  const FeedbackScreen(
+  Vehicle? vehicleInfo;
+   FeedbackScreen(
       {Key? key,
-      required this.techId,
+      this.vehicleInfo,
+      this.techId,
       required this.orderId,
       required this.customerId})
       : super(key: key);
@@ -87,7 +90,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   @override
   void initState() {
     print(widget.techId);
-    _loadTechInfo(widget.techId);
+    if(widget.techId != null){
+      _loadTechInfo(widget.techId!);
+    }
+    
     super.initState();
   }
 
@@ -123,7 +129,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 ),
                 child: Column(
                   children: [
+                    if(technicianInfo != null)
                     _buildTechInfo(technicianInfo),
+                    if(widget.vehicleInfo != null)
+                    _buildCarOwnerInfo(widget.vehicleInfo),
                     _buildRatingStars(),
                   ],
                 ),
@@ -181,6 +190,35 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           ),
           CustomText(
             text: technicianInfo?.phone ?? '',
+            fontSize: 18,
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCarOwnerInfo(Vehicle? vehicleInfo) {
+    return Center(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          CircleAvatar(
+            backgroundColor: FrontendConfigs.kBackgrColor,
+            backgroundImage: NetworkImage(vehicleInfo?.image ?? ''),
+            radius: 40.0, // Điều chỉnh kích thước của CircleAvatar
+          ),
+          SizedBox(
+            height: 8,
+          ),
+          CustomText(
+            text: vehicleInfo?.manufacturer ?? '',
+            fontSize: 18,
+          ),
+          SizedBox(
+            height: 8,
+          ),
+          CustomText(
+            text: vehicleInfo?.licensePlate ?? '',
             fontSize: 18,
           )
         ],

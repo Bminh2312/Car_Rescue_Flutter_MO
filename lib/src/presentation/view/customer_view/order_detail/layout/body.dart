@@ -689,26 +689,35 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                   ),
                 if (order.status == "COMPLETED" &&
                     feedbackCustomer?.status == "WAITING")
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: AppButton(
-                        onPressed: () {
-                          if (widget.techId != null) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => FeedbackScreen(
-                                        techId: widget.techId!,
-                                        orderId: widget.orderId,
-                                        customerId: customer.id,
-                                      )),
-                            );
-                          }
-                        },
-                        btnLabel: "Gửi đánh giá"),
-                  ),
+
+                  AppButton(
+                      onPressed: () {
+                        if (widget.techId != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => FeedbackScreen(
+                                      techId: widget.techId,
+                                      orderId: widget.orderId,
+                                      customerId: customer.id,
+                                    )),
+                          );
+                        }
+
+                        if (vehicleInfo != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => FeedbackScreen(
+                                      vehicleInfo: vehicleInfo,
+                                      orderId: widget.orderId,
+                                      customerId: customer.id,
+                                    )),
+                          );
+                        }
+                      },
+                      btnLabel: "Gửi đánh giá"),
+
               ],
             ),
           );
