@@ -35,12 +35,7 @@ class _PopupButtonState extends State<PopupButton> {
       description:
           'Cung cấp giải pháp cứu hộ tận nơi, nhanh chóng khắc phục sự cố để bạn tiếp tục hành trình',
     ),
-    OptionItem(
-      imageAsset: 'assets/images/tow-service.png',
-      title: 'Dịch vụ khác',
-      description:
-          'Dịch vụ đa dạng, từ bảo dưỡng xe định kỳ đến sửa chữa nhanh, phục vụ mọi nhu cầu của bạn.',
-    ),
+
     // Thêm các lựa chọn khác theo cùng cách thức
   ];
 

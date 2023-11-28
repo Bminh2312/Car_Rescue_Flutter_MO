@@ -201,15 +201,14 @@ class _ServiceBodyState extends State<ServiceBody> {
                     // Handle navigation logic here
                     if (selectedOption.title == 'Kéo xe cứu hộ') {
                       Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) =>SelectCarView(rescueType: 'Towing',)));
+                          builder: (context) => SelectCarView(
+                                rescueType: 'Towing',
+                              )));
                     } else if (selectedOption.title == 'Cứu hộ tại chỗ') {
                       Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) =>
-                              SelectCarView(rescueType: 'OnSiteRescue',)));
-                    } else if (selectedOption.title == 'Dịch vụ khác') {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) =>
-                              SelectCarView(rescueType: 'OtherServices',)));
+                          builder: (context) => SelectCarView(
+                                rescueType: 'OnSiteRescue',
+                              )));
                     }
                     // Add more conditions as necessary
                   },
@@ -222,8 +221,9 @@ class _ServiceBodyState extends State<ServiceBody> {
                         // Navigate to a specific page or with specific parameters
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                              builder: (context) =>
-                                  SelectCarView(rescueType: 'Towing',)),
+                              builder: (context) => SelectCarView(
+                                    rescueType: 'Towing',
+                                  )),
                         );
                       } else if (selectedOption.title == 'Cứu hộ tại chỗ') {
                         // Navigate differently based on the option
@@ -234,15 +234,9 @@ class _ServiceBodyState extends State<ServiceBody> {
                         // );
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                              builder: (context) =>
-                                  SelectCarView(rescueType: 'Fixing',)),
-                        );
-                      } else if (selectedOption.title == 'Dịch vụ khác') {
-                        // Another navigation logic
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  SelectCarView(rescueType: 'Towing',)),
+                              builder: (context) => SelectCarView(
+                                    rescueType: 'Fixing',
+                                  )),
                         );
                       }
                       // Add more conditions as necessary

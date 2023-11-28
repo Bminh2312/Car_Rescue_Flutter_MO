@@ -156,7 +156,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         setState(() {
           _car = carFromAPI;
         });
-        _loadCarModel(_car!.modelId!);
+        _loadCarModel(_car?.modelId ?? '');
         // Assuming the response data is in the format you need
         return CustomerCar.fromJson(
             dataField); // Convert the data to a CustomerCar object
@@ -260,8 +260,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     }
   }
 
- 
-
   void _openImageDialog(
       BuildContext context, int index, List<String> allImages) {
     showDialog(
@@ -356,12 +354,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         phone: customerInfo?.phone ?? 'Chưa thêm số điện thoại',
                         avatar: customerInfo?.avatar ?? '',
                       ),
-                      CustomerCarInfoRow(
-                        manufacturer: _car?.manufacturer ?? 'Không có',
-                        type: _carModel?.model1 ?? 'Không có',
-                        licensePlate: _car?.licensePlate ?? 'Không có',
-                        image: _car?.image ?? 'Không có',
-                      ),
+                      if (customerInfo?.fullname != 'Khách Hàng Offline')
+                        CustomerCarInfoRow(
+                          manufacturer: _car?.manufacturer ?? 'Không có',
+                          type: _carModel?.model1 ?? 'Không có',
+                          licensePlate: _car?.licensePlate ?? 'Không có',
+                          image: _car?.image ?? 'Không có',
+                        ),
                     ],
                   ),
                 ),

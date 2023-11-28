@@ -61,25 +61,25 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   void _submitFeedback() async {
     try {
-      if(_formKey.currentState!.validate()){
+      if (_formKey.currentState!.validate()) {
         String feedbackId = await feedBackProvider.getWaitingFeedbacks(
-          widget.customerId, widget.orderId);
+            widget.customerId, widget.orderId);
         print(feedbackId);
-      // Now you have feedbackId, you can use it for updating feedback
-      bool isSuccess = await feedBackProvider.updateFeedback(
-          feedbackId, _rating, _noteController.text);
+        // Now you have feedbackId, you can use it for updating feedback
+        bool isSuccess = await feedBackProvider.updateFeedback(
+            feedbackId, _rating, _noteController.text);
 
-      if (isSuccess) {
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => BottomNavBarView(
-                      page: 0,
-                    )));
-        notifyMessage.showToast("Đã gửi đánh giá.");
-      } else {
-        notifyMessage.showToast("Đã xảy ra lỗi hệ thống.");
-      }
+        if (isSuccess) {
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => BottomNavBarView(
+                        page: 0,
+                      )));
+          notifyMessage.showToast("Đã gửi đánh giá.");
+        } else {
+          notifyMessage.showToast("Đã xảy ra lỗi hệ thống.");
+        }
       }
     } catch (e) {
       // Handle exceptions
@@ -139,8 +139,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               ),
               SizedBox(height: 20),
               _buildFeedbackHints(),
-              _buildFeedbackNoteField(),
-              SizedBox(height: 20),
+              Expanded(flex: 3, child: _buildFeedbackNoteField()),
               _buildSendButton(),
             ],
           ),
@@ -154,7 +153,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(5, (index) {
         return IconButton(
-          iconSize: 35,
+          iconSize: 25,
           icon: Icon(
             _rating > index ? Icons.star : Icons.star_border,
             color: Colors.amber,
@@ -177,7 +176,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           CircleAvatar(
             backgroundColor: FrontendConfigs.kBackgrColor,
             backgroundImage: NetworkImage(technicianInfo?.avatar ?? ''),
-            radius: 40.0, // Điều chỉnh kích thước của CircleAvatar
+            radius: 30.0, // Điều chỉnh kích thước của CircleAvatar
           ),
           SizedBox(
             height: 8,
@@ -255,24 +254,26 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   Widget _buildFeedbackNoteField() {
-  return Form(
-    key: _formKey,
-    child: TextFormField(
-      controller: _noteController,
-      decoration: InputDecoration(
-        hintText: "Hãy góp ý về dịch vụ",
-        border: OutlineInputBorder(),
+    return Container(
+      child: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: _noteController,
+          decoration: InputDecoration(
+            hintText: "Hãy góp ý về dịch vụ",
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 5,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Vui lòng nhập góp ý của bạn';
+            }
+            return null;
+          },
+        ),
       ),
-      maxLines: 5,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Vui lòng nhập góp ý của bạn';
-        }
-        return null;
-      },
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildSendButton() {
     return ElevatedButton(

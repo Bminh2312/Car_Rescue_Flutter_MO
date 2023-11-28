@@ -33,7 +33,7 @@ class LoginResult {
   });
 }
 
-final String apiKey = 'AIzaSyBv0RoGulA7l1v9-d8uD5pgG8EsOPZbFLU';
+final String apiKey = 'AIzaSyDFer0Di6bJTVO1BqQbKVGs3wI7O-O9xIw';
 
 class AuthService {
   //TECHNICIAN API
@@ -395,6 +395,7 @@ class AuthService {
       throw Exception('Error fetching bookings: $e');
     }
   }
+
   Future<List<Booking>> fetchTechBookingByAssigned(String userId) async {
     try {
       final apiUrl = Uri.parse(
@@ -598,7 +599,7 @@ class AuthService {
     if (latDeparture != null && longDeparture != null) {
       // Replace with your actual API key
       final String urlDeparture =
-          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=$apiKey';
+          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=AIzaSyDrjEvDy6hbfCzcxdR8rYGjPqTZ_ZV1wyw';
 
       final responseDeparture = await http.get(Uri.parse(urlDeparture));
       if (responseDeparture.statusCode != 200) {
@@ -625,7 +626,7 @@ class AuthService {
     if (latDestination != null && longDestination != null) {
       // Replace with your actual API key
       final String urlDestination =
-          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=$apiKey';
+          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=AIzaSyDrjEvDy6hbfCzcxdR8rYGjPqTZ_ZV1wyw';
 
       final responseDestination = await http.get(Uri.parse(urlDestination));
       if (responseDestination.statusCode != 200) {
@@ -1210,6 +1211,7 @@ class AuthService {
         'https://rescuecapstoneapi.azurewebsites.net/api/Schedule/GetWeeklyShiftOfTechnician?id=$weekId&techID=$techId';
     try {
       final response = await http.post(Uri.parse(apiUrl));
+      
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
         final List<dynamic> shiftData = jsonData['data'];

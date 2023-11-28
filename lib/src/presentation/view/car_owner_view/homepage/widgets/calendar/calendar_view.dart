@@ -330,6 +330,7 @@ class _CalendarViewState extends State<CalendarView> {
                             // Close the modal
                             Navigator.of(context).pop();
                             //
+
                             loadWeeklyShift(_nextWeek!.id, widget.userId);
                           } catch (e) {
                             // Handle the error or show an error message
@@ -572,7 +573,7 @@ class _CalendarViewState extends State<CalendarView> {
       );
 
       if (response.statusCode == 200) {
-        // Successfully created the weekly shift
+        loadWeeklyShift(_currentWeek!.id, widget.userId);
         print('Weekly shift created successfully.');
       } else {
         // Failed to create the weekly shift

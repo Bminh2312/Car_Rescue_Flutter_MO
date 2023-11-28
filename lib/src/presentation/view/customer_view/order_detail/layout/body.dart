@@ -49,20 +49,25 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   Vehicle? vehicleInfo;
   late Future<Order> _orderFuture;
   int total = 0;
-  Order? _order;
+
   List<String> _imageUrls = [];
+  List<Map<String, dynamic>> orderDetails = [];
+  num totalQuantity = 0;
+  num totalAmount = 0;
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
   @override
   void initState() {
     print(widget.orderId);
     print(widget.techId);
+    print('a: ${feedbackCustomer?.status}');
+
     if (widget.techId != '' && widget.techId != null) {
       _loadTechInfo(widget.techId ?? '');
     }
     _loadImageOrders(widget.orderId);
     _calculateTotal(widget.orderId);
     fetchFeedback(widget.orderId);
-
+    fetchServiceData(widget.orderId);
     _orderFuture = fetchOrderDetail(widget.orderId).then((order) {
       _loadVehicleInfo(order.vehicleId ?? '').then((vehicle) {
         setState(() {
@@ -130,8 +135,8 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
       }
     } catch (e) {
       setState(() {
-          _car = null;
-        });
+        _car = null;
+      });
       print('Error fetching CarModel: $e');
       throw Exception('Error fetching CarModel: $e');
     }
@@ -140,11 +145,11 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   Future<void> _loadCarModel(String modelId) async {
     try {
       CarModel carModelAPI = await authService.fetchCarModel(modelId);
-      if(carModelAPI.id != null){
+      if (carModelAPI.id != null) {
         setState(() {
-        _carModel = carModelAPI;
-      });
-      }else{
+          _carModel = carModelAPI;
+        });
+      } else {
         setState(() {
           _carModel = null;
         });
@@ -153,8 +158,8 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
     } catch (e) {
       // Handle the exception
       setState(() {
-          _carModel = null;
-        });
+        _carModel = null;
+      });
       print('Error loading CarModel: $e');
       // Optionally, implement additional error handling logic here
     }
@@ -175,6 +180,52 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
       print('Error: $e');
       return null;
     }
+  }
+
+  Future<void> fetchServiceData(String orderId) async {
+    final apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
+
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (responseData.containsKey('data') && responseData['data'] is List) {
+        setState(() {
+          orderDetails = List<Map<String, dynamic>>.from(responseData['data']);
+          print(orderDetails);
+        });
+        fetchServiceNameAndQuantity(
+            orderDetails[0]['serviceId']); // Get the first serviceId
+      } else {
+        throw Exception('API response does not contain a valid list of data.');
+      }
+    } else {
+      throw Exception('Failed to load data from API');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchServiceNameAndQuantity(
+      String serviceId) async {
+    final apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Service/Get?id=$serviceId';
+
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
+        final Map<String, dynamic> responseData = data['data'];
+        final String name = responseData['name'];
+        final int price = responseData['price'];
+        final int quantity = orderDetails
+            .firstWhere((order) => order['serviceId'] == serviceId)['quantity'];
+
+        return {'name': name, 'quantity': quantity, 'price': price};
+      }
+    }
+    throw Exception('Failed to load service name and quantity from API');
   }
 
   Future<String> getPlaceDetails(String latLng) async {
@@ -342,34 +393,34 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                       // if (widget.techId != '' && widget.techId != null)
                       _buildSectionTitle("Khách hàng"),
                       // if (widget.techId != '' && widget.techId != null)
-                      if(_car != null)
-                      CustomerCarInfoRow(
-                        manufacturer: _car?.manufacturer ?? 'Không có',
-                        type: _carModel?.model1 ?? 'Không có',
-                        licensePlate: _car?.licensePlate ?? 'Không có',
-                        image: _car?.image ?? 'Không có',
-                      ),
+                      if (_car != null)
+                        CustomerCarInfoRow(
+                          manufacturer: _car?.manufacturer ?? 'Không có',
+                          type: _carModel?.model1 ?? 'Không có',
+                          licensePlate: _car?.licensePlate ?? 'Không có',
+                          image: _car?.image ?? 'Không có',
+                        ),
                     ],
                   ),
                 ),
-                if(vehicleInfo != null)
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.white,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildSectionTitle('Cứu hộ'),
-                      VehicleInfoRow(
-                        manufacturer: vehicleInfo?.manufacturer ?? '',
-                        type: vehicleInfo?.type ?? '',
-                        licensePlate: vehicleInfo?.licensePlate ?? '',
-                        image: vehicleInfo?.image ?? '',
-                      ),
-                    ],
+                if (vehicleInfo != null)
+                  Container(
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _buildSectionTitle('Cứu hộ'),
+                        VehicleInfoRow(
+                          manufacturer: vehicleInfo?.manufacturer ?? '',
+                          type: vehicleInfo?.type ?? '',
+                          licensePlate: vehicleInfo?.licensePlate ?? '',
+                          image: vehicleInfo?.image ?? '',
+                        ),
+                      ],
+                    ),
                   ),
-                ),
                 if (widget.techId != '' && widget.techId != null)
                   Container(
                     margin: EdgeInsets.symmetric(vertical: 4),
@@ -426,9 +477,16 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                           if (feedbackCustomer?.status == "COMPLETED")
                             _buildInfoRow(
                                 "Nội dung đánh giá",
-                                Text(feedbackCustomer?.note ?? '',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold))),
+                                Container(
+                                  width: 200,
+                                  child: Text(
+                                    feedbackCustomer?.note ?? '',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 3,
+                                  ),
+                                )),
                           SizedBox(height: 2.0),
                         ],
                       )),
@@ -606,21 +664,6 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                         SizedBox(
                           height: 10,
                         ),
-                        if (order.status != "CANCELLED")
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              CustomText(
-                                text: 'Tổng cộng',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                              ),
-                              Text(currencyFormat.format(total),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 19)),
-                            ],
-                          ),
                       ],
                     )),
                 if (order.status != "CANCELLED" && order.rescueType != 'Towing')
@@ -646,6 +689,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                   ),
                 if (order.status == "COMPLETED" &&
                     feedbackCustomer?.status == "WAITING")
+
                   AppButton(
                       onPressed: () {
                         if (widget.techId != null) {
@@ -673,6 +717,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                         }
                       },
                       btnLabel: "Gửi đánh giá"),
+
               ],
             ),
           );
@@ -775,49 +820,157 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
 
   Widget _buildOrderItemSection() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle("Đơn giá"), // Customize the section title
-        // Add order item details here
-
-        FutureBuilder<List<Service>>(
-          future: _loadServicesOfCustomer(widget.orderId),
-          builder: (context, serviceSnapshot) {
-            if (serviceSnapshot.connectionState == ConnectionState.waiting) {
-              // Trạng thái đợi khi tải dữ liệu
-              return CircularProgressIndicator();
-            } else if (serviceSnapshot.hasError) {
-              // Xử lý lỗi nếu có
-              return Text('Error: ${serviceSnapshot.error}');
-            } else {
-              // Hiển thị dữ liệu khi đã có kết quả
-              final List<Service> serviceList = serviceSnapshot.data!;
-
-              if (serviceList.isEmpty) {
-                // Xử lý trường hợp danh sách dịch vụ rỗng
-                return Text('Không có dịch vụ.');
-              }
-
-              // Sử dụng ListView.builder ở đây để danh sách dịch vụ có thể cuộn một cách linh hoạt
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: ScrollPhysics(), // Tắt tính năng cuộn của ListView này
-                itemCount: serviceList.length,
-                itemBuilder: (context, index) {
-                  final service = serviceList[index];
-                  return _buildInfoRow(
-                    "${service.name}",
-                    Text(
-                      "${service.price} vnd", // Sử dụng giá từ đối tượng Service
-                      style: TextStyle(fontWeight: FontWeight.bold),
+        Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    CustomText(
+                      text: 'Phí dịch vụ',
+                      fontSize: 16,
                     ),
+                    SizedBox(
+                      width: 7,
+                    ),
+                    Tooltip(
+                      triggerMode: TooltipTriggerMode.tap,
+                      message:
+                          'Phí dịch vụ mặc định được tính 300.000đ mỗi đơn hàng\n\nTổng cộng = Phí dịch vụ + (Đơn giá x Khoảng cách) ',
+                      textStyle: TextStyle(color: Colors.white),
+                      padding: EdgeInsets.all(8),
+                      margin: EdgeInsets.all(5),
+                      waitDuration: Duration(seconds: 1),
+                      showDuration: Duration(seconds: 7),
+                      child: Icon(Icons.info),
+                    ),
+                  ],
+                ),
+                CustomText(
+                  text: '300.000đ',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ],
+            ),
+          ],
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: orderDetails.map((orderDetail) {
+            return FutureBuilder<Map<String, dynamic>>(
+              future: fetchServiceNameAndQuantity(
+                  orderDetail['serviceId']), // Fetch service name and quantity
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  final name = snapshot.data?['name'] ?? 'Name not available';
+                  final quantity = orderDetail['quantity'] ?? 0;
+                  final price = snapshot.data?['price'] ?? 0;
+                  final total = orderDetail['tOtal'] ?? 0.0;
+                  // Accumulate the total quantity and total amount
+                  totalQuantity = quantity as int;
+                  totalAmount = total as int;
+
+                  final formatter =
+                      NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
+                  final formattedTotal = formatter.format(price);
+
+                  return Column(
+                    children: [
+                      _buildInfoRow(
+                        '$name (Số lượng: $quantity) ',
+                        Text(
+                          '$formattedTotal',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      // _buildInfoRow(
+                      //   'Khoảng cách',
+                      //   Text(
+                      //     '$totalQuantity km',
+                      //     style: TextStyle(fontWeight: FontWeight.bold),
+                      //   ),
+                      // ),
+                      // Row(
+                      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      //   children: [
+                      //     _buildPaymentMethod('Tổng cộng', ''),
+                      //     Text(currencyFormat.format(totalAmount),
+                      //         style: TextStyle(
+                      //             fontWeight: FontWeight.bold, fontSize: 17)),
+                      //   ],
+                      // ),
+                      // Container(
+                      //     decoration: BoxDecoration(
+                      //         color: Color.fromARGB(97, 164, 164, 164),
+                      //         borderRadius: BorderRadius.circular(8)),
+                      //     child: Row(
+                      //       mainAxisAlignment: MainAxisAlignment.center,
+                      //       children: [
+                      //         _buildPaymentMethod(_payment?.method ?? '', ''),
+                      //       ],
+                      //     )),
+                    ],
                   );
-                },
-              );
-            }
-          },
+                } else if (snapshot.hasError) {
+                  return Text('Error fetching service name and quantity');
+                } else {
+                  return CircularProgressIndicator(); // Show a loading indicator
+                }
+              },
+            );
+          }).toList(),
         ),
       ],
+    );
+  }
+
+  Widget _buildPaymentMethod(String title, String total) {
+    String displayTitle;
+    if (title == 'Banking') {
+      displayTitle = 'Trả bằng chuyển khoản';
+    } else if (title == 'Cash') {
+      displayTitle = 'Trả bằng tiền mặt';
+    } else {
+      displayTitle = 'Tổng cộng';
+    }
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              CustomText(
+                text: displayTitle,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+              SizedBox(width: 10.0),
+              if (displayTitle == 'Trả bằng chuyển khoản')
+                Image.asset(
+                  'assets/images/banking.png',
+                  height: 20,
+                  width: 20,
+                )
+              else if (displayTitle == 'Trả bằng tiền mặt')
+                Image.asset(
+                  'assets/images/money.png', // Replace with your cash image asset
+                  height: 20,
+                  width: 20,
+                )
+            ],
+          ),
+          CustomText(
+            text: total,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ],
+      ),
     );
   }
 }

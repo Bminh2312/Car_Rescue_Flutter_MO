@@ -59,7 +59,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
     super.initState();
     loadWalletInfo(widget.userId);
     displayFeedbackForBooking(widget.userId);
-
+    loadCurrentWeek();
     fetchRVOInfo().then((value) {
       if (mounted) {
         // Check if the widget is still in the tree
@@ -326,11 +326,15 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
     DateTime now = DateTime.now();
     DateTime today = DateTime(now.year, now.month, now.day);
     DateTime tomorrow = DateTime(now.year, now.month, now.day + 1);
+    DateTime tomorrow2 = DateTime(now.year, now.month, now.day + 2);
     List<WorkShift> filteredShifts = weeklyShifts.where((shift) {
       DateTime shiftDate =
           DateTime(shift.date.year, shift.date.month, shift.date.day);
-      return shiftDate == today || shiftDate == tomorrow;
+      return shiftDate == today ||
+          shiftDate == tomorrow ||
+          shiftDate == tomorrow2;
     }).toList();
+    print(filteredShifts);
     if (weeklyShifts.length < 2) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
@@ -360,7 +364,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
           ),
         ),
         Container(
-          height: 300,
+          height: 400,
           child: ListView.builder(
             physics: NeverScrollableScrollPhysics(),
             itemCount: filteredShifts.length,

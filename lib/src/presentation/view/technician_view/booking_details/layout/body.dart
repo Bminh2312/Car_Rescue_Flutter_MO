@@ -237,7 +237,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         setState(() {
           _car = carFromAPI;
         });
-        _loadCarModel(_car!.modelId!);
+        _loadCarModel(_car?.modelId ?? '');
         // Assuming the response data is in the format you need
         return CustomerCar.fromJson(
             dataField); // Convert the data to a CustomerCar object
@@ -958,6 +958,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   ),
 
                   // Image
+
                   if (widget.booking.status.toUpperCase() == 'ASSIGNED')
                     Container(
                       margin: EdgeInsets.symmetric(vertical: 4),
@@ -969,7 +970,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           _buildImageSection(_imageUrls),
                         ],
                       ),
+
                     ),
+                  ),
                   // _buildImageSection(imageUrls!),
 
                   // Additional Details

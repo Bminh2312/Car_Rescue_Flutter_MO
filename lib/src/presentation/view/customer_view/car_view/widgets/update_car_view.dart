@@ -119,7 +119,7 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
 
       try {
         bool isSuccess = await updateCarApproval(
-            id: widget.car!.id,
+            id: widget.car?.id ?? '',
             customerId: widget.userId,
             licensePlate: _licensePlate,
             manufacturer: _manufacturer,
@@ -145,7 +145,7 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
 
 // Để hiển thị thông báo Toast
           Fluttertoast.showToast(
-            msg: 'Hệ thống đã tiếp nhận thông tin.\nVui lòng chờ quản lí duyệt',
+            msg: 'Hệ thống đã tiếp nhận thông tin.',
             toastLength: Toast.LENGTH_SHORT, // Độ dài hiển thị
             gravity: ToastGravity.CENTER, // Vị trí hiển thị
             timeInSecForIosWeb: 4, // Thời gian hiển thị (tính theo giây)
@@ -204,7 +204,7 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
 
 // After fetching car models
           for (var model in carModelListAPI) {
-            modelNameToId[model.model1 ?? ''] = model.id!;
+            modelNameToId[model.model1 ?? ''] = model.id ?? '';
           }
 
           print('ab:$carModelList');

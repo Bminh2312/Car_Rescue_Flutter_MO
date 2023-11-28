@@ -88,7 +88,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                 title: Text('Thành công',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 content: Text(
-                  'Đã lưu thông tin thành công.Vui lòng chờ quản lí xác nhận',
+                  'Đã lưu thông tin thành công',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 actions: [

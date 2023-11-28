@@ -105,12 +105,12 @@ class _HistoryCardState extends State<HistoryCard>
         vehicleAndFeedbackTasks
             .add(_fetchVehicleAndFeedbacks(booking, apiFeedbacks));
       }
-      for (int i = 0; i < completedBookingsFromAPI.length; i++) {
-        final Map<String, dynamic> serviceData =
-            await fetchServiceData(completedBookingsFromAPI[i].id);
-        completedBookingsFromAPI[i].quantity = serviceData['quantity'];
-        completedBookingsFromAPI[i].total = serviceData['total'];
-      }
+      // for (int i = 0; i < completedBookingsFromAPI.length; i++) {
+      //   final Map<String, dynamic> serviceData =
+      //       await fetchServiceData(completedBookingsFromAPI[i].id);
+      //   completedBookingsFromAPI[i].quantity = serviceData['quantity'];
+      //   completedBookingsFromAPI[i].total = serviceData['total'];
+      // }
       await Future.wait(vehicleAndFeedbackTasks);
 
       setState(() {

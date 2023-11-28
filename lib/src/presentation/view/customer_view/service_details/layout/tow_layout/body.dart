@@ -68,14 +68,14 @@ class _TowBodyState extends State<TowBody> {
   bool isMomoSelected = false;
   bool isCashSelected = false;
   String? selectedPaymentMethod;
-  
+
   @override
   void initState() {
     selectedDropdownItem = dropdownItems[0];
     urlImages = [];
     selectedServices = [];
     availableServices = loadService();
-    selectedPaymentMethod = 'CASH';
+    selectedPaymentMethod = 'Cash';
     getCustomerCar();
     super.initState();
   }
@@ -127,12 +127,12 @@ class _TowBodyState extends State<TowBody> {
   void caculateTotal() {
     int total = 0;
     for (Service service in selectedServiceCards) {
-    total += service.price;
-  }
+      total += service.price;
+    }
 
-  setState(() {
-    totalPrice = total;
-  });
+    setState(() {
+      totalPrice = total;
+    });
   }
 
   Future<List<Service>> loadService() async {
@@ -162,14 +162,16 @@ class _TowBodyState extends State<TowBody> {
       String rescueType = "Towing"; // Loại cứu hộ (ở đây là "repair")
       String customerId = customer.id; // ID của khách hàng
       List<String> url = urlImages ?? [];
-      List<String> service = selectedServiceCards.map((service) => service.name).toList();;
+      List<String> service =
+          selectedServiceCards.map((service) => service.name).toList();
+      ;
       int area = selectedDropdownItem['value'] ?? 0;
       double distance = double.parse(widget.distance);
 
       // Bước 2: Tạo đối tượng Order
       OrderBookServiceTowing order = OrderBookServiceTowing(
         carID: widget.carId,
-        paymentMethod: paymentMethod,
+        paymentMethod: selectedPaymentMethod!,
         customerNote: customerNote,
         departure: departure,
         destination: destination,
@@ -293,71 +295,71 @@ class _TowBodyState extends State<TowBody> {
                   ],
                 ),
                 const SizedBox(
-                height: 10,
-              ),
+                  height: 10,
+                ),
                 if (_car != null)
-                Card(
-                  shape: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: BorderSide.none,
-                  ),
-                  elevation: 0.5,
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Image.network(
-                              _car!.image!,
-                              height: 62,
-                              width: 62,
-                            ),
-                            const SizedBox(
-                              width: 11,
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CustomText(
-                                  text: _car!.manufacturer,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                CustomText(
-                                  text: _car!.licensePlate,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: FrontendConfigs.kAuthColor,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            IconButton(
-                                onPressed: () {},
-                                icon: SvgPicture.asset(
-                                    'assets/svg/edit_icon.svg')),
-                            Container(
-                              height: 10,
-                            ),
-                            // SizedBox(
-                            //   height: 20,
-                            //   child: CustomText(
-                            //     text: widget.amount,
-                            //     fontSize: 16,
-                            //     fontWeight: FontWeight.w600,
-                            //   ),
-                            // ),
-                          ],
-                        ),
-                      ],
+                  Card(
+                    shape: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide.none,
+                    ),
+                    elevation: 0.5,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Image.network(
+                                _car!.image!,
+                                height: 62,
+                                width: 62,
+                              ),
+                              const SizedBox(
+                                width: 11,
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CustomText(
+                                    text: _car!.manufacturer,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  CustomText(
+                                    text: _car!.licensePlate,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: FrontendConfigs.kAuthColor,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              IconButton(
+                                  onPressed: () {},
+                                  icon: SvgPicture.asset(
+                                      'assets/svg/edit_icon.svg')),
+                              Container(
+                                height: 10,
+                              ),
+                              // SizedBox(
+                              //   height: 20,
+                              //   child: CustomText(
+                              //     text: widget.amount,
+                              //     fontSize: 16,
+                              //     fontWeight: FontWeight.w600,
+                              //   ),
+                              // ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
                 const SizedBox(
                   height: 10,
                 ),
@@ -469,40 +471,38 @@ class _TowBodyState extends State<TowBody> {
                   height: 10,
                 ),
                 buildServiceList(context),
-              SizedBox(height: 10),
-              if (selectedServiceCards.isNotEmpty)
-                SingleChildScrollView(
-                  child: Container(
-                    height: 200, // Đặt chiều cao tùy ý cho Column
-                    child: ListView.builder(
-                      itemCount: selectedServiceCards.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(selectedServiceCards[index].name),
-                          subtitle: Text(
-                              'Giá: ${selectedServiceCards[index].price}₫'),
-                          trailing: IconButton(
-                            icon: Icon(Icons.clear),
-                            onPressed: () {
-                              // Create a copy of the list and remove the selected service
-                              List<Service> updatedList =
-                                  List.from(selectedServiceCards);
-                              updatedList.removeAt(index);
-                
-                              // Update the state with the new list
-                              setState(() {
-                                selectedServiceCards = updatedList;
-                                caculateTotal();
-                              });
-                            },
-                          ),
-                        );
-                      },
+                SizedBox(height: 10),
+                if (selectedServiceCards.isNotEmpty)
+                  SingleChildScrollView(
+                    child: Container(
+                      height: 200, // Đặt chiều cao tùy ý cho Column
+                      child: ListView.builder(
+                        itemCount: selectedServiceCards.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            title: Text(selectedServiceCards[index].name),
+                            subtitle: Text(
+                                'Giá: ${selectedServiceCards[index].price}₫'),
+                            trailing: IconButton(
+                              icon: Icon(Icons.clear),
+                              onPressed: () {
+                                // Create a copy of the list and remove the selected service
+                                List<Service> updatedList =
+                                    List.from(selectedServiceCards);
+                                updatedList.removeAt(index);
+
+                                // Update the state with the new list
+                                setState(() {
+                                  selectedServiceCards = updatedList;
+                                  caculateTotal();
+                                });
+                              },
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
-                ),
-                
-
                 const SizedBox(
                   height: 10,
                 ),
@@ -565,7 +565,7 @@ class _TowBodyState extends State<TowBody> {
                         items: <String>['Chuyển khoản', 'Tiền mặt']
                             .map<DropdownMenuItem<String>>((String value) {
                           String mappedValue =
-                              value == 'Chuyển khoản' ? 'BANKING' : 'CASH';
+                              value == 'Chuyển khoản' ? 'Banking' : 'Cash';
 
                           return DropdownMenuItem<String>(
                             value: mappedValue,
@@ -586,11 +586,9 @@ class _TowBodyState extends State<TowBody> {
                     ),
                   ],
                 ),
-
                 const SizedBox(
                   height: 10,
                 ),
-
                 Container(
                   color: Colors.white,
                   padding:
