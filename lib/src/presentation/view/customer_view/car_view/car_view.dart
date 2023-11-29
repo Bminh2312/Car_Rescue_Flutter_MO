@@ -22,7 +22,7 @@ class CarListView extends StatefulWidget {
   _CarListViewState createState() => _CarListViewState();
 }
 
-enum SortingOption { byName, defaultSort }
+enum SortingOption { byName,byStatus, defaultSort }
 
 class _CarListViewState extends State<CarListView> {
   List<CustomerCar> carData = [];
@@ -30,6 +30,7 @@ class _CarListViewState extends State<CarListView> {
   String searchQuery = '';
   bool isLoading = true;
   bool isAscending = true;
+  String selectedStatus = 'ACTIVE';
   CarModel? carModel;
   @override
   void initState() {
@@ -86,7 +87,7 @@ class _CarListViewState extends State<CarListView> {
     }
   }
 
-  List<Vehicle> sortCarsByName(List<Vehicle> cars, bool ascending) {
+  List<CustomerCar> sortCarsByName(List<CustomerCar> cars, bool ascending) {
     return List.from(cars)
       ..sort((a, b) {
         final comparison = a.manufacturer.compareTo(b.manufacturer);
@@ -94,7 +95,7 @@ class _CarListViewState extends State<CarListView> {
       });
   }
 
-  List<Vehicle> searchCars(List<Vehicle> cars, String query) {
+  List<CustomerCar> searchCars(List<CustomerCar> cars, String query) {
     query = query.toLowerCase();
     return cars.where((car) {
       final manufacturer = car.manufacturer.toLowerCase();
@@ -170,6 +171,13 @@ class _CarListViewState extends State<CarListView> {
 
   @override
   Widget build(BuildContext context) {
+    List<CustomerCar> filteredCars = searchCars(carData, searchQuery);
+
+    // Apply sorting when the user selects "Sort by Name"
+    if (selectedSortingOption == SortingOption.byName) {
+      filteredCars = sortCarsByName(filteredCars, isAscending);
+    }
+    
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -227,7 +235,7 @@ class _CarListViewState extends State<CarListView> {
               });
             },
             decoration: InputDecoration(
-              labelText: 'Tìm kiếm bằng tên hoặc biển số',
+              labelText: 'Tìm kiếm bằng tên xe',
               prefixIcon: Icon(Icons.search),
             ),
           ),
@@ -239,7 +247,7 @@ class _CarListViewState extends State<CarListView> {
                   ? LoadingState()
                   : SingleChildScrollView(
                       child: Column(
-                      children: carData
+                      children: filteredCars
                           .asMap()
                           .map((index, customerCar) => MapEntry(
                                 index,
