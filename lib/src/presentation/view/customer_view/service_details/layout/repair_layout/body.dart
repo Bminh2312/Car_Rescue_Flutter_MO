@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 
 class RepairBody extends StatefulWidget {
   final LatLng latLng;
@@ -445,7 +446,7 @@ class _RepairBodyState extends State<RepairBody> {
                         return ListTile(
                           title: Text(selectedServiceCards[index].name),
                           subtitle: Text(
-                              'Giá: ${selectedServiceCards[index].price}₫'),
+                              'Giá: ${NumberFormat.currency(locale: 'vi_VN', symbol: '', decimalDigits: 0).format(selectedServiceCards[index].price)}₫'),
                           trailing: IconButton(
                             icon: Icon(Icons.clear),
                             onPressed: () {
@@ -568,7 +569,7 @@ class _RepairBodyState extends State<RepairBody> {
                               fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          '${totalPrice}₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
+                          '${NumberFormat.currency(locale: 'vi_VN', symbol: '', decimalDigits: 0).format(totalPrice)}}₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
                           style: TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold),
                         ),
