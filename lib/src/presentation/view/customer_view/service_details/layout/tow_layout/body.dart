@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 
 class TowBody extends StatefulWidget {
   final LatLng latLng;
@@ -63,7 +64,7 @@ class _TowBodyState extends State<TowBody> {
   late String urlImage;
   late Map<String, dynamic> selectedDropdownItem;
   late String selectedPaymentOption;
-  int totalPrice = 300000;
+  double totalPrice = 300000;
   bool isLoading = false;
   bool isMomoSelected = false;
   bool isCashSelected = false;
@@ -125,13 +126,16 @@ class _TowBodyState extends State<TowBody> {
   }
 
   void caculateTotal() {
-    int total = 300000;
+    double total = 300000;
+    double totalService = 0;
+    double distance = double.parse(widget.distance);
     for (Service service in selectedServiceCards) {
-      total += service.price;
+      totalService += service.price;
     }
 
     setState(() {
-      totalPrice = total;
+      totalPrice =  totalService*distance + total;
+      
     });
   }
 
@@ -521,7 +525,7 @@ class _TowBodyState extends State<TowBody> {
                           return ListTile(
                             title: Text(selectedServiceCards[index].name),
                             subtitle: Text(
-                                'Giá: ${selectedServiceCards[index].price}₫'),
+                                'Giá: ${NumberFormat.currency(locale: 'vi_VN', symbol: '', decimalDigits: 0).format(selectedServiceCards[index].price)}₫'),
                             trailing: IconButton(
                               icon: Icon(Icons.clear),
                               onPressed: () {
@@ -646,7 +650,7 @@ class _TowBodyState extends State<TowBody> {
                                 fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            '${totalPrice}₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
+                            '${NumberFormat.currency(locale: 'vi_VN', symbol: '', decimalDigits: 0).format(totalPrice)}₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold),
                           ),
