@@ -63,7 +63,7 @@ class _TowBodyState extends State<TowBody> {
   late String urlImage;
   late Map<String, dynamic> selectedDropdownItem;
   late String selectedPaymentOption;
-  int totalPrice = 0;
+  int totalPrice = 300000;
   bool isLoading = false;
   bool isMomoSelected = false;
   bool isCashSelected = false;
@@ -470,6 +470,45 @@ class _TowBodyState extends State<TowBody> {
                 const SizedBox(
                   height: 10,
                 ),
+                Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            CustomText(
+                              text: 'Phí dịch vụ',
+                              fontSize: 16,
+                            ),
+                            SizedBox(
+                              width: 7,
+                            ),
+                            Tooltip(
+                              triggerMode: TooltipTriggerMode.tap,
+                              message:
+                                  'Phí dịch vụ mặc định được tính 300.000đ mỗi đơn hàng\n\nTổng cộng = Phí dịch vụ + (Đơn giá x Khoảng cách) ',
+                              textStyle: TextStyle(color: Colors.white),
+                              padding: EdgeInsets.all(8),
+                              margin: EdgeInsets.all(5),
+                              waitDuration: Duration(seconds: 1),
+                              showDuration: Duration(seconds: 7),
+                              child: Icon(Icons.info),
+                            ),
+                          ],
+                        ),
+                        CustomText(
+                          text: '300.000đ',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
                 buildServiceList(context),
                 SizedBox(height: 10),
                 if (selectedServiceCards.isNotEmpty)
@@ -712,7 +751,8 @@ class _TowBodyState extends State<TowBody> {
                     itemBuilder: (context, index) {
                       final service = snapshot.data![index];
                       final isSelected = selectedServiceCards.contains(service);
-                      return ServiceCard(rescueType: 'Towing',
+                      return ServiceCard(
+                        rescueType: 'Towing',
                         service: service,
                         onSelected: (isSelected) {
                           updateSelectedServices(service, isSelected);
