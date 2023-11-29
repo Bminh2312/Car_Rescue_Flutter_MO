@@ -26,6 +26,7 @@ import 'package:CarRescue/src/providers/order_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:CarRescue/src/providers/google_map_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ServiceBody extends StatefulWidget {
   const ServiceBody({super.key});
@@ -81,6 +82,21 @@ class _ServiceBodyState extends State<ServiceBody> {
         );
       }
     });
+  }
+
+  void launchDialPad(String phoneNumber) async {
+    String uri = 'tel:$phoneNumber';
+
+    try {
+      if (await canLaunch(uri)) {
+        await launch(uri);
+      } else {
+        throw 'Could not launch $uri';
+      }
+    } catch (e) {
+      print('Error launching dial pad: $e');
+      throw 'Could not launch $uri';
+    }
   }
 
   @override
@@ -176,12 +192,7 @@ class _ServiceBodyState extends State<ServiceBody> {
                   icon: CupertinoIcons.phone_fill_arrow_down_left,
                   label: 'CSKH',
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => OrderProcessingScreen(),
-                      ),
-                    );
+                    launchDialPad("0983434031");
                   }),
             ],
           ),
