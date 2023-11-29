@@ -337,9 +337,6 @@ class _AddCarScreenState extends State<AddCarScreen> {
                             hint: Text('Chọn loại xe'),
                           ),
                           SizedBox(height: 20),
-                          Text('Loại xe đã chọn: $_selectedType'),
-                          Text('ModelId tương ứng: $_selectedModelId'),
-                          SizedBox(height: 16),
                           Row(
                             children: [
                               Container(
