@@ -218,10 +218,12 @@ class _ServiceCardState extends State<ServiceCard> {
             ),
           ),
           onTap: () {
+            print("Current isSelected: ${widget.isSelected}");
             setState(() {
               localSelected = !localSelected;
             });
-            widget.onSelected(!widget.isSelected); // Toggle isSelected
+            widget.onSelected(localSelected);
+            // Toggle isSelected
           },
         ),
       ),

@@ -892,6 +892,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           phone: customerInfo?.phone ?? '',
                           avatar: customerInfo?.avatar ?? '',
                         ),
+                        if(customerInfo?.fullname != 'Khách Hàng Offline')
                         CustomerCarInfoRow(
                           manufacturer: _car?.manufacturer ?? 'Không có',
                           type: _carModel?.model1 ?? 'Không có',

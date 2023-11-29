@@ -86,29 +86,29 @@ class OrderProcessingScreen extends StatelessWidget {
                     },
                   ),
                   SizedBox(height: 10), // Spacing between buttons
-                  ElevatedButton(
-                    child: Text('Xem chi tiết đơn'),
-                    style: ElevatedButton.styleFrom(
-                      primary: Colors.blue, // Background color
-                      onPrimary: Colors.white, // Text color
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(10), // Rounded corners
-                      ),
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 12), // Padding
-                      minimumSize:
-                          Size(double.infinity, 36), // Button minimum size
-                    ),
-                    onPressed: () {
-                      // Navigator.pushReplacement(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => FeedbackScreen(),
-                      //   ),
-                      // );
-                    },
-                  ),
+                  // ElevatedButton(
+                  //   child: Text('Xem chi tiết đơn'),
+                  //   style: ElevatedButton.styleFrom(
+                  //     primary: Colors.blue, // Background color
+                  //     onPrimary: Colors.white, // Text color
+                  //     shape: RoundedRectangleBorder(
+                  //       borderRadius:
+                  //           BorderRadius.circular(10), // Rounded corners
+                  //     ),
+                  //     padding: EdgeInsets.symmetric(
+                  //         horizontal: 20, vertical: 12), // Padding
+                  //     minimumSize:
+                  //         Size(double.infinity, 36), // Button minimum size
+                  //   ),
+                  //   onPressed: () {
+                  //     // Navigator.pushReplacement(
+                  //     //   context,
+                  //     //   MaterialPageRoute(
+                  //     //     builder: (context) => FeedbackScreen(),
+                  //     //   ),
+                  //     // );
+                  //   },
+                  // ),
                 ],
               ),
             )

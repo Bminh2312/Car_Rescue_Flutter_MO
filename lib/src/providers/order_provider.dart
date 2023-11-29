@@ -113,31 +113,62 @@ class OrderProvider {
     }
   }
 
-  Future<List<Order>> getAllOrders(String id) async {
-    try {
-      final response =
-          await http.get(Uri.parse("${apiUrlGetAllOfCustomer}?id=${id}"));
-      if (response.statusCode == 200) {
-        final dynamic data = convert.json.decode(response.body);
+  // Future<List<Order>> getAllOrders(String id) async {
+  //   try {
+  //     final response =
+  //         await http.get(Uri.parse("${apiUrlGetAllOfCustomer}?id=${id}"));
+  //     if (response.statusCode == 200) {
+  //       final dynamic data = convert.json.decode(response.body);
 
-        if (data != null && data['data'] != null) {
-          final List<dynamic> orderData = data['data'];
-          List<Order> orders =
-              orderData.map((data) => Order.fromJson(data)).toList();
-          return orders;
-        } else {
-          // Handle empty or invalid response
-          throw Exception('Empty or invalid response data');
-        }
+  //       if (data != null && data['data'] != null) {
+  //         final List<dynamic> orderData = data['data'];
+  //         List<Order> orders =
+  //             orderData.map((data) => Order.fromJson(data)).toList();
+  //         return orders;
+  //       } else {
+  //         // Handle empty or invalid response
+  //         throw Exception('Empty or invalid response data');
+  //       }
+  //     } else {
+  //       throw Exception('Failed to load orders');
+  //     }
+  //   } catch (e) {
+  //     // Handle other exceptions or errors
+  //     print('Error: $e');
+  //     throw e;
+  //   }
+  // }
+
+  Future<List<Order>> getAllOrders(String id) async {
+  try {
+    final response =
+        await http.get(Uri.parse("${apiUrlGetAllOfCustomer}?id=${id}"));
+    if (response.statusCode == 200) {
+      final dynamic data = convert.json.decode(response.body);
+
+      if (data != null && data['data'] != null) {
+        final List<dynamic> orderData = data['data'];
+        List<Order> orders =
+            orderData.map((data) => Order.fromJson(data)).toList();
+
+        // Sort orders by date in descending order (latest date first)
+        orders.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
+
+        return orders;
       } else {
-        throw Exception('Failed to load orders');
+        // Handle empty or invalid response
+        throw Exception('Empty or invalid response data');
       }
-    } catch (e) {
-      // Handle other exceptions or errors
-      print('Error: $e');
-      throw e;
+    } else {
+      throw Exception('Failed to load orders');
     }
+  } catch (e) {
+    // Handle other exceptions or errors
+    print('Error: $e');
+    throw e;
   }
+}
+
 
   Future<Order> getOrderDetail(String id) async {
     try {
