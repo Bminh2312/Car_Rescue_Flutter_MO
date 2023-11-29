@@ -431,24 +431,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 ),
               ),
             );
-            // Navigator.push(context,
-            //       MaterialPageRoute(
-            //         builder: (context) => BookingListView(userId:technicianInfo!.id , accountId:technicianInfo!.accountId ,
-            //             ),
-            //       ),);
+            
           } else {
             final orderProvider = OrderProvider();
             print("Id: ${widget.booking.id}");
             dynamic data = await orderProvider.endOrder(widget.booking.id);
-            // Navigator.pushReplacement(
-            //   context,
-            //   MaterialPageRoute(
-            //     builder: (context) => BottomNavBarView(
-            //       accountId: technicianInfo!.accountId,
-            //       userId: technicianInfo!.id,
-            //     ),
-            //   ),
-            // );
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(

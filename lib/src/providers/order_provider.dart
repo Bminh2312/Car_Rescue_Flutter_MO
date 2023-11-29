@@ -69,6 +69,7 @@ class OrderProvider {
         },
         body: convert.jsonEncode(requestBody),
       );
+      print("Status: ${response.statusCode}");
       print("Body: ${response.body}");
       if (response.statusCode == 201) {
         print('Đã hủy đơn hàng thành công');

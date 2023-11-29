@@ -1,7 +1,11 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/vehicle_info.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/models/customer.dart';
 import 'package:CarRescue/src/models/customer_car.dart';
@@ -27,6 +31,7 @@ import 'package:photo_view/photo_view_gallery.dart';
 import 'package:intl/intl.dart';
 import 'package:CarRescue/src/models/car_model.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/customer_car_info.dart';
+import 'package:slider_button/slider_button.dart';
 
 class OrderDetailBody extends StatefulWidget {
   final String orderId;
@@ -38,6 +43,9 @@ class OrderDetailBody extends StatefulWidget {
 }
 
 class _OrderDetailBodyState extends State<OrderDetailBody> {
+  final _formKey = GlobalKey<FormState>();
+  NotifyMessage notifyMessage = NotifyMessage();
+  TextEditingController _reasonCacelController = TextEditingController();
   Technician? technicianInfo;
   AuthService authService = AuthService();
   FeedBackProvider feedBackProvider = FeedBackProvider();
@@ -689,7 +697,6 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                   ),
                 if (order.status == "COMPLETED" &&
                     feedbackCustomer?.status == "WAITING")
-
                   AppButton(
                       onPressed: () {
                         if (widget.techId != null) {
@@ -717,7 +724,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                         }
                       },
                       btnLabel: "Gửi đánh giá"),
-
+                if (order.status == "NEW") _slider(),
               ],
             ),
           );
@@ -927,6 +934,31 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
     );
   }
 
+  Widget _slider() {
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      width: double.infinity,
+      child: SliderButton(
+        alignLabel: Alignment.center,
+        shimmer: true,
+        baseColor: Colors.white,
+        buttonSize: 45,
+        height: 60,
+        backgroundColor: FrontendConfigs.kActiveColor,
+        action: () async {
+          showCancelOrderDialog(context, widget.orderId);
+        },
+        label: const Text(
+          "Hủy đơn",
+          style: TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        icon: SvgPicture.asset("assets/svg/cancel_icon.svg"),
+      ),
+    );
+  }
+
   Widget _buildPaymentMethod(String title, String total) {
     String displayTitle;
     if (title == 'Banking') {
@@ -972,5 +1004,107 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
         ],
       ),
     );
+  }
+
+  void showCancelOrderDialog(BuildContext context, String id) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Allow tapping outside the dialog to dismiss
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Hủy đơn"),
+          content: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text("Bạn có chắc muốn hủy đơn không?"),
+                TextFormField(
+                  controller: _reasonCacelController,
+                  decoration: InputDecoration(labelText: "Lý do hủy đơn"),
+                  validator: (value) {
+                    if (value!.isEmpty) {
+                      return 'Lý do hủy đơn không được để trống';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Hủy"),
+              onPressed: () {
+                setState(() {
+                  _reasonCacelController.clear();
+                  _orderFuture = fetchOrderDetail(widget.orderId).then((order) {
+                    _loadVehicleInfo(order.vehicleId ?? '').then((vehicle) {
+                      setState(() {
+                        vehicleInfo = vehicle;
+                      });
+                    });
+                    return order;
+                  });
+                  _orderFuture = fetchOrderDetail(widget.orderId).then((order) {
+                    getCarData(order.carId!).then((carData) {
+                      setState(() {
+                        _car = carData;
+                      });
+                    });
+                    return order;
+                  });
+                });
+                Navigator.of(context).pop(); // Đóng hộp thoại
+              },
+            ),
+            TextButton(
+              child: Text("Xác nhận"),
+              onPressed: () async {
+                // Kiểm tra hợp lệ của form
+                if (_formKey.currentState!.validate()) {
+                  // Ở đây bạn có thể xử lý hành động hủy đơn
+                  final success =
+                      await cancelOrder(id, _reasonCacelController.text);
+                  if (success) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BottomNavBarView(
+                          page: 0,
+                        ),
+                      ),
+                      (route) =>
+                          false, // Loại bỏ tất cả các màn hình khỏi ngăn xếp
+                    );
+                    notifyMessage.showToast("Đã hủy đơn");
+                  } else {
+                    notifyMessage.showToast("Hủy đơn lỗi");
+                    Navigator.of(context).pop();
+                  }
+                  ;
+                  _reasonCacelController.clear();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<bool> cancelOrder(String orderID, String cancellationReason) async {
+    try {
+      final orderProvider =
+          await OrderProvider().cancelOrder(orderID, cancellationReason);
+      if (orderProvider) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      notifyMessage.showToast("Huỷ đơn lỗi.");
+      return false;
+    }
   }
 }

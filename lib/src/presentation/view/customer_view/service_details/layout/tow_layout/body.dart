@@ -125,7 +125,7 @@ class _TowBodyState extends State<TowBody> {
   }
 
   void caculateTotal() {
-    int total = 0;
+    int total = 300000;
     for (Service service in selectedServiceCards) {
       total += service.price;
     }
@@ -712,7 +712,7 @@ class _TowBodyState extends State<TowBody> {
                     itemBuilder: (context, index) {
                       final service = snapshot.data![index];
                       final isSelected = selectedServiceCards.contains(service);
-                      return ServiceCard(
+                      return ServiceCard(rescueType: 'Towing',
                         service: service,
                         onSelected: (isSelected) {
                           updateSelectedServices(service, isSelected);

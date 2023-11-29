@@ -112,6 +112,7 @@ class _ServiceSelectionPageState extends State<ServiceSelectionPage> {
 }
 
 class ServiceCard extends StatefulWidget {
+  final String rescueType;
   final Service service;
   final bool isSelected;
   final Function(bool) onSelected;
@@ -121,6 +122,7 @@ class ServiceCard extends StatefulWidget {
     required this.service,
     required this.isSelected,
     required this.onSelected,
+    required this.rescueType,
   }) : super(key: key);
 
   @override
@@ -136,11 +138,12 @@ class _ServiceCardState extends State<ServiceCard> {
     super.initState();
     localSelected = widget.isSelected;
   }
+
   @override
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat('#,##0₫', 'vi_VN');
 
-    return SingleChildScrollView(
+    return widget.rescueType == "Fixing" ? SingleChildScrollView(
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
         margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -173,21 +176,55 @@ class _ServiceCardState extends State<ServiceCard> {
             ),
           ),
           onTap: () {
-             print("Current isSelected: ${widget.isSelected}");
+            print("Current isSelected: ${widget.isSelected}");
             setState(() {
               localSelected = !localSelected;
-              
             });
-            widget.onSelected(localSelected);  
+            widget.onSelected(localSelected);
             // Toggle isSelected
+          },
+        ),
+      ),
+    ) : SingleChildScrollView(
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+        margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: localSelected
+              ? FrontendConfigs.kPrimaryColorCustomer
+              : Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: const Color.fromARGB(64, 158, 158, 158).withOpacity(0.5),
+              spreadRadius: 1,
+              blurRadius: 1,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ListTile(
+          leading: Icon(Icons.auto_fix_high_rounded),
+          title: Text(
+            widget.service.name,
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          trailing: Text(
+            currencyFormat.format(widget.service.price),
+            style: TextStyle(
+              color: FrontendConfigs.kAuthColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 17,
+            ),
+          ),
+          onTap: () {
+            setState(() {
+              localSelected = !localSelected;
+            });
+            widget.onSelected(!widget.isSelected); // Toggle isSelected
           },
         ),
       ),
     );
   }
 }
-
-
-
-
-
