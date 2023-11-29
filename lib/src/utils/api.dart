@@ -33,7 +33,7 @@ class LoginResult {
   });
 }
 
-final String apiKey = 'AIzaSyDFer0Di6bJTVO1BqQbKVGs3wI7O-O9xIw';
+final String apiKey = 'AIzaSyC9yT-tLqUpv_4YNg_C91_5Nzg6AW2OQmk';
 
 class AuthService {
   //TECHNICIAN API
@@ -599,7 +599,7 @@ class AuthService {
     if (latDeparture != null && longDeparture != null) {
       // Replace with your actual API key
       final String urlDeparture =
-          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=AIzaSyDrjEvDy6hbfCzcxdR8rYGjPqTZ_ZV1wyw';
+          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=${apiKey}';
 
       final responseDeparture = await http.get(Uri.parse(urlDeparture));
       if (responseDeparture.statusCode != 200) {
@@ -626,7 +626,7 @@ class AuthService {
     if (latDestination != null && longDestination != null) {
       // Replace with your actual API key
       final String urlDestination =
-          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=AIzaSyDrjEvDy6hbfCzcxdR8rYGjPqTZ_ZV1wyw';
+          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=${apiKey}';
 
       final responseDestination = await http.get(Uri.parse(urlDestination));
       if (responseDestination.statusCode != 200) {

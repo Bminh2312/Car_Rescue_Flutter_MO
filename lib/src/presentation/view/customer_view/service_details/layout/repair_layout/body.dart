@@ -677,7 +677,7 @@ class _RepairBodyState extends State<RepairBody> {
                         onSelected: (isSelected) {
                           updateSelectedServices(service, isSelected);
                         },
-                        isSelected: isSelected,
+                        isSelected: isSelected, rescueType: 'Fixing',
                       );
                     },
                   );
