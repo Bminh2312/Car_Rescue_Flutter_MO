@@ -10,7 +10,6 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart'; // Import the intl package
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class WithdrawFormScreen extends StatefulWidget {
   final Wallet wallet;
