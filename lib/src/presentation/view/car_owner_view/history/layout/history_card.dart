@@ -379,58 +379,7 @@ class _HistoryCardState extends State<HistoryCard>
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 2),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  SvgPicture.asset(
-                                      "assets/svg/location_icon.svg",
-                                      color: FrontendConfigs.kIconColor),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  CustomText(
-                                      text: '${quantity} km',
-                                      fontWeight: FontWeight.w600,
-                                      color: FrontendConfigs.kAuthColor)
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  SvgPicture.asset("assets/svg/watch_icon.svg",
-                                      color: FrontendConfigs.kIconColor),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  CustomText(
-                                      text: "15 mins",
-                                      fontWeight: FontWeight.w600,
-                                      color: FrontendConfigs.kAuthColor)
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  SvgPicture.asset(
-                                    "assets/svg/wallet_icon.svg",
-                                    color: FrontendConfigs.kIconColor,
-                                  ),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  CustomText(
-                                      text: currencyFormat.format(total),
-                                      fontWeight: FontWeight.w600,
-                                      color: FrontendConfigs.kAuthColor)
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        Divider(
+                         Divider(
                           color: FrontendConfigs.kIconColor,
                         ),
                         const SizedBox(

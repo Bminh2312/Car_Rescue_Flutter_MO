@@ -14,7 +14,6 @@ import 'package:lottie/lottie.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
-
 class WaitingForPaymentScreen extends StatefulWidget {
   final Payment payment;
   final Booking booking;
@@ -206,9 +205,9 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 Lottie.asset('assets/animations/waiting_payment.json',
-                    width: 300, height: 300, fit: BoxFit.fill),
+                    width: 250, height: 250, fit: BoxFit.fill),
                 SizedBox(
-                  height: 20,
+                  height: 10,
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -218,11 +217,8 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(
-                  height: 50,
-                ),
                 Container(
-                  height: MediaQuery.of(context).size.height * 0.3,
+                  height: 360,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     color: Colors.white,

@@ -272,6 +272,9 @@ class _CarListViewState extends State<CarListView> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.transparent,
+        foregroundColor: FrontendConfigs.kActiveColor,
+        elevation: 1,
         onPressed: () async {
           bool? result = await Navigator.push(
             context,

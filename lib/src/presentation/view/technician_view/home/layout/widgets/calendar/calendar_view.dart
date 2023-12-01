@@ -573,6 +573,7 @@ class _CalendarViewState extends State<CalendarView> {
       );
       print(response.statusCode);
       if (response.statusCode == 200) {
+        loadWeeklyShift(_currentWeek!.id, widget.userId);
         // Successfully created the weekly shift
         print('Weekly shift created successfully.');
       } else {

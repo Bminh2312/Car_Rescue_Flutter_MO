@@ -399,12 +399,12 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           )),
                       _buildInfoRow(
                           "Điểm đi",
-                          Text(' ${widget.addressesDepart[widget.booking.id]}',
+                          Text(' ${widget.subAddressesDepart[widget.booking.id]}',
                               style: TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 15))),
                       _buildInfoRow(
                           "Điểm đến",
-                          Text('${widget.addressesDesti[widget.booking.id]}',
+                          Text('${widget.subAddressesDesti[widget.booking.id]}',
                               style: TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 15))),
                       _buildInfoRow(

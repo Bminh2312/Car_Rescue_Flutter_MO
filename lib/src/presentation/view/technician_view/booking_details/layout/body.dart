@@ -906,12 +906,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           phone: customerInfo?.phone ?? '',
                           avatar: customerInfo?.avatar ?? '',
                         ),
-                        CustomerCarInfoRow(
-                          manufacturer: _car?.manufacturer ?? 'Không có',
-                          type: _carModel?.model1 ?? 'Không có',
-                          licensePlate: _car?.licensePlate ?? 'Không có',
-                          image: _car?.image ?? 'Không có',
-                        ),
+                        if (customerInfo?.fullname != 'Khách Hàng Offline')
+                          CustomerCarInfoRow(
+                            manufacturer: _car?.manufacturer ?? 'Không có',
+                            type: _carModel?.model1 ?? 'Không có',
+                            licensePlate: _car?.licensePlate ?? 'Không có',
+                            image: _car?.image ?? 'Không có',
+                          ),
                       ],
                     ),
                   ),
@@ -931,7 +932,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                             )),
                         _buildInfoRow(
                             "Địa chỉ",
-                            Text('${widget.addressesDepart[widget.booking.id]}',
+                            Text(
+                                '${widget.subAddressesDesti[widget.booking.id]}',
                                 style: TextStyle(fontWeight: FontWeight.bold))),
                         if (widget.booking.rescueType == "Towing")
                           _buildInfoRow(
