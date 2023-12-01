@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
+import 'package:CarRescue/src/models/payment.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/vehicle_info.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
@@ -55,8 +56,11 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   CustomerCar? _car;
   CarModel? _carModel;
   Vehicle? vehicleInfo;
+  Payment? _payment;
   late Future<Order> _orderFuture;
   int total = 0;
+  bool _isLoading = true;
+  List<int> prices = [];
 
   List<String> _imageUrls = [];
   List<Map<String, dynamic>> orderDetails = [];
@@ -68,7 +72,6 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
     print(widget.orderId);
     print(widget.techId);
     print('a: ${feedbackCustomer?.status}');
-
     if (widget.techId != '' && widget.techId != null) {
       _loadTechInfo(widget.techId ?? '');
     }
@@ -92,7 +95,30 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
       });
       return order;
     });
+    _loadPayment(widget.orderId);
     super.initState();
+  }
+
+  
+
+  Future<void> _loadPayment(String orderId) async {
+    try {
+      Map<String, dynamic>? paymentInfo =
+          await authService.fetchPayment(widget.orderId);
+      print(paymentInfo);
+      // Assuming Payment.fromJson is a constructor that returns a Payment object
+      Payment payment = Payment.fromJson(paymentInfo);
+      print(payment);
+      setState(() {
+        _payment = payment;
+
+        _isLoading = false;
+      });
+    } catch (e) {
+      // Handle any potential errors, such as network issues
+      print('Error loading payment: $e');
+      // Optionally, set some state to show an error message in the UI
+    }
   }
 
   Future<Vehicle> _loadVehicleInfo(String vehicleId) async {
@@ -660,20 +686,19 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                     ],
                   ),
                 ),
-
                 SizedBox(height: 8.0),
                 Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      children: [
-                        _buildOrderItemSection(),
-                        SizedBox(
-                          height: 10,
-                        ),
-                      ],
-                    )),
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle("Đơn giá"),
+                      _buildOrderItemSection(order.rescueType!),
+                    ],
+                  ),
+                ),
                 if (order.status != "CANCELLED" && order.rescueType != 'Towing')
                   Container(
                     margin: EdgeInsets.symmetric(vertical: 4),
@@ -825,7 +850,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
     );
   }
 
-  Widget _buildOrderItemSection() {
+  Widget _buildOrderItemSection(String type) {
     return Column(
       children: [
         Column(
@@ -879,11 +904,13 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                   // Accumulate the total quantity and total amount
                   totalQuantity = quantity as int;
                   totalAmount = total as int;
-
+                  print("Total:$totalAmount"); 
                   final formatter =
                       NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
                   final formattedTotal = formatter.format(price);
-
+                  if (widget.techId != null) {
+                    prices.add(price);
+                  }
                   return Column(
                     children: [
                       _buildInfoRow(
@@ -893,32 +920,35 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
-                      // _buildInfoRow(
-                      //   'Khoảng cách',
-                      //   Text(
-                      //     '$totalQuantity km',
-                      //     style: TextStyle(fontWeight: FontWeight.bold),
-                      //   ),
-                      // ),
-                      // Row(
-                      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //   children: [
-                      //     _buildPaymentMethod('Tổng cộng', ''),
-                      //     Text(currencyFormat.format(totalAmount),
-                      //         style: TextStyle(
-                      //             fontWeight: FontWeight.bold, fontSize: 17)),
-                      //   ],
-                      // ),
-                      // Container(
-                      //     decoration: BoxDecoration(
-                      //         color: Color.fromARGB(97, 164, 164, 164),
-                      //         borderRadius: BorderRadius.circular(8)),
-                      //     child: Row(
-                      //       mainAxisAlignment: MainAxisAlignment.center,
-                      //       children: [
-                      //         _buildPaymentMethod(_payment?.method ?? '', ''),
-                      //       ],
-                      //     )),
+                      if (type == "Towing")
+                        _buildInfoRow(
+                          'Khoảng cách',
+                          Text(
+                            '$totalQuantity km',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      if (type == "Towing")
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildPaymentMethod('Tổng cộng', ''),
+                            Text(currencyFormat.format(totalAmount),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 17)),
+                          ],
+                        ),
+                      if (type == "Towing")
+                        Container(
+                            decoration: BoxDecoration(
+                                color: Color.fromARGB(97, 164, 164, 164),
+                                borderRadius: BorderRadius.circular(8)),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildPaymentMethod(_payment?.method ?? '', ''),
+                              ],
+                            )),
                     ],
                   );
                 } else if (snapshot.hasError) {
@@ -930,6 +960,15 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
             );
           }).toList(),
         ),
+        if (type == "Fixing")
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildPaymentMethod('Tổng cộng', ''),
+              Text(currencyFormat.format(total),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+            ],
+          ),
       ],
     );
   }
