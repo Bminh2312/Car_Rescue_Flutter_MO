@@ -1,4 +1,5 @@
 import 'package:CarRescue/src/models/customer.dart';
+import 'package:CarRescue/src/models/service.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/layout/body.dart';
@@ -12,6 +13,7 @@ class BookingDetailsView extends StatefulWidget {
   final Map<String, String> subAddressesDepart;
   final Map<String, String> addressesDesti;
   final Map<String, String> subAddressesDesti;
+  final List<Service>? selectedServices;
   BookingDetailsView({
     Key? key,
     required this.booking,
@@ -19,6 +21,7 @@ class BookingDetailsView extends StatefulWidget {
     required this.subAddressesDepart,
     required this.subAddressesDesti,
     required this.addressesDesti,
+    this.selectedServices,
   }) : super(key: key);
 
   @override

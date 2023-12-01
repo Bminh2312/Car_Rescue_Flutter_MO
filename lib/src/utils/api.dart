@@ -734,7 +734,7 @@ class AuthService {
     }
 
     if (street != null && route != null && admin2 != null) {
-      return '$street $route, $admin2, ${admin1 ?? ''}'.trim();
+      return '$street $route,${locality ?? ''} $admin2, ${admin1 ?? ''}'.trim();
     } else if (street == null &&
         route == null &&
         neighborhood != null &&
@@ -881,8 +881,7 @@ class AuthService {
         // You might need a separate API or endpoint to handle the image upload.
       }),
     );
-    final List userImage = [frontImageUrl, backImageUrl, vehicleUrl];
-    print(userImage);
+    
     if (response.statusCode == 200) {
       print('Successfully created the car ${response.body}');
       return true; //

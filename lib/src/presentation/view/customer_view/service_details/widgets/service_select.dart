@@ -136,6 +136,7 @@ class _ServiceCardState extends State<ServiceCard> {
     super.initState();
     localSelected = widget.isSelected;
   }
+
   @override
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat('#,##0₫', 'vi_VN');
@@ -158,13 +159,12 @@ class _ServiceCardState extends State<ServiceCard> {
             ),
           ],
         ),
-        child: ListTile(
-          leading: Icon(Icons.auto_fix_high_rounded),
+        child: CheckboxListTile(
           title: Text(
             widget.service.name,
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
-          trailing: Text(
+          subtitle: Text(
             currencyFormat.format(widget.service.price),
             style: TextStyle(
               color: FrontendConfigs.kAuthColor,
@@ -172,22 +172,16 @@ class _ServiceCardState extends State<ServiceCard> {
               fontSize: 17,
             ),
           ),
-          onTap: () {
-             print("Current isSelected: ${widget.isSelected}");
+          value: localSelected,
+          onChanged: (value) {
+            print("Current isSelected: $value");
             setState(() {
-              localSelected = !localSelected;
-              
+              localSelected = value ?? false;
             });
-            widget.onSelected(localSelected);  
-            // Toggle isSelected
+            widget.onSelected(localSelected);
           },
         ),
       ),
     );
   }
 }
-
-
-
-
-

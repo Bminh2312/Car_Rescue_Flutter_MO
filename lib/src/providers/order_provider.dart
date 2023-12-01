@@ -328,13 +328,13 @@ class OrderProvider {
       'staffNote': staffNote,
       'url': imageUrls,
     };
-
     final response = await http.post(
       Uri.parse(apiUrl),
       headers: {'Content-Type': 'application/json-patch+json'},
       body: convert.json.encode(requestBody),
     );
 
+    print('C: ${response.statusCode}');
     if (response.statusCode == 201) {
       // Xử lý thành công
       print('Đã cập nhật đơn hàng cho kỹ thuật viên thành công.');
