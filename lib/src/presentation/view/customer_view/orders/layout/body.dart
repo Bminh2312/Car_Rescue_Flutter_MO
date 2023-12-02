@@ -4,6 +4,7 @@ import 'package:CarRescue/src/models/feedback_customer.dart';
 import 'package:CarRescue/src/models/order.dart';
 import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:CarRescue/src/presentation/elements/empty_state.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/chat_with_driver/chat_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/order_detail/order_detail_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/orders/layout/widgets/selection_location_widget.dart';
@@ -121,8 +122,7 @@ class _OrderListState extends State<OrderList> {
             background: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                if(type != 'Fixing')
-                _buildFilterButton('NEW', Colors.yellow),
+                if (type != 'Fixing') _buildFilterButton('NEW', Colors.yellow),
                 _buildFilterButton('ASSIGNING', Colors.blue),
                 _buildFilterButton('COMPLETED', Colors.green),
                 _buildFilterButton('CANCELLED', Colors.red),
@@ -142,6 +142,10 @@ class _OrderListState extends State<OrderList> {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else {
                     final orders = snapshot.data ?? [];
+                    if (orders.isEmpty) {
+                      // Display a message or widget when the list is empty
+                      return Center(child: EmptyState());
+                    }
                     return Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
@@ -255,9 +259,6 @@ class _OrderListState extends State<OrderList> {
                                       ],
                                     ),
                                     // Use the BookingStatusWidget here
-                                  ),
-                                  Divider(
-                                    color: FrontendConfigs.kIconColor,
                                   ),
                                   Column(
                                     crossAxisAlignment:
@@ -474,7 +475,7 @@ class _OrderListState extends State<OrderList> {
       translatedText = 'Hoàn Thành';
     } else if (type == 'CANCELLED') {
       translatedText = 'Đã hủy';
-    } else if (type == 'NEW'){
+    } else if (type == 'NEW') {
       translatedText = 'Mới';
     }
     return ElevatedButton(

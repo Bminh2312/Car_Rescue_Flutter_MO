@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/select_service.dart';
+import 'package:CarRescue/src/presentation/view/technician_view/booking_list/widgets/selection_location_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
@@ -48,6 +49,7 @@ class BookingDetailsBody extends StatefulWidget {
 class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   TextEditingController techNoteController = TextEditingController();
+  TextEditingController quantityController = TextEditingController();
   bool _isLoading = true;
   int total = 0;
   AuthService authService = AuthService();
@@ -536,8 +538,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               context,
               MaterialPageRoute(
                 builder: (context) => BottomNavBarTechView(
-                  accountId: technicianInfo!.accountId,
-                  userId: technicianInfo!.id,
+                  accountId: technicianInfo?.accountId ?? '',
+                  userId: technicianInfo?.id ?? '',
                 ),
               ),
             );
@@ -549,14 +551,14 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               context,
               MaterialPageRoute(
                 builder: (context) => WaitingForPaymentScreen(
-                  accountId: technicianInfo!.accountId,
+                  accountId: technicianInfo?.accountId ?? '',
                   addressesDepart: widget.addressesDepart,
                   subAddressesDepart: widget.subAddressesDepart,
                   addressesDesti: widget.addressesDesti,
                   subAddressesDesti: widget.subAddressesDesti,
                   booking: widget.booking,
                   payment: _payment!,
-                  userId: technicianInfo!.id,
+                  userId: technicianInfo?.id ?? '',
                   data:
                       data, // Pass the retrieved data to WaitingForPaymentScreen
                 ),
@@ -735,8 +737,14 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   //   );
   // }
   Widget _buildPaymentMethod(String title, String total) {
-    // Check if the title is 'Momo' and change it to 'Chuyen khoan' if it is
-    String displayTitle = title == 'Momo' ? 'Trả bằng chuyển khoản' : title;
+    String displayTitle;
+    if (title == 'Banking') {
+      displayTitle = 'Trả bằng chuyển khoản';
+    } else if (title == 'Cash') {
+      displayTitle = 'Trả bằng tiền mặt';
+    } else {
+      displayTitle = 'Tổng cộng';
+    }
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -751,19 +759,18 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 fontSize: 18,
               ),
               SizedBox(width: 10.0),
-              // Conditionally display the image based on the displayTitle
-              if (displayTitle == 'Banking')
+              if (displayTitle == 'Trả bằng chuyển khoản')
                 Image.asset(
                   'assets/images/banking.png',
-                  height: 25,
-                  width: 25,
+                  height: 20,
+                  width: 20,
                 )
-              else
+              else if (displayTitle == 'Trả bằng tiền mặt')
                 Image.asset(
-                  'assets/images/money.png', // Replace with your desired asset
-                  height: 25,
-                  width: 25,
-                ),
+                  'assets/images/money.png', // Replace with your cash image asset
+                  height: 20,
+                  width: 20,
+                )
             ],
           ),
           CustomText(
@@ -946,20 +953,23 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   }
 
   Widget _buildOrderDetail(Map<String, dynamic> orderDetail) {
+    quantityController.text = orderDetail['quantity'].toString();
+    // Add this line
     return FutureBuilder<Map<String, dynamic>>(
       future: fetchServiceNameAndQuantity(orderDetail['serviceId']),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           if (snapshot.hasData && snapshot.data is Map<String, dynamic>) {
             final name = snapshot.data?['name'] ?? 'Name not available';
-            final quantity = orderDetail['quantity'] ?? 0;
+            var quantity = orderDetail['quantity'] ?? 0;
             final price = snapshot.data?['price'] ?? 0;
             int total = orderDetail['tOtal'] ?? 1;
             final orderId = orderDetail['id'];
             final formatter =
                 NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
             final formattedTotal = formatter.format(total);
-
+            TextEditingController quantityController =
+                TextEditingController(text: quantity.toString());
             return Column(
               children: [
                 _buildItemRow(
@@ -968,6 +978,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     '$formattedTotal',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
+                  isLoading: _isLoading,
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -979,38 +990,45 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           icon: Icon(Icons.remove),
                           onPressed: () async {
                             if (quantity > 1) {
-                              _updateOrderDetails(
-                                  orderDetail, quantity - 1, price);
+                              _updateOrderDetails(orderDetail, quantity - 1,
+                                  price, (loading) => _isLoading = loading);
                               await _delayedLoadPayment();
                             }
                           },
                         ),
                         SizedBox(
-                          width: 10, // Adjust the width for spacing
+                          width: 10,
                         ),
                         SizedBox(
                           width: 50,
                           height: 32,
                           child: TextFormField(
-                            readOnly: true,
                             textAlign: TextAlign.center,
                             decoration: InputDecoration(
                               border: OutlineInputBorder(),
                             ),
-                            controller: TextEditingController(
-                              text: quantity.toString(),
-                            ),
+                            controller: quantityController,
+                            onChanged: (value) {
+                              // Update the local quantity when the text changes
+                              quantity = int.tryParse(value) ?? 0;
+                            },
+                            onEditingComplete: () async {
+                              // Trigger the update when the confirm button is pressed
+                              _updateOrderDetails(orderDetail, quantity, price,
+                                  (loading) => _isLoading = loading);
+                              await _delayedLoadPayment();
+                            },
                           ),
                         ),
                         SizedBox(
-                          width: 10, // Adjust the width for spacing
+                          width: 10,
                         ),
                         if(widget.booking.status == "ASSIGNED")
                         IconButton(
                           icon: Icon(Icons.add),
                           onPressed: () async {
-                            _updateOrderDetails(
-                                orderDetail, quantity + 1, price);
+                            _updateOrderDetails(orderDetail, quantity + 1,
+                                price, (loading) => _isLoading = loading);
                             await _delayedLoadPayment();
                           },
                         ),
@@ -1021,16 +1039,63 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               ],
             );
           } else {
-            // Handle the case where the data is not of the expected type
             return Text('Invalid data format');
           }
         } else if (snapshot.hasError) {
           return Text('Error fetching service name and quantity');
         } else {
-          return SizedBox.shrink(); // Show a loading indicator
+          return SizedBox.shrink();
         }
       },
     );
+  }
+
+  // Widget _buildItemRow(String title, Widget value, {bool _isLoading = false}) {
+  //   return Column(
+  //     children: [
+  //       Row(
+  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //         children: [
+  //           ListTile(
+  //             title: Text(title),
+  //             subtitle: value,
+  //           ),
+  //         ],
+  //       ),
+  //       isLoading ? CircularProgressIndicator() : SizedBox.shrink(),
+  //     ],
+  //   );
+  // }
+
+  void _updateOrderDetails(Map<String, dynamic> orderDetail, int newQuantity,
+      int price, Function(bool) setLoading) async {
+    try {
+      setLoading(true);
+
+      final snapshot =
+          await fetchServiceNameAndQuantity(orderDetail['serviceId']);
+
+      final name = snapshot['name'] ?? 'Name not available';
+
+      _updateService(orderDetail['id'], newQuantity, name);
+
+      orderDetail['quantity'] = newQuantity;
+
+      if (orderDetail['tOtal'] != null && orderDetail['tOtal'] is num) {
+        orderDetail['tOtal'] = newQuantity * price;
+      } else {
+        orderDetail['tOtal'] = 0;
+      }
+
+      setLoading(false);
+    } catch (e) {
+      print('Exception in _updateOrderDetails: $e');
+    }
+  }
+
+  Future<void> _delayedLoadPayment() async {
+    await Future.delayed(Duration(milliseconds: 500));
+    await _loadPayment(widget.booking.id);
   }
 
   Widget _buildInfoRow(String title, Widget value) {
@@ -1038,54 +1103,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       title: Text(title),
       subtitle: value,
     );
-  }
-
-  void _updateOrderDetails(
-      Map<String, dynamic> orderDetail, int newQuantity, int price) async {
-    try {
-      print('Before updating:');
-      print('orderDetail: $orderDetail');
-      print('orderDetail[\'tOtal\']: ${orderDetail['tOtal']}');
-      print('orderDetail[\'id\']: ${orderDetail['id']}');
-
-      // Fetch the name using the serviceId
-      final snapshot =
-          await fetchServiceNameAndQuantity(orderDetail['serviceId']);
-
-      if (snapshot != null && snapshot is Map<String, dynamic>) {
-        final name = snapshot['name'] ?? 'Name not available';
-
-        // Update the service with the fetched name
-        _updateService(orderDetail['id'], newQuantity, name);
-
-        orderDetail['quantity'] = newQuantity;
-
-        // Check if 'tOtal' is not null and is a valid number
-        if (orderDetail['tOtal'] != null && orderDetail['tOtal'] is num) {
-          orderDetail['tOtal'] = newQuantity * price;
-        } else {
-          // Handle the case where 'tOtal' is null or not a valid number
-          // You might want to set a default value or log an error.
-          orderDetail['tOtal'] = 0;
-        }
-
-        print('After updating:');
-        print('orderDetail: $orderDetail');
-        print('orderDetail[\'tOtal\']: ${orderDetail['tOtal']}');
-      } else {
-        // Handle the case where 'name' is not available in data
-        print('Name data not available');
-      }
-    } catch (e) {
-      // Print the exception for further debugging
-      print('Exception in _updateOrderDetails: $e');
-      // Handle the error as needed
-    }
-  }
-
-  Future<void> _delayedLoadPayment() async {
-    await Future.delayed(Duration(milliseconds: 100));
-    await _loadPayment(widget.booking.id);
   }
 
   Widget _buildSectionTitle(String title) {
@@ -1100,30 +1117,34 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
   Widget _buildNoteRow(String label, GlobalKey key) {
     return Form(
-        key: key,
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Flexible(
-                  child: TextFormField(
-                controller: techNoteController,
-                decoration: InputDecoration(
-                  labelText: label,
-                ),
-                maxLines: 3,
-                validator: (value) {
-                  if (value!.isEmpty) {
-                    return 'Hãy ghi chú';
-                  }
-                  return null;
-                },
-              )),
-              SizedBox(width: 8.0), // Add spacing between label and value
-            ],
+      key: key,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Flexible(
+            child: TextFormField(
+              controller: techNoteController,
+              decoration: InputDecoration(
+                hintText: 'Nhập nội dung ghi chú',
+                border: OutlineInputBorder(),
+              ),
+              onTap: () {
+                // Clear the hint text when the user taps on the text field
+                setState(() {
+                  techNoteController.text = '';
+                });
+              },
+              validator: (value) {
+                if (value!.isEmpty) {
+                  return 'Hãy ghi chú';
+                }
+                return null;
+              },
+            ),
           ),
-        ));
+        ],
+      ),
+    );
   }
 
   @override
@@ -1187,47 +1208,50 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionTitle('Thông tin đơn hàng'),
-                        _buildInfoRow(
-                          "Trạng thái",
-                          Row(
-                            children: [
-                              // Add some spacing if needed
-                              Flexible(
-                                child: BookingStatus(
-                                  status: widget.booking.status,
-                                  fontSize: 14,
-                                ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildSectionTitle('Đơn hàng'),
+                            Flexible(
+                              child: BookingStatus(
+                                status: widget.booking.status,
+                                fontSize: 14,
                               ),
-                            ],
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: RideSelectionWidget(
+                            icon: 'assets/svg/pickup_icon.svg',
+                            title: widget.addressesDepart[widget.booking.id] ??
+                                '', // Use addresses parameter
+                            body:
+                                widget.subAddressesDepart[widget.booking.id] ??
+                                    '',
+                            onPressed: () {},
                           ),
                         ),
                         _buildInfoRow(
-                            "Địa chỉ",
-                            Text(
-                                '${widget.subAddressesDesti[widget.booking.id]}',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: FrontendConfigs.kAuthColor,
-                                    fontSize: 15))),
-                        if (widget.booking.rescueType == "Towing")
-                          _buildInfoRow(
-                              "Điểm đến",
-                              Text(
-                                  '${widget.addressesDesti[widget.booking.id]}',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: FrontendConfigs.kAuthColor,
-                                      fontSize: 15))),
+                          "Loại dịch vụ",
+                          Text(
+                            widget.booking.rescueType == "Towing"
+                                ? "Keo xe cứu hộ"
+                                : (widget.booking.rescueType == "Fixing"
+                                    ? "Sửa chữa tại chỗ"
+                                    : widget.booking.rescueType),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: FrontendConfigs.kAuthColor,
+                            ),
+                          ),
+                        ),
                         _buildInfoRow(
-                            "Dịch vụ",
-                            Text(widget.booking.rescueType,
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: FrontendConfigs.kAuthColor,
-                                    fontSize: 15))),
-                        _buildInfoRow(
-                            "Ghi chú",
+                            "Ghi chú của khách hàng",
                             Text(widget.booking.customerNote,
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
@@ -1276,16 +1300,14 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         SizedBox(height: 8.0),
                         _buildSectionTitle("Ghi chú của kĩ thuật viên"),
                         if (widget.booking.status == "ASSIGNED")
-                          _buildNoteRow("Ghi chú", _formKey),
+                          _buildNoteRow("Nhập nội dung ghi chú", _formKey),
                         _buildInfoRow(
-                            "-",
-                            Text('${_currentBooking?.staffNote ?? ''}',
+                            "Nội dung ghi chú",
+                            Text('${_currentBooking?.staffNote ?? 'Không có'}',
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: FrontendConfigs.kAuthColor,
                                     fontSize: 15))),
-                        Divider(thickness: 3),
-                        SizedBox(height: 8.0),
                       ],
                     ),
                   ),
@@ -1390,6 +1412,17 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       ],
                     ),
                   ),
+
+                  // Action Buttons
+
+                  SizedBox(height: 24.0), // Additional spacing at the bottom
+                ],
+              ),
+            ),
+            bottomNavigationBar: Container(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   GestureDetector(
                     onTap: () {
                       List<Service> selectedServices = selectedServiceCards
@@ -1410,7 +1443,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           ));
                     },
                     child: Container(
-                      margin: EdgeInsets.symmetric(vertical: 4),
                       padding:
                           EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       color: Colors.white,
@@ -1419,81 +1451,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _buildSectionTitle("Dịch vụ"),
-                            ],
+                            children: [SizedBox()],
                           ),
                           buildServiceList(context),
-                          if (selectedServiceCards.isNotEmpty)
-                            SingleChildScrollView(
-                              child: Container(
-                                height: 300,
-                                child: ListView.builder(
-                                  itemCount: selectedServiceCards.length,
-                                  itemBuilder: (context, index) {
-                                    int quantity =
-                                        selectedServiceCards[index].quantity;
-
-                                    return Column(
-                                      children: [
-                                        Card(
-                                          child: Column(
-                                            children: [
-                                              ListTile(
-                                                title: Text(
-                                                    selectedServiceCards[index]
-                                                        .name),
-                                                subtitle: Text(
-                                                    'Giá: ${selectedServiceCards[index].price}₫'),
-                                                trailing: IconButton(
-                                                  icon: Icon(Icons.clear),
-                                                  onPressed: () {
-                                                    // Create a copy of the list and remove the selected service
-                                                    List<Service> updatedList =
-                                                        List.from(
-                                                            selectedServiceCards);
-                                                    updatedList.removeAt(index);
-
-                                                    // Update the state with the new list
-                                                    setState(() {
-                                                      selectedServiceCards =
-                                                          updatedList;
-                                                      _updateService(
-                                                        widget.booking.id,
-                                                        quantity,
-                                                        selectedServiceCards[
-                                                                index]
-                                                            .name,
-                                                      );
-                                                      _quantity = quantity;
-                                                    });
-                                                  },
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
                         ],
                       ),
                     ),
                   ),
-
-                  // Action Buttons
-
-                  SizedBox(height: 24.0), // Additional spacing at the bottom
-                ],
-              ),
-            ),
-            bottomNavigationBar: Container(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     color: Colors.white,
@@ -1512,7 +1476,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       ],
                     ),
                   ),
-                  if (widget.booking.status == "ASSIGNED") _slider(true),
+                  // if (widget.booking.status == "ASSIGNED") _slider(true),
                   if (widget.booking.status == "INPROGRESS") _slider(false),
                   if (widget.booking.status == "ASSIGNED")
                     Center(
@@ -1525,13 +1489,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                 setState(() {
                                   _isLoading = true;
                                 });
-                                await _addServices(
-                                    widget.booking.id, selectedServiceCards);
+
                                 await _loadBooking(widget.booking.id);
                                 if (_formKey.currentState!.validate() &&
                                     pickedImages.isNotEmpty) {
                                   await uploadImage();
-
+                                  await updateOrder(widget.booking.id,
+                                      techNoteController.text, _updateImage);
                                   // await _loadImageOrders(widget.booking.id);
                                   await _loadTechInfo(
                                       widget.booking.technicianId);
@@ -1578,7 +1542,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               Icon(Icons.add_box), // Biểu tượng dấu '+'
               SizedBox(width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
               Text(
-                'Chọn', // Văn bản bên cạnh biểu tượng
+                'Chọn dịch vụ', // Văn bản bên cạnh biểu tượng
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16, // Kích thước văn bản
@@ -1664,10 +1628,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     );
   }
 
-  Widget _buildItemRow(
-    String label,
-    Widget value,
-  ) {
+  Widget _buildItemRow(String label, Widget value, {bool isLoading = false}) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -1686,7 +1647,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
             ),
           ),
           SizedBox(width: 8.0), // Add spacing between label and value
-          value
+          value,
+          isLoading ? LoadingState() : SizedBox.shrink(),
         ],
       ),
     );
@@ -1696,6 +1658,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   void dispose() {
     _imageUrls.clear();
     techNoteController.dispose();
+    quantityController.dispose();
     super.dispose();
   }
 }

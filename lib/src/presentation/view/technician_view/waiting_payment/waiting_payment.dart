@@ -152,44 +152,49 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
   }
 
   Widget _buildOrderItemSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: orderDetails.map((orderDetail) {
-        return FutureBuilder<Map<String, dynamic>>(
-          future: fetchServiceNameAndQuantity(
-              orderDetail['serviceId']), // Fetch service name and quantity
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              final name = snapshot.data?['name'] ?? 'Name not available';
-              final quantity = snapshot.data?['quantity'] ?? 0;
-              final price = snapshot.data?['price'] ?? 0;
-              final total = orderDetail['tOtal'] ?? 0.0;
-              // Accumulate the total quantity and total amount
-              totalQuantity = quantity as int;
-              totalAmount = total as int;
-              final formatter =
-                  NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
-              final formattedTotal = formatter.format(total);
+    return Container(
+      height: 260,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: orderDetails.map((orderDetail) {
+            return FutureBuilder<Map<String, dynamic>>(
+              future: fetchServiceNameAndQuantity(
+                  orderDetail['serviceId']), // Fetch service name and quantity
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  final name = snapshot.data?['name'] ?? 'Name not available';
+                  final quantity = snapshot.data?['quantity'] ?? 0;
+                  final price = snapshot.data?['price'] ?? 0;
+                  final total = orderDetail['tOtal'] ?? 0.0;
+                  // Accumulate the total quantity and total amount
+                  totalQuantity = quantity as int;
+                  totalAmount = total as int;
+                  final formatter =
+                      NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
+                  final formattedTotal = formatter.format(total);
 
-              return Column(
-                children: [
-                  _buildInfoRow(
-                    '$name (Số lượng: ${totalQuantity.toString()}) ',
-                    Text(
-                      '$formattedTotal',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              );
-            } else if (snapshot.hasError) {
-              return Text('Error fetching service name and quantity');
-            } else {
-              return CircularProgressIndicator(); // Show a loading indicator
-            }
-          },
-        );
-      }).toList(),
+                  return Column(
+                    children: [
+                      _buildInfoRow(
+                        '$name (Số lượng: ${totalQuantity.toString()}) ',
+                        Text(
+                          '$formattedTotal',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  );
+                } else if (snapshot.hasError) {
+                  return Text('Error fetching service name and quantity');
+                } else {
+                  return CircularProgressIndicator(); // Show a loading indicator
+                }
+              },
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 
@@ -234,11 +239,7 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                       _buildOrderItemSection(),
-                      // OrderItem(title: 'title', quantity: 1),
-                      // OrderItem(title: 'title', quantity: 1),
-                      // OrderItem(title: 'title', quantity: 1),
-                      // OrderItem(title: 'title', quantity: 1),
-                      // OrderItem(title: 'title', quantity: 1),
+
                       Spacer(),
                       Divider(
                         thickness: 2,
