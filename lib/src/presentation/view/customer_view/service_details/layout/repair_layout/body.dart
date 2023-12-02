@@ -14,6 +14,7 @@ import 'package:CarRescue/src/providers/car_customer_profile_provider.dart';
 import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
 import 'package:CarRescue/src/providers/service_provider.dart';
+import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get_storage/get_storage.dart';
@@ -228,380 +229,385 @@ class _RepairBodyState extends State<RepairBody> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(
-                height: 12,
-              ),
-              Divider(
-                color: FrontendConfigs.kIconColor,
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              HomeSelectionWidget(
-                  icon: 'assets/svg/pickup_icon.svg',
-                  title: 'Pick up Location',
-                  body: widget.address,
-                  onPressed: () {
-                    // Navigator.of(context).push(
-                    //   MaterialPageRoute(
-                    //       builder: (context) => HomeView(services: "repair")),
-                    // );
-                    Navigator.of(context).pop();
-                  }),
-              const SizedBox(
-                height: 10,
-              ),
-              if (_car != null)
-                Card(
-                  shape: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: BorderSide.none,
-                  ),
-                  elevation: 0.5,
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Image.network(
-                              _car!.image!,
-                              height: 62,
-                              width: 62,
-                            ),
-                            const SizedBox(
-                              width: 11,
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CustomText(
-                                  text: _car!.manufacturer,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                CustomText(
-                                  text: _car!.licensePlate,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: FrontendConfigs.kAuthColor,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            IconButton(
-                                onPressed: () {},
-                                icon: SvgPicture.asset(
-                                    'assets/svg/edit_icon.svg')),
-                            Container(
-                              height: 10,
-                            ),
-                            // SizedBox(
-                            //   height: 20,
-                            //   child: CustomText(
-                            //     text: widget.amount,
-                            //     fontSize: 16,
-                            //     fontWeight: FontWeight.w600,
-                            //   ),
-                            // ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  height: 12,
                 ),
-              Container(
-                height: 10,
-              ),
-              CustomText(
-                  text: 'Khu vực hỗ trợ gần bạn',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18),
-              Column(
-                children: [
-                  Wrap(
-                    spacing: 32.0, // Horizontal space between chips.
-                    runSpacing: 8.0, // Vertical space between lines.
-                    children: dropdownItems.map((item) {
-                      return ChoiceChip(
-                        labelPadding: EdgeInsets.symmetric(
-                          horizontal: 20.0,
-                        ), // Add padding inside the chip.
-                        label: Text(
-                          item["name"],
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16, // Increase the font size.
-                          ),
-                        ),
-                        selected: selectedDropdownItem == item,
-                        onSelected: (bool selected) {
-                          setState(() {
-                            if (selected) {
-                              selectedDropdownItem = item;
-                            }
-                          });
-                        },
-                        selectedColor: FrontendConfigs
-                            .kActiveColor, // Optional: Changes the color when selected.
-                        backgroundColor: FrontendConfigs.kIconColor,
-                        shape:
-                            StadiumBorder(), // Optional: Creates a stadium-shaped border.
-                      );
-                    }).toList(),
-                  ),
-                  SizedBox(width: 16.0),
-                ],
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              CustomText(
-                text: 'Hình ảnh hiện trường',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  if (!isImageLoading) {
-                    setState(() {
-                      isImageLoading = true;
-                    });
-                  }
-                  // Xử lý khi người dùng nhấp vào biểu tượng '+'
-                  // Chuyển qua camera ở đây
-                  captureImage();
-                },
-                style: ButtonStyle(
-                  padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  ),
-                  backgroundColor: MaterialStateProperty.all<Color>(
-                    FrontendConfigs.kIconColor, // Màu nền của nút
-                  ),
+                Divider(
+                  color: FrontendConfigs.kIconColor,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add_box), // Biểu tượng dấu '+'
-                    SizedBox(
-                        width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
-                    Text(
-                      'Thêm', // Văn bản bên cạnh biểu tượng
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16, // Kích thước văn bản
-                      ),
-                    ),
-                  ],
+                const SizedBox(
+                  height: 10,
                 ),
-              ),
-              if (urlImages.isNotEmpty)
-                Container(
-                  height: 100, // Điều chỉnh chiều cao tùy ý
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal, // Đặt hướng cuộn là ngang
-                    itemCount: urlImages.length,
-                    itemBuilder: (context, index) {
-                      return Container(
-                        margin: EdgeInsets.all(
-                            8.0), // Thêm khoảng cách giữa các hình ảnh
-                        child: Image.network(
-                          urlImages[index],
-                          width:
-                              100, // Điều chỉnh kích thước của hình ảnh tùy ý
-                          height: 100,
-                          fit: BoxFit.cover,
-                        ),
-                      );
-                    },
-                  ),
+                HomeSelectionWidget(
+                    icon: 'assets/svg/pickup_icon.svg',
+                    title: 'Pick up Location',
+                    body: widget.address,
+                    onPressed: () {
+                      // Navigator.of(context).push(
+                      //   MaterialPageRoute(
+                      //       builder: (context) => HomeView(services: "repair")),
+                      // );
+                      Navigator.of(context).pop();
+                    }),
+                const SizedBox(
+                  height: 10,
                 ),
-              const SizedBox(
-                height: 10,
-              ),
-              buildServiceList(context),
-              SizedBox(height: 10),
-              if (selectedServiceCards.isNotEmpty)
-                SingleChildScrollView(
-                  child: Container(
-                    height: 200, // Đặt chiều cao tùy ý cho Column
-                    child: ListView.builder(
-                      itemCount: selectedServiceCards.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(selectedServiceCards[index].name),
-                          subtitle: Text(
-                              'Giá: ${selectedServiceCards[index].price}₫'),
-                          trailing: IconButton(
-                            icon: Icon(Icons.clear),
-                            onPressed: () {
-                              // Create a copy of the list and remove the selected service
-                              List<Service> updatedList =
-                                  List.from(selectedServiceCards);
-                              updatedList.removeAt(index);
-
-                              // Update the state with the new list
-                              setState(() {
-                                selectedServiceCards = updatedList;
-                                caculateTotal();
-                              });
-                            },
-                          ),
-                        );
-                      },
+                if (_car != null)
+                  Card(
+                    shape: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide.none,
                     ),
-                  ),
-                ),
-              const SizedBox(
-                height: 10,
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Ghi chú', // Nhãn cho ô nhập liệu
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18.0,
-                    ),
-                  ),
-                  SizedBox(height: 8.0), // Khoảng cách giữa nhãn và ô nhập liệu
-                  TextFormField(
-                    controller: customerNoteController,
-                    maxLines: 3,
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return 'Hãy ghi chú';
-                      }
-                      return null;
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Nhập ghi chú của bạn', // Gợi ý cho ô nhập liệu
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                            8.0), // Định dạng bo tròn viền ô nhập liệu
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              CustomText(
-                text: 'Phương thức thanh toán',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: DropdownButton<String>(
-                      isExpanded: true,
-                      value: selectedPaymentOption,
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            selectedPaymentOption = newValue;
-                          });
-                        }
-                      },
-                      items: <String>['Chuyển khoản', 'Tiền mặt']
-                          .map<DropdownMenuItem<String>>((String value) {
-                        String mappedValue =
-                            value == 'Chuyển khoản' ? 'Banking' : 'Cash';
-
-                        return DropdownMenuItem<String>(
-                          value: mappedValue,
-                          child: Row(
-                            children: <Widget>[
-                              Image.asset(
-                                getImageAsset(value),
-                                width: value == 'Chuyển khoản' ? 25 : 24,
-                                height: value == 'Chuyển khoản' ? 25 : 24,
+                    elevation: 0.5,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Image.network(
+                                _car!.image!,
+                                height: 62,
+                                width: 62,
                               ),
-                              SizedBox(width: 10),
-                              Text(value),
+                              const SizedBox(
+                                width: 11,
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CustomText(
+                                    text: _car!.manufacturer,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  CustomText(
+                                    text: _car!.licensePlate,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: FrontendConfigs.kAuthColor,
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
+                          Column(
+                            children: [
+                              IconButton(
+                                  onPressed: () {},
+                                  icon: SvgPicture.asset(
+                                      'assets/svg/edit_icon.svg')),
+                              Container(
+                                height: 10,
+                              ),
+                              // SizedBox(
+                              //   height: 20,
+                              //   child: CustomText(
+                              //     text: widget.amount,
+                              //     fontSize: 16,
+                              //     fontWeight: FontWeight.w600,
+                              //   ),
+                              // ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                Container(
+                  height: 10,
+                ),
+                CustomText(
+                    text: 'Khu vực hỗ trợ gần bạn',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18),
+                Column(
+                  children: [
+                    Wrap(
+                      spacing: 32.0, // Horizontal space between chips.
+                      runSpacing: 8.0, // Vertical space between lines.
+                      children: dropdownItems.map((item) {
+                        return ChoiceChip(
+                          labelPadding: EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                          ), // Add padding inside the chip.
+                          label: Text(
+                            item["name"],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16, // Increase the font size.
+                            ),
+                          ),
+                          selected: selectedDropdownItem == item,
+                          onSelected: (bool selected) {
+                            setState(() {
+                              if (selected) {
+                                selectedDropdownItem = item;
+                              }
+                            });
+                          },
+                          selectedColor: FrontendConfigs
+                              .kActiveColor, // Optional: Changes the color when selected.
+                          backgroundColor: FrontendConfigs.kIconColor,
+                          shape:
+                              StadiumBorder(), // Optional: Creates a stadium-shaped border.
                         );
                       }).toList(),
                     ),
+                    SizedBox(width: 16.0),
+                  ],
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                CustomText(
+                  text: 'Hình ảnh hiện trường',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (!isImageLoading) {
+                      setState(() {
+                        isImageLoading = true;
+                      });
+                    }
+                    // Xử lý khi người dùng nhấp vào biểu tượng '+'
+                    // Chuyển qua camera ở đây
+                    captureImage();
+                  },
+                  style: ButtonStyle(
+                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    ),
+                    backgroundColor: MaterialStateProperty.all<Color>(
+                      FrontendConfigs.kIconColor, // Màu nền của nút
+                    ),
                   ),
-                ],
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Container(
-                color: Colors.white,
-                padding:
-                    EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 10),
-                width: double.infinity,
-                child: Column(
-                  mainAxisSize: MainAxisSize
-                      .min, // Đặt cột để không chiếm quá nhiều không gian
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_box), // Biểu tượng dấu '+'
+                      SizedBox(
+                          width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
+                      Text(
+                        'Thêm', // Văn bản bên cạnh biểu tượng
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16, // Kích thước văn bản
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (urlImages.isNotEmpty)
+                  Container(
+                    height: 100, // Điều chỉnh chiều cao tùy ý
+                    child: ListView.builder(
+                      scrollDirection:
+                          Axis.horizontal, // Đặt hướng cuộn là ngang
+                      itemCount: urlImages.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          margin: EdgeInsets.all(
+                              8.0), // Thêm khoảng cách giữa các hình ảnh
+                          child: Image.network(
+                            urlImages[index],
+                            width:
+                                100, // Điều chỉnh kích thước của hình ảnh tùy ý
+                            height: 100,
+                            fit: BoxFit.cover,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                const SizedBox(
+                  height: 10,
+                ),
+                buildServiceList(context),
+                SizedBox(height: 10),
+                if (selectedServiceCards.isNotEmpty)
+                  SingleChildScrollView(
+                    child: Container(
+                      height: 200, // Đặt chiều cao tùy ý cho Column
+                      child: ListView.builder(
+                        itemCount: selectedServiceCards.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            title: Text(selectedServiceCards[index].name),
+                            subtitle: Text(
+                                'Giá: ${selectedServiceCards[index].price}₫'),
+                            trailing: IconButton(
+                              icon: Icon(Icons.clear),
+                              onPressed: () {
+                                // Create a copy of the list and remove the selected service
+                                List<Service> updatedList =
+                                    List.from(selectedServiceCards);
+                                updatedList.removeAt(index);
+
+                                // Update the state with the new list
+                                setState(() {
+                                  selectedServiceCards = updatedList;
+                                  caculateTotal();
+                                });
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                const SizedBox(
+                  height: 10,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Tổng cộng (Tạm tính):',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '${totalPrice}₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      ],
+                    Text(
+                      'Ghi chú', // Nhãn cho ô nhập liệu
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18.0,
+                      ),
                     ),
                     SizedBox(
-                        height: 20), // Khoảng cách giữa tổng cộng tiền và nút
-                    SizedBox(
-                      width:
-                          double.infinity, // Đặt chiều rộng bằng với Container
-                      height: 50, // Đặt chiều cao cố định cho nút
-                      child: ElevatedButton(
-                        child: Text(
-                          isLoading ? 'Đang tạo đơn hàng...' : "Tạo đơn",
-                          style: TextStyle(fontSize: 18),
+                        height: 8.0), // Khoảng cách giữa nhãn và ô nhập liệu
+                    TextFormField(
+                      controller: customerNoteController,
+                      maxLines: 3,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Hãy ghi chú';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        hintText:
+                            'Nhập ghi chú của bạn', // Gợi ý cho ô nhập liệu
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                              8.0), // Định dạng bo tròn viền ô nhập liệu
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: FrontendConfigs
-                              .kIconColor, // Đảm bảo rằng màu này được định nghĩa trong FrontendConfigs
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(8), // Góc bo tròn cho nút
-                          ),
-                        ),
-                        onPressed: () {
-                          createOrder();
-                        },
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(
+                  height: 10,
+                ),
+                CustomText(
+                  text: 'Phương thức thanh toán',
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: selectedPaymentOption,
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              selectedPaymentOption = newValue;
+                            });
+                          }
+                        },
+                        items: <String>['Chuyển khoản', 'Tiền mặt']
+                            .map<DropdownMenuItem<String>>((String value) {
+                          String mappedValue =
+                              value == 'Chuyển khoản' ? 'Banking' : 'Cash';
+
+                          return DropdownMenuItem<String>(
+                            value: mappedValue,
+                            child: Row(
+                              children: <Widget>[
+                                Image.asset(
+                                  getImageAsset(value),
+                                  width: value == 'Chuyển khoản' ? 25 : 24,
+                                  height: value == 'Chuyển khoản' ? 25 : 24,
+                                ),
+                                SizedBox(width: 10),
+                                Text(value),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                Container(
+                  color: Colors.white,
+                  padding:
+                      EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 10),
+                  width: double.infinity,
+                  child: Column(
+                    mainAxisSize: MainAxisSize
+                        .min, // Đặt cột để không chiếm quá nhiều không gian
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Tổng cộng (Tạm tính):',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            '${totalPrice}₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                          height: 20), // Khoảng cách giữa tổng cộng tiền và nút
+                      SizedBox(
+                        width: double
+                            .infinity, // Đặt chiều rộng bằng với Container
+                        height: 50, // Đặt chiều cao cố định cho nút
+                        child: ElevatedButton(
+                          child: Text(
+                            isLoading ? 'Đang tạo đơn hàng...' : "Tạo đơn",
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: FrontendConfigs
+                                .kIconColor, // Đảm bảo rằng màu này được định nghĩa trong FrontendConfigs
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                  8), // Góc bo tròn cho nút
+                            ),
+                          ),
+                          onPressed: () {
+                            createOrder();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -350,78 +350,100 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
           Order order = snapshot.data!;
 
           print(order.id);
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                // Header
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.white,
-                  child: Center(
-                    child: Column(
-                      children: [
-                        CustomText(
-                          text: "Mã đơn hàng",
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+          return Scaffold(
+            bottomNavigationBar: Container(
+              margin: EdgeInsets.symmetric(vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: Colors.white,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            Colors.green, // color for accept button
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        CustomText(
-                          text: " ${widget.orderId}",
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ],
+                      ),
+                      onPressed: () async {
+                        setState(() {
+                          // _isLoading = true;
+                        });
+                        bool decision = true;
+                        bool isSuccess =
+                            await AuthService().acceptOrder(order.id, decision);
+
+                        if (isSuccess) {
+                          setState(() {
+                            // _isLoading = false;
+                          });
+                          // widget.updateTabCallback!(1);
+
+                          Navigator.pop(context,
+                              'reload'); // This pops the `BookingDetailsBody` screen.
+                        }
+                        // widget.updateTabCallback!(1);
+                      },
+                      child: Text(
+                        "Đồng ý",
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ),
-                ),
-
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.white,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // if (widget.techId != '' && widget.techId != null)
-
-                      // Use the 'order' object as needed
-
-                      // Example: Text(order.id),
-
-                      // if (widget.techId != '' && widget.techId != null)
-                      _buildSectionTitle("Khách hàng"),
-                      // if (widget.techId != '' && widget.techId != null)
-                      if (_car != null)
-                        CustomerCarInfoRow(
-                          manufacturer: _car?.manufacturer ?? 'Không có',
-                          type: _carModel?.model1 ?? 'Không có',
-                          licensePlate: _car?.licensePlate ?? 'Không có',
-                          image: _car?.image ?? 'Không có',
+                  SizedBox(
+                      width:
+                          2), // Optional: you can use this for a small gap between the buttons
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red, // color for cancel button
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                    ],
+                      ),
+                      onPressed: () async {
+                        bool decision = false;
+                        await AuthService().acceptOrder(order.id, decision);
+                      },
+                      child: Text(
+                        "Hủy",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
                   ),
-                ),
-                if (vehicleInfo != null)
+                ],
+              ),
+            ),
+            body: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  // Header
                   Container(
                     margin: EdgeInsets.symmetric(vertical: 4),
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        _buildSectionTitle('Cứu hộ'),
-                        VehicleInfoRow(
-                          manufacturer: vehicleInfo?.manufacturer ?? '',
-                          type: vehicleInfo?.type ?? '',
-                          licensePlate: vehicleInfo?.licensePlate ?? '',
-                          image: vehicleInfo?.image ?? '',
-                        ),
-                      ],
+                    child: Center(
+                      child: Column(
+                        children: [
+                          CustomText(
+                            text: "Mã đơn hàng",
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          CustomText(
+                            text: " ${widget.orderId}",
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                if (widget.techId != '' && widget.techId != null)
+
                   Container(
                     margin: EdgeInsets.symmetric(vertical: 4),
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -429,22 +451,46 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // if (widget.techId != '' && widget.techId != null)
+
                         // Use the 'order' object as needed
 
                         // Example: Text(order.id),
 
-                        _buildSectionTitle("Thông tin kĩ thuật viên"),
-
-                        CustomerInfoRow(
-                          name: technicianInfo?.fullname ?? "",
-                          phone: technicianInfo?.phone ?? "",
-                          avt: technicianInfo?.avatar ?? "",
-                        ),
+                        // if (widget.techId != '' && widget.techId != null)
+                        _buildSectionTitle("Khách hàng"),
+                        // if (widget.techId != '' && widget.techId != null)
+                        if (_car != null)
+                          CustomerCarInfoRow(
+                            manufacturer: _car?.manufacturer ?? 'Không có',
+                            type: _carModel?.model1 ?? 'Không có',
+                            licensePlate: _car?.licensePlate ?? 'Không có',
+                            image: _car?.image ?? 'Không có',
+                          ),
                       ],
                     ),
                   ),
-                if (feedbackCustomer?.status == "COMPLETED")
-                  Container(
+                  if (vehicleInfo != null)
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          _buildSectionTitle('Cứu hộ'),
+                          VehicleInfoRow(
+                            manufacturer: vehicleInfo?.manufacturer ?? '',
+                            type: vehicleInfo?.type ?? '',
+                            licensePlate: vehicleInfo?.licensePlate ?? '',
+                            image: vehicleInfo?.image ?? '',
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (widget.techId != '' && widget.techId != null)
+                    Container(
                       margin: EdgeInsets.symmetric(vertical: 4),
                       padding:
                           EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -452,93 +498,96 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildSectionTitle("Đánh giá"),
-                          if (feedbackCustomer?.status == "COMPLETED")
-                            Center(
-                              child: RatingBar.builder(
-                                initialRating: ratingParse,
-                                minRating: 1,
-                                direction: Axis.horizontal,
-                                allowHalfRating: false,
-                                itemCount: 5,
-                                itemSize: 30,
-                                itemPadding:
-                                    EdgeInsets.symmetric(horizontal: 2.0),
-                                itemBuilder: (context, _) => Icon(
-                                  Icons.star,
-                                  color: Colors.amber,
-                                ),
-                                onRatingUpdate: (newRating) {
-                                  // Handle the updated rating if needed
-                                },
-                                ignoreGestures: true,
-                              ),
-                            ),
-                          if (feedbackCustomer?.status == "COMPLETED")
-                            _buildInfoRow(
-                                "Nội dung đánh giá",
-                                Container(
-                                  width: 200,
-                                  child: Text(
-                                    feedbackCustomer?.note ?? '',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 3,
-                                  ),
-                                )),
-                          SizedBox(height: 2.0),
-                        ],
-                      )),
+                          // Use the 'order' object as needed
 
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.white,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionTitle("Thông tin đơn hàng"),
-                      _buildInfoRow(
-                          "Trạng thái",
-                          BookingStatus(
-                            status: order.status,
-                            fontSize: 14,
-                          )),
-                      _buildInfoRow(
-                          "Loại dịch vụ",
-                          Text(order.rescueType ?? '',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                      FutureBuilder<String>(
-                        future: getPlaceDetails(order.departure ?? ''),
-                        builder: (context, addressSnapshot) {
-                          if (addressSnapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            // Display loading indicator or placeholder text
-                            return CircularProgressIndicator();
-                          } else if (addressSnapshot.hasError) {
-                            // Handle error
-                            return Text('Error: ${addressSnapshot.error}');
-                          } else {
-                            String departureAddress =
-                                addressSnapshot.data ?? '';
-                            return _buildInfoRow(
-                              "Điểm đi",
-                              Flexible(
-                                child: Text(
-                                  departureAddress,
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
+                          // Example: Text(order.id),
+
+                          _buildSectionTitle("Thông tin kĩ thuật viên"),
+
+                          CustomerInfoRow(
+                            name: technicianInfo?.fullname ?? "",
+                            phone: technicianInfo?.phone ?? "",
+                            avt: technicianInfo?.avatar ?? "",
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (feedbackCustomer?.status == "COMPLETED")
+                    Container(
+                        margin: EdgeInsets.symmetric(vertical: 4),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        color: Colors.white,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSectionTitle("Đánh giá"),
+                            if (feedbackCustomer?.status == "COMPLETED")
+                              Center(
+                                child: RatingBar.builder(
+                                  initialRating: ratingParse,
+                                  minRating: 1,
+                                  direction: Axis.horizontal,
+                                  allowHalfRating: false,
+                                  itemCount: 5,
+                                  itemSize: 30,
+                                  itemPadding:
+                                      EdgeInsets.symmetric(horizontal: 2.0),
+                                  itemBuilder: (context, _) => Icon(
+                                    Icons.star,
+                                    color: Colors.amber,
+                                  ),
+                                  onRatingUpdate: (newRating) {
+                                    // Handle the updated rating if needed
+                                  },
+                                  ignoreGestures: true,
                                 ),
                               ),
-                            );
-                          }
-                        },
-                      ),
-                      if (order.rescueType == "Towing")
+                            if (feedbackCustomer?.status == "COMPLETED")
+                              _buildInfoRow(
+                                  "Nội dung đánh giá",
+                                  Container(
+                                    width: 200,
+                                    child: Text(
+                                      feedbackCustomer?.note ?? '',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 3,
+                                    ),
+                                  )),
+                            SizedBox(height: 2.0),
+                          ],
+                        )),
+
+                  Container(
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle("Thông tin đơn hàng"),
+                        _buildInfoRow(
+                          "Trạng thái",
+                          Row(
+                            children: [
+                              // Add some spacing if needed
+                              Flexible(
+                                child: BookingStatus(
+                                  status: order.status,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        _buildInfoRow(
+                            "Loại dịch vụ",
+                            Text(order.rescueType ?? '',
+                                style: TextStyle(fontWeight: FontWeight.bold))),
                         FutureBuilder<String>(
-                          future: getPlaceDetails(order.destination ?? ''),
+                          future: getPlaceDetails(order.departure ?? ''),
                           builder: (context, addressSnapshot) {
                             if (addressSnapshot.connectionState ==
                                 ConnectionState.waiting) {
@@ -548,13 +597,13 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                               // Handle error
                               return Text('Error: ${addressSnapshot.error}');
                             } else {
-                              String destinationAddress =
+                              String departureAddress =
                                   addressSnapshot.data ?? '';
                               return _buildInfoRow(
-                                "Điểm đến",
+                                "Điểm đi",
                                 Flexible(
                                   child: Text(
-                                    destinationAddress,
+                                    departureAddress,
                                     style:
                                         TextStyle(fontWeight: FontWeight.bold),
                                     maxLines: 3,
@@ -565,108 +614,60 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                             }
                           },
                         ),
-                      _buildInfoRow(
-                          "Ghi chú",
-                          Text(order.customerNote ?? '',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                    ],
-                  ),
-                ),
-
-                if (_imageUrls.isNotEmpty)
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionTitle("Hình ảnh hiện trường"),
-                        _buildImageSection(_imageUrls),
-                        SizedBox(height: 15.0),
-                      ],
-                    ),
-                  ),
-
-                SizedBox(height: 15.0),
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.white,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (widget.techId != '' && widget.techId != null)
-                        _buildSectionTitle("Ghi chú của kĩ thuật viên"),
-                      if (widget.techId != '' && widget.techId != null)
+                        if (order.rescueType == "Towing")
+                          FutureBuilder<String>(
+                            future: getPlaceDetails(order.destination ?? ''),
+                            builder: (context, addressSnapshot) {
+                              if (addressSnapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                // Display loading indicator or placeholder text
+                                return CircularProgressIndicator();
+                              } else if (addressSnapshot.hasError) {
+                                // Handle error
+                                return Text('Error: ${addressSnapshot.error}');
+                              } else {
+                                String destinationAddress =
+                                    addressSnapshot.data ?? '';
+                                return _buildInfoRow(
+                                  "Điểm đến",
+                                  Flexible(
+                                    child: Text(
+                                      destinationAddress,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
                         _buildInfoRow(
                             "Ghi chú",
-                            Text(order.staffNote!,
+                            Text(order.customerNote ?? '',
                                 style: TextStyle(fontWeight: FontWeight.bold))),
-                      if (widget.techId != '' && widget.techId != null)
-                        SizedBox(height: 15.0),
-                    ],
-                  ),
-                ),
-
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.white,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionTitle("Thời gian"),
-                      if (order.status != "ASSIGNED" && order.startTime != null)
-                        _buildInfoRow(
-                          "Bắt đầu",
-                          Text(
-                            DateFormat('dd-MM-yyyy | HH:mm').format(order
-                                .startTime!
-                                .toUtc()
-                                .add(Duration(hours: 14))),
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      if (order.status != "ASSIGNED" && order.endTime != null)
-                        _buildInfoRow(
-                          "Kết thúc ",
-                          Text(
-                            DateFormat('dd-MM-yyyy | HH:mm').format(order
-                                .endTime!
-                                .toUtc()
-                                .add(Duration(hours: 14))),
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      _buildInfoRow(
-                        "Được tạo lúc",
-                        Text(
-                          DateFormat('dd-MM-yyyy | HH:mm').format(order
-                              .createdAt!
-                              .toUtc()
-                              .add(Duration(hours: 14))),
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 8.0),
-                Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      children: [
-                        _buildOrderItemSection(),
-                        SizedBox(
-                          height: 10,
-                        ),
                       ],
-                    )),
-                if (order.status != "CANCELLED" && order.rescueType != 'Towing')
+                    ),
+                  ),
+
+                  if (_imageUrls.isNotEmpty)
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle("Hình ảnh hiện trường"),
+                          _buildImageSection(_imageUrls),
+                          SizedBox(height: 15.0),
+                        ],
+                      ),
+                    ),
+
+                  SizedBox(height: 15.0),
                   Container(
                     margin: EdgeInsets.symmetric(vertical: 4),
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -674,42 +675,129 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionTitle("Thanh toán"),
-                        _buildInfoRow(
-                            "Người trả",
-                            Text('${customer.fullname}',
-                                style: TextStyle(fontWeight: FontWeight.bold))),
-                        _buildInfoRow(
-                            "Người nhận",
-                            Text('${technicianInfo?.fullname ?? ''}',
-                                style: TextStyle(fontWeight: FontWeight.bold))),
-                        SizedBox(height: 24.0),
+                        if (widget.techId != '' && widget.techId != null)
+                          _buildSectionTitle("Ghi chú của kĩ thuật viên"),
+                        if (widget.techId != '' && widget.techId != null)
+                          _buildInfoRow(
+                              "Ghi chú",
+                              Text(order.staffNote!,
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold))),
+                        if (widget.techId != '' && widget.techId != null)
+                          SizedBox(height: 15.0),
                       ],
                     ),
                   ),
-                if (order.status == "COMPLETED" &&
-                    feedbackCustomer?.status == "WAITING")
+
                   Container(
                     margin: EdgeInsets.symmetric(vertical: 4),
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     color: Colors.white,
-                    child: AppButton(
-                        onPressed: () {
-                          if (widget.techId != null) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => FeedbackScreen(
-                                        techId: widget.techId!,
-                                        orderId: widget.orderId,
-                                        customerId: customer.id,
-                                      )),
-                            );
-                          }
-                        },
-                        btnLabel: "Gửi đánh giá"),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle("Thời gian"),
+                        if (order.status != "ASSIGNED" &&
+                            order.startTime != null)
+                          _buildItemRow(
+                            "Bắt đầu",
+                            Text(
+                              DateFormat('dd-MM-yyyy | HH:mm').format(order
+                                  .startTime!
+                                  .toUtc()
+                                  .add(Duration(hours: 14))),
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        if (order.status != "ASSIGNED" && order.endTime != null)
+                          _buildItemRow(
+                            "Kết thúc ",
+                            Text(
+                              DateFormat('dd-MM-yyyy | HH:mm').format(order
+                                  .endTime!
+                                  .toUtc()
+                                  .add(Duration(hours: 14))),
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        _buildItemRow(
+                          "Được tạo lúc",
+                          Text(
+                            DateFormat('dd-MM-yyyy | HH:mm').format(order
+                                .createdAt!
+                                .toUtc()
+                                .add(Duration(hours: 14))),
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-              ],
+
+                  SizedBox(height: 8.0),
+                  Container(
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+                          _buildOrderItemSection(),
+                          SizedBox(
+                            height: 10,
+                          ),
+                        ],
+                      )),
+                  if (order.status != "CANCELLED" &&
+                      order.rescueType != 'Towing')
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle("Thanh toán"),
+                          _buildInfoRow(
+                              "Người trả",
+                              Text('${customer.fullname}',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold))),
+                          _buildInfoRow(
+                              "Người nhận",
+                              Text('${technicianInfo?.fullname ?? ''}',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold))),
+                          SizedBox(height: 24.0),
+                        ],
+                      ),
+                    ),
+                  if (order.status == "COMPLETED" &&
+                      feedbackCustomer?.status == "WAITING")
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white,
+                      child: AppButton(
+                          onPressed: () {
+                            if (widget.techId != null) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => FeedbackScreen(
+                                          techId: widget.techId!,
+                                          orderId: widget.orderId,
+                                          customerId: customer.id,
+                                        )),
+                              );
+                            }
+                          },
+                          btnLabel: "Gửi đánh giá"),
+                    ),
+                ],
+              ),
             ),
           );
         }
@@ -781,7 +869,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
         ));
   }
 
-  Widget _buildInfoRow(
+  Widget _buildItemRow(
     String label,
     Widget value,
   ) {
@@ -806,6 +894,13 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
           value
         ],
       ),
+    );
+  }
+
+  Widget _buildInfoRow(String title, Widget value) {
+    return ListTile(
+      title: Text(title),
+      subtitle: value,
     );
   }
 
