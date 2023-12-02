@@ -306,7 +306,7 @@ class _ServiceBodyState extends State<ServiceBody>
       child: TabBarView(
         controller: _tabController,
         children: [
-          buildOrders("ASSIGNED"),
+          buildOrders("WAITING"),
           buildOrders("INPROGRESS"),
         ],
       ),
@@ -640,7 +640,7 @@ class _ServiceBodyState extends State<ServiceBody>
                               Row(
                                 children: [
                                   CustomText(
-                                    text: 'Các đơn duyệt và hoạt động',
+                                    text: 'Các đơn chờ duyệt và hoạt động',
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -658,7 +658,7 @@ class _ServiceBodyState extends State<ServiceBody>
                                 tabs: [
                                   Tab(
                                     child: BookingStatus(
-                                      status: "ASSIGNED",
+                                      status: "WAITING",
                                       fontSize: 16,
                                     ),
                                   ),

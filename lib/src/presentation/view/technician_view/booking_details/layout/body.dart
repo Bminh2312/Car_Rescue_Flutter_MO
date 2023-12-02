@@ -974,6 +974,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   children: [
                     Row(
                       children: [
+                        if(widget.booking.status == "ASSIGNED")
                         IconButton(
                           icon: Icon(Icons.remove),
                           onPressed: () async {
@@ -1004,6 +1005,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         SizedBox(
                           width: 10, // Adjust the width for spacing
                         ),
+                        if(widget.booking.status == "ASSIGNED")
                         IconButton(
                           icon: Icon(Icons.add),
                           onPressed: () async {
