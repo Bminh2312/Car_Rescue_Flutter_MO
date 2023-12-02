@@ -65,19 +65,19 @@ class RideSelectionWidget extends StatelessWidget {
                 const SizedBox(
                   height: 3,
                 ),
-                CustomText(
-                  text: body,
-                  color: Colors.black54,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
+                Container(
+                  width: 260,
+                  child: CustomText(
+                    text: body,
+                    color: Colors.black54,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
                 )
               ],
             )
           ],
         ),
-        IconButton(
-            onPressed: onPressed,
-            icon: SvgPicture.asset('assets/svg/edit_icon.svg'))
       ],
     );
   }

@@ -4,6 +4,7 @@ import 'package:CarRescue/src/models/technician.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/feedback/layout/widgets/report_view.dart';
 import 'package:CarRescue/src/providers/feedback_order.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +14,7 @@ class FeedbackScreen extends StatefulWidget {
   final String orderId;
   final String customerId;
   Vehicle? vehicleInfo;
-   FeedbackScreen(
+  FeedbackScreen(
       {Key? key,
       this.vehicleInfo,
       this.techId,
@@ -90,10 +91,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   @override
   void initState() {
     print(widget.techId);
-    if(widget.techId != null){
+    if (widget.techId != null) {
       _loadTechInfo(widget.techId!);
     }
-    
+
     super.initState();
   }
 
@@ -111,15 +112,26 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               SizedBox(
                 height: 50,
               ),
-              CustomText(
-                text: 'Đánh giá',
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CustomText(
+                    text: 'Đánh giá',
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 10,
               ),
               CustomText(
                 text: 'Hãy đánh giá trải nghiệm của bạn về kĩ thuật viên',
                 fontSize: 18,
                 color: Colors.black54,
+              ),
+              SizedBox(
+                height: 10,
               ),
               Container(
                 padding: EdgeInsets.symmetric(vertical: 5),
@@ -129,10 +141,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 ),
                 child: Column(
                   children: [
-                    if(technicianInfo != null)
-                    _buildTechInfo(technicianInfo),
-                    if(widget.vehicleInfo != null)
-                    _buildCarOwnerInfo(widget.vehicleInfo),
+                    if (technicianInfo != null) _buildTechInfo(technicianInfo),
+                    if (widget.vehicleInfo != null)
+                      _buildCarOwnerInfo(widget.vehicleInfo),
                     _buildRatingStars(),
                   ],
                 ),

@@ -396,7 +396,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            'Lịch làm việc',
+            'Lịch làm việc trong tuần',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,

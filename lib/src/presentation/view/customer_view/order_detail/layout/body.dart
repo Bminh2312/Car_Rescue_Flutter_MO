@@ -6,6 +6,8 @@ import 'package:CarRescue/src/models/payment.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/vehicle_info.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/feedback/layout/widgets/report_view.dart';
+import 'package:CarRescue/src/presentation/view/technician_view/booking_list/widgets/selection_location_widget.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/models/customer.dart';
@@ -88,7 +90,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
       return order;
     });
     _orderFuture = fetchOrderDetail(widget.orderId).then((order) {
-      getCarData(order.carId!).then((carData) {
+      getCarData(order.carId ?? '').then((carData) {
         setState(() {
           _car = carData;
         });
@@ -155,7 +157,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
         setState(() {
           _car = carFromAPI;
         });
-        _loadCarModel(_car!.modelId!);
+        _loadCarModel(_car?.modelId ?? '');
         // Assuming the response data is in the format you need
         return CustomerCar.fromJson(
             dataField); // Convert the data to a CustomerCar object
@@ -382,73 +384,123 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
           Order order = snapshot.data!;
 
           print(order.id);
+
           return Scaffold(
-              bottomNavigationBar: Container(
-                margin: EdgeInsets.symmetric(vertical: 4),
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: Colors.white,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Colors.green, // color for accept button
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        onPressed: () async {
-                          setState(() {
-                            // _isLoading = true;
-                          });
-                          bool decision = true;
-                          bool isSuccess = await AuthService()
-                              .acceptOrder(order.id, decision);
+              bottomNavigationBar: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  order.status == 'WAITING'
+                      ? Container(
+                          margin: EdgeInsets.symmetric(vertical: 4),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          color: Colors.white,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  onPressed: () async {
+                                    setState(() {
+                                      // _isLoading = true;
+                                    });
+                                    bool decision = true;
+                                    bool isSuccess = await AuthService()
+                                        .acceptOrder(order.id, decision);
+                                    AuthService().sendNotification(
+                                        deviceId:
+                                            'eW2_hO5k8iFCpdzKBwt6b0:APA91bGNee9KwsiJVzMCxuPvsKlq2sd41O3rBjP8rpoeCnFk3WgS20ewmDujrOmEkg09TFu7wjmVAen4e5YEkJyYA7C9AB7dlAl_t-c_blbKsNs5n1xuzpTT0-5J2Ur1NtL-ouMc3s2C',
+                                        isAndroidDevice: true,
+                                        title: 'Khách hàng',
+                                        body:
+                                            'Khách hàng đã chấp nhận đơn hàng. Hãy điều phối nhân sự');
+                                    if (isSuccess) {
+                                      setState(() {
+                                        // _isLoading = false;
+                                      });
+                                      // widget.updateTabCallback!(1);
 
-                          if (isSuccess) {
-                            setState(() {
-                              // _isLoading = false;
-                            });
-                            // widget.updateTabCallback!(1);
-
-                            Navigator.pop(context,
-                                'reload'); // This pops the `BookingDetailsBody` screen.
-                          }
-                          // widget.updateTabCallback!(1);
-                        },
-                        child: Text(
-                          "Đồng ý",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                        width:
-                            2), // Optional: you can use this for a small gap between the buttons
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Colors.red, // color for cancel button
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                                      Navigator.pop(context,
+                                          'reload'); // This pops the `BookingDetailsBody` screen.
+                                    }
+                                    // widget.updateTabCallback!(1);
+                                  },
+                                  child: Text(
+                                    "Đồng ý",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 2),
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  onPressed: () async {
+                                    bool decision = false;
+                                    await AuthService()
+                                        .acceptOrder(order.id, decision);
+                                  },
+                                  child: Text(
+                                    "Hủy",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        onPressed: () async {
-                          bool decision = false;
-                          await AuthService().acceptOrder(order.id, decision);
-                        },
-                        child: Text(
-                          "Hủy",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                        )
+                      : SizedBox.shrink(),
+                  order.status == 'COMPLETED'
+                      ? InkWell(
+                          onTap: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ReportScreen(
+                                  orderId: widget.orderId,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            color: Colors.white,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              color: FrontendConfigs.kBackgrColor,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/icons/danger.png',
+                                    height: 20,
+                                    width: 20,
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  CustomText(text: 'Báo cáo sự cố')
+                                ],
+                              ),
+                            ),
+                          ),
+                        )
+                      : SizedBox.shrink(),
+                ],
               ),
               body: SingleChildScrollView(
                 child: Column(
@@ -603,26 +655,18 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildSectionTitle("Thông tin đơn hàng"),
-                          _buildInfoRow(
-                            "Trạng thái",
-                            Row(
-                              children: [
-                                // Add some spacing if needed
-                                Flexible(
-                                  child: BookingStatus(
-                                    status: order.status,
-                                    fontSize: 14,
-                                  ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildSectionTitle('Đơn hàng'),
+                              Flexible(
+                                child: BookingStatus(
+                                  status: order.status,
+                                  fontSize: 14,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          _buildInfoRow(
-                              "Loại dịch vụ",
-                              Text(order.rescueType ?? '',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold))),
                           FutureBuilder<String>(
                             future: getPlaceDetails(order.departure ?? ''),
                             builder: (context, addressSnapshot) {
@@ -636,20 +680,34 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                               } else {
                                 String departureAddress =
                                     addressSnapshot.data ?? '';
-                                return _buildInfoRow(
-                                  "Điểm đi",
-                                  Flexible(
-                                    child: Text(
-                                      departureAddress,
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12.0),
+                                  child: RideSelectionWidget(
+                                    icon: 'assets/svg/pickup_icon.svg',
+                                    title:
+                                        departureAddress, // Use addresses parameter
+                                    body: departureAddress,
+                                    onPressed: () {},
                                   ),
                                 );
                               }
                             },
+                          ),
+                          _buildInfoRow(
+                            "Loại dịch vụ",
+                            Text(
+                              order.rescueType! == "Towing"
+                                  ? "Keo xe cứu hộ"
+                                  : (order.rescueType! == "Fixing"
+                                      ? "Sửa chữa tại chỗ"
+                                      : order.rescueType!),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: FrontendConfigs.kAuthColor,
+                              ),
+                            ),
                           ),
                           if (order.rescueType == "Towing")
                             FutureBuilder<String>(
@@ -683,7 +741,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                             ),
                           _buildInfoRow(
                               "Ghi chú",
-                              Text(order.customerNote ?? '',
+                              Text(order.customerNote ?? 'Không có',
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold))),
                         ],
@@ -719,7 +777,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                             _buildSectionTitle("Ghi chú của kĩ thuật viên"),
                           if (widget.techId != '' && widget.techId != null)
                             _buildInfoRow(
-                                "Ghi chú",
+                                "Nội dung ghi chú",
                                 Text(order.staffNote!,
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold))),
@@ -740,7 +798,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                           _buildSectionTitle("Thời gian"),
                           if (order.status != "ASSIGNED" &&
                               order.startTime != null)
-                            _buildInfoRow(
+                            _buildItemRow(
                               "Bắt đầu",
                               Text(
                                 DateFormat('dd-MM-yyyy | HH:mm').format(order
@@ -752,7 +810,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                             ),
                           if (order.status != "ASSIGNED" &&
                               order.endTime != null)
-                            _buildInfoRow(
+                            _buildItemRow(
                               "Kết thúc ",
                               Text(
                                 DateFormat('dd-MM-yyyy | HH:mm').format(order
@@ -762,7 +820,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),
-                          _buildInfoRow(
+                          _buildItemRow(
                             "Được tạo lúc",
                             Text(
                               DateFormat('dd-MM-yyyy | HH:mm').format(order

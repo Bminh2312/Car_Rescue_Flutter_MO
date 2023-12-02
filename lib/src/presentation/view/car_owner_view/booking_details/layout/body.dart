@@ -6,8 +6,10 @@ import 'package:CarRescue/src/models/car_model.dart';
 import 'package:CarRescue/src/models/customer_car.dart';
 import 'package:CarRescue/src/presentation/elements/app_button.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/customer_car_info.dart';
+import 'package:CarRescue/src/presentation/view/car_owner_view/layout/selection_location_widget.dart';
 import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
+import 'package:dotted_line/dotted_line.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/booking.dart';
@@ -520,61 +522,92 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionTitle('Đơn hàng'),
-                      _buildInfoRow(
-                          "Trạng thái",
-                          BookingStatus(
-                            status: _currentBooking?.status ?? '',
-                            fontSize: 14,
-                          )),
-                      _buildInfoRow(
-                        "Điểm đi",
-                        Container(
-                          width: 190,
-                          child: Text(
-                            ' ${widget.subAddressesDepart[widget.booking.id]}',
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 3,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildSectionTitle('Đơn hàng'),
+                          Flexible(
+                            child: BookingStatus(
+                              status: widget.booking.status,
+                              fontSize: 14,
                             ),
-                            textAlign:
-                                TextAlign.right, // Align text to the right
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(
+                            height: 8,
+                          ),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 12.0),
+                            child: RideSelectionWidget(
+                              icon: 'assets/svg/pickup_icon.svg',
+                              title:
+                                  widget.addressesDepart[widget.booking.id] ??
+                                      '', // Use addresses parameter
+                              body: widget
+                                      .subAddressesDepart[widget.booking.id] ??
+                                  '',
+                              onPressed: () {},
+                            ),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.only(left: 31),
+                            child: DottedLine(
+                              direction: Axis.vertical,
+                              lineLength: 30,
+                              lineThickness: 1.0,
+                              dashLength: 4.0,
+                              dashColor: Colors.black,
+                              dashRadius: 2.0,
+                              dashGapLength: 4.0,
+                              dashGapRadius: 0.0,
+                            ),
+                          ),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 12.0),
+                            child: RideSelectionWidget(
+                              icon: 'assets/svg/location_icon.svg',
+                              title: widget.addressesDesti[widget.booking.id] ??
+                                  '',
+                              body:
+                                  widget.subAddressesDesti[widget.booking.id] ??
+                                      '',
+                              onPressed: () {},
+                            ),
+                          ),
+                        ],
+                      ),
+                      _buildInfoRow(
+                        "Loại dịch vụ",
+                        Text(
+                          widget.booking.rescueType == "Towing"
+                              ? "Kéo xe cứu hộ"
+                              : (widget.booking.rescueType == "Fixing"
+                                  ? "Sửa chữa tại chỗ"
+                                  : widget.booking.rescueType),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: FrontendConfigs.kAuthColor,
                           ),
                         ),
                       ),
                       _buildInfoRow(
-                        "Điểm đến",
-                        Container(
-                          width: 190,
-                          child: Text(
-                            ' ${widget.subAddressesDesti[widget.booking.id]}',
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 3,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                            textAlign:
-                                TextAlign.right, // Align text to the right
-                          ),
-                        ),
-                      ),
-                      _buildInfoRow(
-                          "Loại dịch vụ",
-                          Text(widget.booking.rescueType,
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 15))),
-                      _buildInfoRow(
-                          "Ghi chú",
+                          "Ghi chú khách hàng",
                           Container(
                             width: 250,
                             child: Text(
                               "${widget.booking.customerNote}",
-                              textAlign: TextAlign.end,
+
                               style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 15),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: FrontendConfigs.kAuthColor),
                               maxLines:
                                   4, // Set the maximum number of lines to 2
                               overflow: TextOverflow.ellipsis,
@@ -652,10 +685,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     children: [
                       SizedBox(height: 8.0),
                       _buildSectionTitle("Ghi chú của nhân viên"),
-                      _buildNoteRow("", _formKey),
+                      _buildNoteRow('Nhập nội dung ghi chú', _formKey),
                       _buildInfoRow(
                           "Nội dung",
-                          Text('${_currentBooking!.staffNote ?? ''}',
+                          Text('${_currentBooking!.staffNote ?? 'Không có'}',
                               style: TextStyle(fontWeight: FontWeight.bold))),
                       SizedBox(height: 8.0),
                     ],
@@ -670,7 +703,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     children: [
                       _buildSectionTitle('Thời gian'),
                       widget.booking.startTime != null
-                          ? _buildInfoRow(
+                          ? _buildItemRow(
                               "Bắt đầu",
                               Text(
                                 DateFormat('dd-MM-yyyy | HH:mm').format(widget
@@ -683,7 +716,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           : Container(),
                       // Empty container when startTime is null
                       widget.booking.endTime != null
-                          ? _buildInfoRow(
+                          ? _buildItemRow(
                               "Kết thúc ",
                               Text(
                                 DateFormat('dd-MM-yyyy | HH:mm').format(
@@ -694,7 +727,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                               ),
                             )
                           : Container(),
-                      _buildInfoRow(
+                      _buildItemRow(
                         "Được tạo lúc",
                         Text(
                           DateFormat('dd-MM-yyyy | HH:mm').format(widget
@@ -739,7 +772,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 mainAxisSize: MainAxisSize
                     .min, // Quan trọng để đảm bảo Column không chiếm toàn bộ không gian
                 children: [
-                  
                   if (widget.booking.status == 'ASSIGNED')
                     Container(
                       width: double.infinity,
@@ -1268,7 +1300,14 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     );
   }
 
-  Widget _buildInfoRow(
+  Widget _buildInfoRow(String title, Widget value) {
+    return ListTile(
+      title: Text(title),
+      subtitle: value,
+    );
+  }
+
+  Widget _buildItemRow(
     String label,
     Widget value,
   ) {
@@ -1298,29 +1337,35 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
   Widget _buildNoteRow(String label, GlobalKey key) {
     return Form(
-        key: key,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Flexible(
-                child: TextFormField(
+      key: key,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Flexible(
+            child: TextFormField(
               controller: techNoteController,
               decoration: InputDecoration(
-                labelText: label,
                 hintText: 'Nhập nội dung ghi chú',
-                border: OutlineInputBorder(), // Add border to the input field
+                border: OutlineInputBorder(),
               ),
               maxLines: 3,
+              onTap: () {
+                // Clear the hint text when the user taps on the text field
+                setState(() {
+                  techNoteController.text = '';
+                });
+              },
               validator: (value) {
                 if (value!.isEmpty) {
                   return 'Hãy ghi chú';
                 }
                 return null;
               },
-            )),
-            SizedBox(width: 8.0), // Add spacing between label and value
-          ],
-        ));
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

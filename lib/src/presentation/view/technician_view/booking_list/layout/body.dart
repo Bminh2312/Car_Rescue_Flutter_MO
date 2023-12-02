@@ -170,7 +170,7 @@ class _BookingListBodyState extends State<BookingListBody> {
 
       final apiFeedbacks =
           await authService.fetchTechFeedbackRatings(widget.userId);
-          
+
       assignedBookingsFromAPI.sort((a, b) {
         if (a.createdAt == null) return 1;
         if (b.createdAt == null) return -1;
@@ -188,7 +188,9 @@ class _BookingListBodyState extends State<BookingListBody> {
         assignedBookings = assignedBookingsFromAPI;
         isDataLoaded = true;
       });
-      if (assignedBookings.isEmpty) {}
+      if (assignedBookings.isEmpty) {
+        isAssiginedEmpty = true;
+      }
     } catch (e) {
       // Handle any exceptions that occur during the API request
       print('Error loading bookings: $e');
@@ -311,8 +313,16 @@ class _BookingListBodyState extends State<BookingListBody> {
                         : isAssiginedEmpty
                             ? EmptyState()
                             : _buildBookingListView(assignedBookings),
-                    _buildBookingListView(completedBookings),
-                    _buildBookingListView(canceledBookings),
+                    !isDataLoaded
+                        ? LoadingState()
+                        : isCompletedEmpty
+                            ? EmptyState()
+                            : _buildBookingListView(completedBookings),
+                    !isDataLoaded
+                        ? LoadingState()
+                        : isCanceledEmpty
+                            ? EmptyState()
+                            : _buildBookingListView(canceledBookings),
                   ],
                 ),
               ),
@@ -328,10 +338,9 @@ class _BookingListBodyState extends State<BookingListBody> {
       itemCount: bookings.length,
       itemBuilder: (context, index) {
         final booking = bookings[index];
-        final int quantity = booking.quantity ?? 0;
-        final int total = booking.total ?? 0;
+
         String formattedStartTime = DateFormat('dd/MM/yyyy | HH:mm')
-            .format(booking.createdAt ?? DateTime.now());
+            .format(booking.createdAt!.toUtc().add(Duration(hours: 14)));
 
         // Future<Customer?> _loadCustomerInfo(String customerId) async {
         //   Map<String, dynamic>? userProfile =
@@ -379,7 +388,17 @@ class _BookingListBodyState extends State<BookingListBody> {
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                     ),
-                    subtitle: Text(booking.rescueType),
+                    subtitle: Text(
+                      booking.rescueType == "Towing"
+                          ? "Keo xe cứu hộ"
+                          : (booking.rescueType == "Fixing"
+                              ? "Sửa chữa tại chỗ"
+                              : booking.rescueType),
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: FrontendConfigs.kAuthColor,
+                      ),
+                    ),
                     trailing: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -414,9 +433,6 @@ class _BookingListBodyState extends State<BookingListBody> {
                           )
                       ],
                     ), // Use the BookingStatusWidget here
-                  ),
-                  Divider(
-                    color: FrontendConfigs.kIconColor,
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
