@@ -41,6 +41,7 @@ class BookingListBody extends StatefulWidget {
 }
 
 class _BookingListBodyState extends State<BookingListBody> {
+  List<Booking> waitingBookings = [];
   List<Booking> inprogressBookings = [];
   List<Booking> assignedBookings = [];
   List<Booking> otherBookings = [];
@@ -52,10 +53,11 @@ class _BookingListBodyState extends State<BookingListBody> {
   bool isCompletedEmpty = false;
   bool isCanceledEmpty = false;
   bool isAssiginedEmpty = false;
+  bool isWaitingEmpty = false;
   @override
   void initState() {
     super.initState();
-    // separateBookings();
+    separateBookings();
     loadCompletedBookings();
     loadCanceledBookings();
     loadAssignedBookings();
@@ -230,34 +232,36 @@ class _BookingListBodyState extends State<BookingListBody> {
     }
   }
 
-  // void separateBookings() async {
-  //   try {
-  //     final List<Booking> data =
-  //         await AuthService().fetchBookings(widget.userId);
+  void separateBookings() async {
+    try {
+      final List<Booking> data =
+          await AuthService().fetchBookings(widget.userId);
 
-  //     // data.sort((a, b) {
-  //     //   if (a.createdAt == null && b.createdAt == null)
-  //     //     return 0; // Both are null, so they're considered equal
-  //     //   if (a.createdAt == null)
-  //     //     return 1; // a is null, so it should come after b
-  //     //   if (b.createdAt == null)
-  //     //     return -1; // b is null, so it should come after a
-  //     //   return b.createdAt!.compareTo(
-  //     //       a.createdAt!); // Both are non-null, proceed with the comparison
-  //     // });
-  //     // Sort by startTime
-  //     setState(() {
-  //       assignedBookings = data.where((booking) {
-  //         final status = booking.status.trim().toUpperCase();
-  //         return status == 'ASSIGNED';
-  //       }).toList();
-  //     });
-
-  //     print('ASSIGNED Bookings: $inprogressBookings');
-  //   } catch (e) {
-  //     print('Error: $e');
-  //   }
-  // }
+      // data.sort((a, b) {
+      //   if (a.createdAt == null && b.createdAt == null)
+      //     return 0; // Both are null, so they're considered equal
+      //   if (a.createdAt == null)
+      //     return 1; // a is null, so it should come after b
+      //   if (b.createdAt == null)
+      //     return -1; // b is null, so it should come after a
+      //   return b.createdAt!.compareTo(
+      //       a.createdAt!); // Both are non-null, proceed with the comparison
+      // });
+      // Sort by startTime
+      setState(() {
+        waitingBookings = data.where((booking) {
+          final status = booking.status.trim().toUpperCase();
+          return status == 'WAITING';
+        }).toList();
+      });
+      if (waitingBookings.isEmpty) {
+        // This seems like a naming error. You might want to change this to canceledBookings.
+        isWaitingEmpty = true;
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -274,6 +278,16 @@ class _BookingListBodyState extends State<BookingListBody> {
                     child: Center(
                       child: Text(
                         'Được giao',
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Tab(
+                    child: Center(
+                      child: Text(
+                        'Đang chờ',
                         style: TextStyle(
                           color: Colors.black,
                         ),
@@ -313,6 +327,11 @@ class _BookingListBodyState extends State<BookingListBody> {
                         : isAssiginedEmpty
                             ? EmptyState()
                             : _buildBookingListView(assignedBookings),
+                    !isDataLoaded
+                        ? LoadingState()
+                        : isWaitingEmpty
+                            ? EmptyState()
+                            : _buildBookingListView(waitingBookings),
                     !isDataLoaded
                         ? LoadingState()
                         : isCompletedEmpty

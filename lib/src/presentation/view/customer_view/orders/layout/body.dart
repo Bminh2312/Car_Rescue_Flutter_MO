@@ -17,6 +17,8 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class OrderList extends StatefulWidget {
   const OrderList({Key? key}) : super(key: key);
@@ -30,6 +32,7 @@ class _OrderListState extends State<OrderList> {
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
   FeedBackProvider feedBackProvider = FeedBackProvider();
   FeedbackCustomer? feedbackCustomer;
+
   Future<String> getPlaceDetails(String latLng) async {
     try {
       final locationProvider = LocationProvider();
@@ -41,6 +44,43 @@ class _OrderListState extends State<OrderList> {
       // Xử lý lỗi nếu có
       print("Lỗi khi lấy địa chỉ: $e");
       return "Không tìm thấy";
+    }
+  }
+
+  Future<Map<String, dynamic>?> fetchReport(String orderId) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'https://rescuecapstoneapi.azurewebsites.net/api/Report/GetByOrderID?id=$orderId'), // Replace with your actual API endpoint
+      );
+      if (response.statusCode == 200) {
+        print(response.statusCode);
+        return json.decode(response.body);
+      } else {
+        // Handle non-200 status code when fetching the report
+        if (response.body != null && response.body.isNotEmpty) {
+          // If the response has a body, try to decode it as JSON
+          Map<String, dynamic>? errorResponse = json.decode(response.body);
+          if (errorResponse != null && errorResponse.containsKey('status')) {
+            // Check if the response has the expected 'status' field
+            if (errorResponse['status'] == 'Fail') {
+              print('Report fetch failed: ${errorResponse['message']}');
+            } else {
+              print('Unexpected status: ${errorResponse['status']}');
+            }
+          } else {
+            // If the response does not have the expected structure, print the entire body
+            print('Unexpected response body: ${response.body}');
+          }
+        } else {
+          // If the response has no body, print the status code
+          print('Failed to fetch report. Status Code: ${response.statusCode}');
+        }
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching Report: $e');
+      return null;
     }
   }
 
@@ -146,10 +186,39 @@ class _OrderListState extends State<OrderList> {
                       // Display a message or widget when the list is empty
                       return Center(child: EmptyState());
                     }
+                    Future<bool> fetchAndCheckReport(String orderId) async {
+                      final report = await fetchReport(orderId);
+                      if (report != null && report['status'] == 'Success') {
+                        // Order has a failed status
+                        print(
+                            'Order $orderId has a failed status: ${report['message']}');
+                        return true;
+                      }
+                      return false;
+                    }
+
+                    Future<void> navigateToOrderDetail(
+                        BuildContext context, Order order) async {
+                      bool hasFailedStatus =
+                          await fetchAndCheckReport(order.id);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OrderDetail(
+                            orderId: order.id,
+                            techId: order.technicianId,
+                            hasFailedStatus: !hasFailedStatus,
+                          ),
+                        ),
+                      );
+                    }
+
                     return Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
                         children: orders.map((order) {
+                          fetchAndCheckReport(order.id);
                           String formattedStartTime =
                               DateFormat('dd/MM/yyyy | HH:mm')
                                   .format(order.createdAt ?? DateTime.now());
@@ -181,7 +250,55 @@ class _OrderListState extends State<OrderList> {
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black,
                                     ),
-                                    subtitle: Text(order.rescueType!),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          order.rescueType! == "Towing"
+                                              ? "Kéo xe cứu hộ"
+                                              : (order.rescueType! == "Fixing"
+                                                  ? "Sửa chữa tại chỗ"
+                                                  : order.rescueType!),
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            color: FrontendConfigs.kAuthColor,
+                                          ),
+                                        ),
+                                        FutureBuilder<bool>(
+                                          future: fetchAndCheckReport(order.id),
+                                          builder: (context, reportSnapshot) {
+                                            bool hasFailedStatus =
+                                                reportSnapshot.data ?? false;
+                                            print(hasFailedStatus);
+                                            return Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                SizedBox(
+                                                  height: 5,
+                                                ),
+                                                if (hasFailedStatus)
+                                                  Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.dangerous,
+                                                        color: Colors.red,
+                                                        size: 20.0,
+                                                      ),
+                                                      CustomText(
+                                                        text:
+                                                            'Đơn có báo cáo sự cố',
+                                                      ),
+                                                    ],
+                                                  ),
+                                                // Add other widgets as needed
+                                              ],
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
 
                                     trailing: Column(
                                       children: [
@@ -264,60 +381,6 @@ class _OrderListState extends State<OrderList> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      // Padding(
-                                      //   padding: const EdgeInsets.symmetric(
-                                      //       horizontal: 12, vertical: 2),
-                                      //   child: Row(
-                                      //     mainAxisAlignment:
-                                      //         MainAxisAlignment.spaceBetween,
-                                      //     children: [
-                                      //       Row(
-                                      //         children: [
-                                      //           SvgPicture.asset(
-                                      //               "assets/svg/location_icon.svg",
-                                      //               color: FrontendConfigs
-                                      //                   .kPrimaryColor),
-                                      //           const SizedBox(
-                                      //             width: 10,
-                                      //           ),
-                                      //           CustomText(
-                                      //             text: "6.5 km",
-                                      //             fontWeight: FontWeight.w600,
-                                      //           )
-                                      //         ],
-                                      //       ),
-                                      //       Row(
-                                      //         children: [
-                                      //           SvgPicture.asset(
-                                      //               "assets/svg/watch_icon.svg"),
-                                      //           const SizedBox(
-                                      //             width: 10,
-                                      //           ),
-                                      //           CustomText(
-                                      //             text: "15 mins",
-                                      //             fontWeight: FontWeight.w600,
-                                      //           )
-                                      //         ],
-                                      //       ),
-                                      //       Row(
-                                      //         children: [
-                                      //           SvgPicture.asset(
-                                      //             "assets/svg/wallet_icon.svg",
-                                      //             color: FrontendConfigs
-                                      //                 .kPrimaryColor,
-                                      //           ),
-                                      //           const SizedBox(
-                                      //             width: 10,
-                                      //           ),
-                                      //           CustomText(
-                                      //             text: "\$56.00",
-                                      //             fontWeight: FontWeight.w600,
-                                      //           )
-                                      //         ],
-                                      //       ),
-                                      //     ],
-                                      //   ),
-                                      // ),
                                       Divider(
                                         color: FrontendConfigs.kIconColor,
                                       ),
@@ -412,32 +475,19 @@ class _OrderListState extends State<OrderList> {
                                                   MaterialPageRoute(
                                                     builder: (context) =>
                                                         OrderDetail(
-                                                            orderId: order.id,
-                                                            techId: null),
+                                                      orderId: order.id,
+                                                      techId: null,
+                                                      hasFailedStatus: false,
+                                                    ),
                                                   ),
                                                 );
                                               } else if (order.technicianId ==
                                                   '') {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        OrderDetail(
-                                                            orderId: order.id,
-                                                            techId: ''),
-                                                  ),
-                                                );
+                                                navigateToOrderDetail(
+                                                    context, order);
                                               } else {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        OrderDetail(
-                                                            orderId: order.id,
-                                                            techId: order
-                                                                .technicianId),
-                                                  ),
-                                                );
+                                                navigateToOrderDetail(
+                                                    context, order);
                                               }
                                             },
                                             child: CustomText(

@@ -39,7 +39,12 @@ import 'package:slider_button/slider_button.dart';
 class OrderDetailBody extends StatefulWidget {
   final String orderId;
   final String? techId;
-  OrderDetailBody({Key? key, required this.orderId, required this.techId});
+  final bool hasFailedStatus;
+  OrderDetailBody(
+      {Key? key,
+      required this.orderId,
+      required this.techId,
+      required this.hasFailedStatus});
 
   @override
   State<OrderDetailBody> createState() => _OrderDetailBodyState();
@@ -464,7 +469,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                           ),
                         )
                       : SizedBox.shrink(),
-                  order.status == 'COMPLETED'
+                  order.status == 'COMPLETED' && widget.hasFailedStatus == true
                       ? InkWell(
                           onTap: () {
                             Navigator.pushReplacement(
@@ -481,24 +486,23 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                 horizontal: 16, vertical: 8),
                             color: Colors.white,
                             child: Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              color: FrontendConfigs.kBackgrColor,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/icons/danger.png',
-                                    height: 20,
-                                    width: 20,
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  CustomText(text: 'Báo cáo sự cố')
-                                ],
-                              ),
-                            ),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                color: FrontendConfigs.kBackgrColor,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/icons/danger.png',
+                                      height: 20,
+                                      width: 20,
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    CustomText(text: 'Báo cáo sự cố')
+                                  ],
+                                )),
                           ),
                         )
                       : SizedBox.shrink(),
@@ -744,8 +748,9 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                           _buildInfoRow(
                               "Ghi chú",
                               Text(order.customerNote ?? 'Không có',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold))),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: FrontendConfigs.kAuthColor))),
                         ],
                       ),
                     ),
@@ -865,12 +870,14 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                 "Người trả",
                                 Text('${customer.fullname}',
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold))),
+                                        fontWeight: FontWeight.bold,
+                                        color: FrontendConfigs.kAuthColor))),
                             _buildInfoRow(
                                 "Người nhận",
                                 Text('${technicianInfo?.fullname ?? ''}',
                                     style: TextStyle(
-                                        fontWeight: FontWeight.bold))),
+                                        fontWeight: FontWeight.bold,
+                                        color: FrontendConfigs.kAuthColor))),
                             SizedBox(height: 24.0),
                           ],
                         ),
@@ -1072,7 +1079,9 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                         '$name (Số lượng: $quantity) ',
                         Text(
                           '$formattedTotal',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: FrontendConfigs.kAuthColor),
                         ),
                       ),
                       if (type == "Towing")
