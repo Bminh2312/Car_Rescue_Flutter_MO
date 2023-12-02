@@ -1615,7 +1615,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         onSelected: (isSelected) {
                           updateSelectedServices(service, isSelected);
                         },
-                        isSelected: isSelected,
+                        isSelected: isSelected, rescueType: '',
                       );
                     },
                   );
