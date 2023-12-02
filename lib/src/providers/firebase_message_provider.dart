@@ -34,6 +34,8 @@ class FireBaseMessageProvider {
     }
   }
 
+  
+
   void handleMessage(RemoteMessage? message) {
     if (message == null) return;
     navigatorKey.currentState?.pushNamed("/notify");

@@ -236,7 +236,7 @@ class _BookingCompletedScreenState extends State<BookingCompletedScreen> {
                   Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => BottomNavBarView(
+                        builder: (context) => BottomNavBarTechView(
                             userId: widget.userId, accountId: widget.accountId),
                       ));
                 },

@@ -6,6 +6,8 @@ class Environment {
 
   static const String API_KEY_MAPS = "AIzaSyDOI-u7wGzGG27hUGCO3z7MR8MIVsvJ2jg";
 
+
+
   static const String API_KEY_PREDICTIONS =
       "AIzaSyBZmPE0cCErk-nZtza3mDsXwIKLhS2s8Jg";
 

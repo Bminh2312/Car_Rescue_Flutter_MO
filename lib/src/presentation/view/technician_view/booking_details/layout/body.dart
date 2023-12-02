@@ -537,9 +537,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => BottomNavBarView(
+                builder: (context) => BottomNavBarTechView(
                   accountId: technicianInfo?.accountId ?? '',
-                  userId: technicianInfo?.id?? '',
+                  userId: technicianInfo?.id ?? '',
                 ),
               ),
             );

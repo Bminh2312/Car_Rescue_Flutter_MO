@@ -2,8 +2,7 @@ import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/models/customerInfo.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
-import 'package:CarRescue/src/presentation/view/technician_view/bottom_nav_bar/bottom_nav_bar_view.dart';
-import 'package:CarRescue/src/presentation/view/technician_view/home/home_view.dart';
+import 'package:CarRescue/src/presentation/view/car_owner_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_list/widgets/selection_location_widget.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:dotted_line/dotted_line.dart';
@@ -236,7 +235,7 @@ class _BookingCompletedScreenState extends State<BookingCompletedScreen> {
                   Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => BottomNavBarView(
+                        builder: (context) => BottomNavBarCarView(
                             userId: widget.userId, accountId: widget.accountId),
                       ));
                 },
