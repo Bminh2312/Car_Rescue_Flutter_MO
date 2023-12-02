@@ -33,7 +33,7 @@ class LoginResult {
   });
 }
 
-final String apiKey = 'AIzaSyC9yT-tLqUpv_4YNg_C91_5Nzg6AW2OQmk';
+final String apiKey = 'AIzaSyCAdxREbd7ajm33jyILCLQKfHp4uF4QSi4';
 
 class AuthService {
   //TECHNICIAN API
@@ -599,7 +599,7 @@ class AuthService {
     if (latDeparture != null && longDeparture != null) {
       // Replace with your actual API key
       final String urlDeparture =
-          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=${apiKey}';
+          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=$apiKey';
 
       final responseDeparture = await http.get(Uri.parse(urlDeparture));
       if (responseDeparture.statusCode != 200) {
@@ -626,7 +626,7 @@ class AuthService {
     if (latDestination != null && longDestination != null) {
       // Replace with your actual API key
       final String urlDestination =
-          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=${apiKey}';
+          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=$apiKey';
 
       final responseDestination = await http.get(Uri.parse(urlDestination));
       if (responseDestination.statusCode != 200) {
@@ -734,7 +734,7 @@ class AuthService {
     }
 
     if (street != null && route != null && admin2 != null) {
-      return '$street $route, $admin2, ${admin1 ?? ''}'.trim();
+      return '$street $route,${locality ?? ''} $admin2, ${admin1 ?? ''}'.trim();
     } else if (street == null &&
         route == null &&
         neighborhood != null &&
@@ -881,8 +881,7 @@ class AuthService {
         // You might need a separate API or endpoint to handle the image upload.
       }),
     );
-    final List userImage = [frontImageUrl, backImageUrl, vehicleUrl];
-    print(userImage);
+    
     if (response.statusCode == 200) {
       print('Successfully created the car ${response.body}');
       return true; //
@@ -1211,7 +1210,7 @@ class AuthService {
         'https://rescuecapstoneapi.azurewebsites.net/api/Schedule/GetWeeklyShiftOfTechnician?id=$weekId&techID=$techId';
     try {
       final response = await http.post(Uri.parse(apiUrl));
-      
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
         final List<dynamic> shiftData = jsonData['data'];

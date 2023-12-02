@@ -8,18 +8,18 @@ class Service {
   late String createdAt;
   late String updatedAt;
   late String status;
-
-  Service({
-    required this.id,
-    required this.createdBy,
-    required this.name,
-    required this.description,
-    required this.price,
-    required this.type,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.status,
-  });
+  int quantity;
+  Service(
+      {required this.id,
+      required this.createdBy,
+      required this.name,
+      required this.description,
+      required this.price,
+      required this.type,
+      required this.createdAt,
+      required this.updatedAt,
+      required this.status,
+      this.quantity = 1});
 
   factory Service.fromJson(Map<String, dynamic> json) {
     return Service(

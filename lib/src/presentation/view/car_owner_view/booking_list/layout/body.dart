@@ -147,12 +147,7 @@ class _BookingListBodyState extends State<BookingListBody>
       for (Booking booking in assigningBookingsFromAPI) {
         vehicleTasks.add(_fetchVehicleForBooking(booking));
       }
-      for (int i = 0; i < assigningBookingsFromAPI.length; i++) {
-        final Map<String, dynamic> serviceData =
-            await fetchServiceData(assigningBookingsFromAPI[i].id);
-        assigningBookingsFromAPI[i].quantity = serviceData['quantity'];
-        assigningBookingsFromAPI[i].total = serviceData['total'];
-      }
+
       await Future.wait(vehicleTasks);
 
       setState(() {
@@ -256,8 +251,6 @@ class _BookingListBodyState extends State<BookingListBody>
         await authService.fetchVehicleInfo(booking.vehicleId ?? '');
     booking.vehicleInfo = vehicleInfoFromAPI;
   }
-
-  
 
   void fetchUserProfileData() async {
     try {
@@ -526,44 +519,6 @@ class _BookingListBodyState extends State<BookingListBody>
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 2),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Row(
-                                children: [
-                                  SvgPicture.asset(
-                                      "assets/svg/location_icon.svg",
-                                      color: FrontendConfigs.kIconColor),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  CustomText(
-                                      text: '$quantity km',
-                                      fontWeight: FontWeight.w600,
-                                      color: FrontendConfigs.kAuthColor)
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  SvgPicture.asset(
-                                    "assets/svg/wallet_icon.svg",
-                                    color: FrontendConfigs.kIconColor,
-                                  ),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  CustomText(
-                                      text: currencyFormat.format(total),
-                                      fontWeight: FontWeight.w600,
-                                      color: FrontendConfigs.kAuthColor)
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
                         Divider(
                           color: FrontendConfigs.kIconColor,
                         ),
@@ -665,8 +620,7 @@ class _BookingListBodyState extends State<BookingListBody>
         itemCount: bookings.length,
         itemBuilder: (context, index) {
           final booking = bookings[index];
-          final int quantity = booking.quantity ?? 0;
-          final int total = booking.total ?? 0;
+
           String formattedStartTime = DateFormat('dd/MM/yyyy | HH:mm')
               .format(booking.createdAt ?? DateTime.now());
 
@@ -747,50 +701,9 @@ class _BookingListBodyState extends State<BookingListBody>
                       ),
                       // Use the BookingStatusWidget here
                     ),
-                    Divider(
-                      color: FrontendConfigs.kIconColor,
-                    ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 2),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Row(
-                                children: [
-                                  SvgPicture.asset(
-                                      "assets/svg/location_icon.svg",
-                                      color: FrontendConfigs.kIconColor),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  CustomText(
-                                      text: '$quantity km',
-                                      fontWeight: FontWeight.w600,
-                                      color: FrontendConfigs.kAuthColor)
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  SvgPicture.asset(
-                                    "assets/svg/wallet_icon.svg",
-                                    color: FrontendConfigs.kIconColor,
-                                  ),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  CustomText(
-                                      text: currencyFormat.format(total),
-                                      fontWeight: FontWeight.w600,
-                                      color: FrontendConfigs.kAuthColor)
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
                         Divider(
                           color: FrontendConfigs.kIconColor,
                         ),

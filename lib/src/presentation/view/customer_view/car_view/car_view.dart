@@ -22,7 +22,10 @@ class CarListView extends StatefulWidget {
   _CarListViewState createState() => _CarListViewState();
 }
 
-enum SortingOption { byName,byStatus, defaultSort }
+
+enum SortingOption { byName, byStatus, defaultSort }
+
+
 
 class _CarListViewState extends State<CarListView> {
   List<CustomerCar> carData = [];
@@ -32,6 +35,7 @@ class _CarListViewState extends State<CarListView> {
   bool isAscending = true;
   String selectedStatus = 'ACTIVE';
   CarModel? carModel;
+
   @override
   void initState() {
     super.initState();
@@ -169,6 +173,10 @@ class _CarListViewState extends State<CarListView> {
     });
   }
 
+  List<CustomerCar> sortCarsByStatus(List<CustomerCar> cars, String status) {
+    return cars.where((car) => car.status == status).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     List<CustomerCar> filteredCars = searchCars(carData, searchQuery);
@@ -177,7 +185,11 @@ class _CarListViewState extends State<CarListView> {
     if (selectedSortingOption == SortingOption.byName) {
       filteredCars = sortCarsByName(filteredCars, isAscending);
     }
-    
+
+    if (selectedSortingOption == SortingOption.byStatus) {
+      filteredCars = sortCarsByStatus(filteredCars, selectedStatus);
+    }
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,

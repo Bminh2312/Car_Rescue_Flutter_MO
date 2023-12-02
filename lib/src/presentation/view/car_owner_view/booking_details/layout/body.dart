@@ -1,9 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/car_model.dart';
 import 'package:CarRescue/src/models/customer_car.dart';
+import 'package:CarRescue/src/presentation/elements/app_button.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/customer_car_info.dart';
+import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
+import 'package:CarRescue/src/providers/order_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/booking.dart';
@@ -68,12 +72,17 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   int desiredTabIndex = 0;
   List<String> _imageUrls = [];
   List<String> pickedImages = [];
+  List<String> _updateImage = [];
   Booking? _currentBooking;
   ServiceData? serviceData;
   List<Map<String, dynamic>> orderDetails = [];
   num totalQuantity = 0;
   num totalAmount = 0;
   int total = 0;
+  bool checkUpdate = false;
+  NotifyMessage notifyMessage = NotifyMessage();
+  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  TextEditingController techNoteController = TextEditingController();
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
 
   Future<void> _loadPayment(String orderId) async {
@@ -93,6 +102,44 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       // Handle any potential errors, such as network issues
       print('Error loading payment: $e');
       // Optionally, set some state to show an error message in the UI
+    }
+  }
+
+  void _addImageFromGallery() async {
+    final picker = ImagePicker();
+    final XFile? pickedFile =
+        await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      // Add the file path to your imageUrls list
+      setState(() {
+        pickedImages.add(pickedFile.path);
+      });
+    } else {
+      print('No image selected.');
+    }
+  }
+
+  Future<void> _loadImageOrders(String id) async {
+    final orderProvider = OrderProvider();
+    List<String> imgData = await orderProvider.getUrlImages(id);
+    print("Loaded: ${imgData.length}");
+    setState(() {
+      _imageUrls.clear();
+      _imageUrls = imgData;
+    });
+  }
+
+  void _addImageFromCamera() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      // Add the file path to your imageUrls list
+      setState(() {
+        pickedImages.add(pickedFile.path);
+      });
+    } else {
+      print('No image selected.');
     }
   }
 
@@ -183,6 +230,32 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     }
   }
 
+  Future<void> uploadImage() async {
+    final upload = FirBaseStorageProvider();
+
+    if (pickedImages != []) {
+      for (int index = 0; index < pickedImages.length; index++) {
+        print(pickedImages.length);
+        String? imageUrl =
+            await upload.uploadImageToFirebaseStorage(pickedImages[index]);
+        print(imageUrl);
+        if (imageUrl != null) {
+          setState(() {
+            _updateImage.add(imageUrl);
+          });
+          print('Image uploaded successfully. URL: $imageUrl');
+        } else {
+          print('Failed to upload image.');
+        }
+      }
+      setState(() {
+        pickedImages.clear();
+      });
+    } else {
+      print('No image selected.');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -194,6 +267,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     _loadImageUrls();
     getCarData(widget.booking.carId ?? '');
     _loadPayment(widget.booking.id);
+    _loadImageOrders(widget.booking.id);
   }
 
   Future<void> _loadImageUrls() async {
@@ -260,6 +334,34 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     }
   }
 
+  void showCancelOrderDialog(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              title: Text("Chọn ảnh"),
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.photo_library),
+                    onPressed: () {
+                      // Đặt hành động khi chọn ảnh từ thư viện ở đây
+                      _addImageFromGallery();
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.camera_alt),
+                    onPressed: () {
+                      // Đặt hành động khi chọn ảnh từ máy ảnh ở đây
+                      _addImageFromCamera();
+                    },
+                  ),
+                ],
+              ));
+        });
+  }
+
   void _openImageDialog(
       BuildContext context, int index, List<String> allImages) {
     showDialog(
@@ -289,6 +391,34 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         ),
       ),
     );
+  }
+
+  Future<void> updateOrder(
+    String orderId,
+    String staffNote,
+    List<String> imageUrls,
+  ) async {
+    Future<bool> checkUpdateFuture = Future.value(false);
+    print("UpdateOrder img: ${imageUrls.length}");
+    try {
+      final update = OrderProvider();
+      checkUpdateFuture =
+          update.updateOrderForTechnician(orderId, staffNote, imageUrls);
+      if (checkUpdateFuture == Future.value(true)) {
+        setState(() {
+          checkUpdate = true;
+        }); // Trả về true nếu cập nhật thành công
+      } else {
+        setState(() {
+          checkUpdate = false;
+        });
+      }
+    } catch (error) {
+      print('Lỗi khi cập nhật đơn hàng: $error');
+      setState(() {
+        checkUpdate = false;
+      }); // Trả về false nếu có lỗi
+    }
   }
 
   @override
@@ -398,15 +528,39 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                             fontSize: 14,
                           )),
                       _buildInfoRow(
-                          "Điểm đi",
-                          Text(' ${widget.addressesDepart[widget.booking.id]}',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 15))),
+                        "Điểm đi",
+                        Container(
+                          width: 190,
+                          child: Text(
+                            ' ${widget.subAddressesDepart[widget.booking.id]}',
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 3,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                            textAlign:
+                                TextAlign.right, // Align text to the right
+                          ),
+                        ),
+                      ),
                       _buildInfoRow(
-                          "Điểm đến",
-                          Text('${widget.addressesDesti[widget.booking.id]}',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 15))),
+                        "Điểm đến",
+                        Container(
+                          width: 190,
+                          child: Text(
+                            ' ${widget.subAddressesDesti[widget.booking.id]}',
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 3,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                            textAlign:
+                                TextAlign.right, // Align text to the right
+                          ),
+                        ),
+                      ),
                       _buildInfoRow(
                           "Loại dịch vụ",
                           Text(widget.booking.rescueType,
@@ -471,25 +625,42 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 ),
 
                 // Image
-                if (_imageUrls.isNotEmpty)
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      children: [
-                        _buildImageSection(_imageUrls),
-                      ],
-                      // _buildInfoRow(
-                      //     "Ghi chú NV",
-                      //     Text(widget.booking.staffNote ?? '',
-                      //         style: TextStyle(fontWeight: FontWeight.bold))),
-                    ),
+
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Column(
+                    children: [
+                      _buildImageSection(_imageUrls),
+                    ],
+                    // _buildInfoRow(
+                    //     "Ghi chú NV",
+                    //     Text(widget.booking.staffNote ?? '',
+                    //         style: TextStyle(fontWeight: FontWeight.bold))),
                   ),
+                ),
                 // _buildInfoRow("Lí do huỷ đơn", booking.cancellationReason),
 
                 // Timing
-
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 8.0),
+                      _buildSectionTitle("Ghi chú của nhân viên"),
+                      _buildNoteRow("", _formKey),
+                      _buildInfoRow(
+                          "Nội dung",
+                          Text('${_currentBooking!.staffNote ?? ''}',
+                              style: TextStyle(fontWeight: FontWeight.bold))),
+                      SizedBox(height: 8.0),
+                    ],
+                  ),
+                ),
                 Container(
                   margin: EdgeInsets.symmetric(vertical: 4),
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -568,6 +739,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 mainAxisSize: MainAxisSize
                     .min, // Quan trọng để đảm bảo Column không chiếm toàn bộ không gian
                 children: [
+                  
                   if (widget.booking.status == 'ASSIGNED')
                     Container(
                       width: double.infinity,
@@ -607,71 +779,121 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         ),
                         icon: SvgPicture.asset("assets/svg/cancel_icon.svg"),
                       ),
-                    )
-                  else if (widget.booking.status == 'ASSIGNING')
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Colors.green, // color for accept button
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
+                    ),
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        SizedBox(width: 24.0),
+                        AppButton(
                             onPressed: () async {
                               setState(() {
                                 _isLoading = true;
                               });
-                              bool decision = true;
-                              bool isSuccess = await authService.acceptOrder(
-                                  widget.booking.id, decision);
+                              if (_formKey.currentState!.validate() &&
+                                  pickedImages.isNotEmpty) {
+                                await uploadImage();
+                                await updateOrder(widget.booking.id,
+                                    techNoteController.text, _updateImage);
+                                // await _loadImageOrders(widget.booking.id);
+                                await _loadVehicleInfo(
+                                    widget.booking.vehicleId ?? '');
+                                // await _loadBooking(widget.booking.id);
 
-                              if (isSuccess) {
+                                await _loadImageOrders(widget.booking.id);
+                                Booking updatedBooking = await authService
+                                    .fetchBookingById(widget.booking.id);
+                                setState(() {
+                                  _currentBooking = updatedBooking;
+                                  techNoteController.clear();
+                                  _loadCustomerInfo(widget.booking.customerId);
+                                });
+                                if (_imageUrls.isNotEmpty) {
+                                } else {
+                                  print("Image empty");
+                                  setState(() {
+                                    _isLoading = false;
+                                  });
+                                }
+                              } else {
+                                print("Note or pickedImages empty");
+                                notifyMessage
+                                    .showToast("Cần có ảnh và ghi chú");
                                 setState(() {
                                   _isLoading = false;
                                 });
-                                widget.updateTabCallback!(1);
-
-                                Navigator.pop(context,
-                                    'reload'); // This pops the `BookingDetailsBody` screen.
                               }
-                              // widget.updateTabCallback!(1);
                             },
-                            child: Text(
-                              "Đồng ý",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                            width:
-                                2), // Optional: you can use this for a small gap between the buttons
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Colors.red, // color for cancel button
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            onPressed: () async {
-                              bool decision = false;
-                              await authService.acceptOrder(
-                                  widget.booking.id, decision);
-                            },
-                            child: Text(
-                              "Hủy",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
+                            btnLabel: checkUpdate
+                                ? "Đang gửi về hệ thống"
+                                : "Hoàn thiện đơn hàng"),
                       ],
                     ),
+                  ),
+
+                  // Row(
+                  //   children: [
+                  //     Expanded(
+                  //       child: ElevatedButton(
+                  //         style: ElevatedButton.styleFrom(
+                  //           backgroundColor:
+                  //               Colors.green, // color for accept button
+                  //           elevation: 0,
+                  //           shape: RoundedRectangleBorder(
+                  //             borderRadius: BorderRadius.circular(16),
+                  //           ),
+                  //         ),
+                  //         onPressed: () async {
+                  //           setState(() {
+                  //             _isLoading = true;
+                  //           });
+                  //           bool decision = true;
+                  //           bool isSuccess = await authService.acceptOrder(
+                  //               widget.booking.id, decision);
+
+                  //           if (isSuccess) {
+                  //             setState(() {
+                  //               _isLoading = false;
+                  //             });
+                  //             widget.updateTabCallback!(1);
+
+                  //             Navigator.pop(context,
+                  //                 'reload'); // This pops the `BookingDetailsBody` screen.
+                  //           }
+                  //           // widget.updateTabCallback!(1);
+                  //         },
+                  //         child: Text(
+                  //           "Đồng ý",
+                  //           style: TextStyle(color: Colors.white),
+                  //         ),
+                  //       ),
+                  //     ),
+                  //     SizedBox(
+                  //         width:
+                  //             2), // Optional: you can use this for a small gap between the buttons
+                  //     Expanded(
+                  //       child: ElevatedButton(
+                  //         style: ElevatedButton.styleFrom(
+                  //           backgroundColor:
+                  //               Colors.red, // color for cancel button
+                  //           elevation: 0,
+                  //           shape: RoundedRectangleBorder(
+                  //             borderRadius: BorderRadius.circular(16),
+                  //           ),
+                  //         ),
+                  //         onPressed: () async {
+                  //           bool decision = false;
+                  //           await authService.acceptOrder(
+                  //               widget.booking.id, decision);
+                  //         },
+                  //         child: Text(
+                  //           "Hủy",
+                  //           style: TextStyle(color: Colors.white),
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                   if (_currentBooking != null &&
                       _currentBooking?.status == 'INPROGRESS')
                     Container(
@@ -757,16 +979,16 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
   Widget _buildImageSection(List<String> imageUrls) {
     final allImages = [...imageUrls, ...pickedImages];
-
+    print("Tong so anh:  ${allImages.length}");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle("Hình ảnh"),
+        _buildSectionTitle('Hình ảnh hiện trường'),
         Container(
           height: 200.0,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: 5, // fixed to 5 slots for images
+            itemCount: 10, // fixed to 5 slots for images
             itemBuilder: (context, index) {
               // If there's an image at this index, show it
               if (index < allImages.length) {
@@ -805,6 +1027,27 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               }
 
               // Otherwise, show an add button
+              {
+                return Padding(
+                  padding: EdgeInsets.only(right: 16.0),
+                  child: InkWell(
+                    onTap: () {
+                      showCancelOrderDialog(context);
+                    },
+                    child: Container(
+                      width: 200.0,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: Center(
+                        child: Icon(Icons.add,
+                            size: 60.0, color: Colors.grey[400]),
+                      ),
+                    ),
+                  ),
+                );
+              }
             },
           ),
         ),
@@ -1051,5 +1294,39 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         ],
       ),
     );
+  }
+
+  Widget _buildNoteRow(String label, GlobalKey key) {
+    return Form(
+        key: key,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Flexible(
+                child: TextFormField(
+              controller: techNoteController,
+              decoration: InputDecoration(
+                labelText: label,
+                hintText: 'Nhập nội dung ghi chú',
+                border: OutlineInputBorder(), // Add border to the input field
+              ),
+              maxLines: 3,
+              validator: (value) {
+                if (value!.isEmpty) {
+                  return 'Hãy ghi chú';
+                }
+                return null;
+              },
+            )),
+            SizedBox(width: 8.0), // Add spacing between label and value
+          ],
+        ));
+  }
+
+  @override
+  void dispose() {
+    _imageUrls.clear();
+    techNoteController.dispose();
+    super.dispose();
   }
 }

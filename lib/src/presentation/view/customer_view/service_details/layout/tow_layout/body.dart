@@ -134,8 +134,7 @@ class _TowBodyState extends State<TowBody> {
     }
 
     setState(() {
-      totalPrice =  totalService*distance + total;
-      
+      totalPrice = totalService * distance + total;
     });
   }
 
@@ -756,7 +755,6 @@ class _TowBodyState extends State<TowBody> {
                       final service = snapshot.data![index];
                       final isSelected = selectedServiceCards.contains(service);
                       return ServiceCard(
-                        rescueType: 'Towing',
                         service: service,
                         onSelected: (isSelected) {
                           updateSelectedServices(service, isSelected);

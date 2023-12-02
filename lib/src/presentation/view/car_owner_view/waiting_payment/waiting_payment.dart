@@ -224,9 +224,9 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 Lottie.asset('assets/animations/waiting_payment.json',
-                    width: 300, height: 300, fit: BoxFit.fill),
+                    width: 250, height: 250, fit: BoxFit.fill),
                 SizedBox(
-                  height: 20,
+                  height: 10,
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -236,11 +236,8 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(
-                  height: 50,
-                ),
                 Container(
-                  height: MediaQuery.of(context).size.height * 0.3,
+                  height: 360,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     color: Colors.white,
@@ -277,6 +274,9 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                       // OrderItem(title: 'title', quantity: 1),
                       // OrderItem(title: 'title', quantity: 1),
                       // OrderItem(title: 'title', quantity: 1),
+                      // OrderItem(title: 'title', quantity: 1),
+                      // OrderItem(title: 'title', quantity: 1),
+
                       Spacer(),
                       Divider(
                         thickness: 2,
@@ -284,19 +284,21 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                       Row(
                         children: [
                           Expanded(
-                              child: CustomText(
-                            text: 'Tổng cộng',
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          )),
+                            child: CustomText(
+                              text: 'Tổng cộng',
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           Text(
                             NumberFormat.currency(
                               locale: 'vi_VN',
                               symbol: '₫',
                             ).format(_payment?.amount ?? 0),
-                            // Replace with your total amount calculation
                             style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                             textAlign: TextAlign.right,
                           ),
                         ],
@@ -325,7 +327,7 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                             ? 'Trả bằng tiền mặt'
                             : (_payment?.method == 'Banking')
                                 ? 'Trả bằng chuyển khoản'
-                                : 'ko cóa',
+                                : '',
                         style: TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold),
                       ),

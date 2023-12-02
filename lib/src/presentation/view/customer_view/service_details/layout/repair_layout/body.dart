@@ -507,39 +507,6 @@ class _RepairBodyState extends State<RepairBody> {
               const SizedBox(
                 height: 10,
               ),
-              // Column(
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: [
-              //     Text(
-              //       'Ghi chú', // Nhãn cho ô nhập liệu
-              //       style: TextStyle(
-              //         fontWeight: FontWeight.bold,
-              //         fontSize: 18.0,
-              //       ),
-              //     ),
-              //     SizedBox(height: 8.0), // Khoảng cách giữa nhãn và ô nhập liệu
-              //     TextFormField(
-              //       controller: customerNoteController,
-              //       maxLines: 3,
-              //       validator: (value) {
-              //         if (value!.isEmpty) {
-              //           return 'Hãy ghi chú';
-              //         }
-              //         return null;
-              //       },
-              //       decoration: InputDecoration(
-              //         hintText: 'Nhập ghi chú của bạn', // Gợi ý cho ô nhập liệu
-              //         border: OutlineInputBorder(
-              //           borderRadius: BorderRadius.circular(
-              //               8.0), // Định dạng bo tròn viền ô nhập liệu
-              //         ),
-              //       ),
-              //     ),
-              //   ],
-              // ),
-              // const SizedBox(
-              //   height: 10,
-              // ),
               CustomText(
                 text: 'Phương thức thanh toán',
                 fontSize: 18,
@@ -597,22 +564,6 @@ class _RepairBodyState extends State<RepairBody> {
                   mainAxisSize: MainAxisSize
                       .min, // Đặt cột để không chiếm quá nhiều không gian
                   children: [
-                    // Row(
-                    //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    //   children: [
-                    //     Text(
-                    //       'Tổng cộng (Tạm tính):',
-                    //       style: TextStyle(
-                    //           fontSize: 18, fontWeight: FontWeight.bold),
-                    //     ),
-                    //     Text(
-                    //       '${NumberFormat.currency(locale: 'vi_VN', symbol: '', decimalDigits: 0).format(totalPrice)}₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
-                    //       style: TextStyle(
-                    //           fontSize: 18, fontWeight: FontWeight.bold),
-                    //     ),
-                    //   ],
-                    // ),
-                     // Khoảng cách giữa tổng cộng tiền và nút
                     SizedBox(
                       width:
                           double.infinity, // Đặt chiều rộng bằng với Container

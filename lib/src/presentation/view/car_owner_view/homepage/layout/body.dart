@@ -1,5 +1,6 @@
 import 'package:CarRescue/src/models/current_week.dart';
 import 'package:CarRescue/src/models/feedback.dart';
+import 'package:CarRescue/src/models/payment.dart';
 import 'package:CarRescue/src/models/rescue_vehicle_owner.dart';
 import 'package:CarRescue/src/models/wallet.dart';
 import 'package:CarRescue/src/models/wallet_transaction.dart';
@@ -8,7 +9,7 @@ import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/car_view/widgets/add_car_view.dart';
-
+import 'package:CarRescue/src/presentation/view/car_owner_view/waiting_payment/waiting_payment.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/homepage/widgets/calendar/calendar_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/notification/notification_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/profile/profile_view.dart';
@@ -45,7 +46,13 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
   List<String> weeklyTasks = [
     "Thứ Hai: \n9:00 - 21:00",
   ];
-
+  Payment payments = Payment(
+      method: 'method',
+      id: 'id',
+      orderId: 'orderId',
+      createdAt: 'createdAt',
+      amount: 0,
+      status: 'status');
   DateTime? selectedDate;
   int completedBookings = 0;
   double averageRating = 4.7;
@@ -582,7 +589,35 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const NotificationView(),
+                      builder: (context) => WaitingForPaymentScreen(
+                        addressesDepart: {},
+                        addressesDesti: {},
+                        subAddressesDepart: {},
+                        subAddressesDesti: {},
+                        accountId: '',
+                        data: '',
+                        payment: payments,
+                        userId: '',
+                        booking: Booking(
+                            carId: 'carId',
+                            id: 'id',
+                            customerId: 'customerId',
+                            technicianId: 'technicianId',
+                            managerId: 'managerId',
+                            vehicleId: 'vehicleId',
+                            paymentId: 'paymentId',
+                            rescueType: 'rescueType',
+                            staffNote: 'staffNote',
+                            customerNote: 'customerNote',
+                            cancellationReason: 'cancellationReason',
+                            startTime: DateTime.now(),
+                            endTime: DateTime.now(),
+                            createdAt: DateTime.now(),
+                            status: 'status',
+                            departure: 'departure',
+                            destination: 'destination',
+                            area: 1),
+                      ),
                     ),
                   );
                 },

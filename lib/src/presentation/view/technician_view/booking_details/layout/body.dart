@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
+import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/select_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
@@ -59,12 +61,17 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   List<String> _imageUrls = [];
   List<String> pickedImages = [];
   List<String> _updateImage = [];
-  // num totalQuantity = 0;
-  // num totalAmount = 0;
+  Future<List<Service>>? availableServices;
   List<Map<String, dynamic>> orderDetails = [];
   bool checkUpdate = false;
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
   NotifyMessage notifyMessage = NotifyMessage();
+  List<Service> selectedServiceCards = [];
+  late List<String> selectedServices;
+  int totalPrice = 0;
+  int _quantity = 1;
+  int totalQuantity = 0;
+  int totalAmount = 0;
   @override
   void initState() {
     super.initState();
@@ -77,7 +84,21 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     _loadBooking(widget.booking.id);
     getCarData(widget.booking.carId ?? '');
     fetchServiceData(widget.booking.id);
+    selectedServices = [];
+    availableServices = loadService();
+
     // _imageUrls.clear();
+  }
+
+  Future<List<Service>> loadService() async {
+    final serviceProvider = ServiceProvider();
+    try {
+      return serviceProvider.getAllServicesFixing();
+    } catch (e) {
+      // Xử lý lỗi khi tải dịch vụ
+      print('Lỗi khi tải danh sách dịch vụ: $e');
+      return [];
+    }
   }
 
   Future<void> _loadBooking(String orderId) async {
@@ -91,6 +112,73 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       print('Error loading payment: $e');
     }
   }
+
+  Future<void> _updateService(
+      String orderDetailId, int quantity, String service) async {
+    final String apiUrl =
+        "https://rescuecapstoneapi.azurewebsites.net/api/Order/ManagerUpdateService"; // Replace with your endpoint URL
+
+    final response = await http.post(Uri.parse(apiUrl),
+        headers: {
+          "Content-Type": "application/json",
+          // Add other headers if needed, like authorization headers
+        },
+        body: json.encode({
+          'orderDetailId': orderDetailId,
+          'quantity': quantity,
+          'service': service
+        }));
+    final Map<String, dynamic> requestBody = {
+      'orderDetailId': orderDetailId,
+      'quantity': quantity,
+      'service': service
+    };
+    print(requestBody);
+    if (response.statusCode == 200) {
+      print('Successfully update the car ${response.body}');
+    } else {
+      print('Failed to update the car: ${response.body}');
+    }
+  }
+
+  Future<void> _addServices(String orderId, List<Service> services) async {
+    final String apiUrl =
+        "https://rescuecapstoneapi.azurewebsites.net/api/Order/ManagerAddService";
+
+    final List<Map<String, dynamic>> serviceData = services
+        .map((service) => {
+              'orderId': orderId,
+              'quantity': service.quantity,
+              'service': service.name,
+            })
+        .toList();
+
+    // Iterate through serviceData and make the API call for each service
+    for (var service in serviceData) {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          "Content-Type": "application/json",
+          // Add other headers if needed, like authorization headers
+        },
+        body: json.encode(service),
+      );
+      print('Request body for service update: ${json.encode(service)}');
+
+      if (response.statusCode == 200) {
+        print('Successfully add the service: ${response.body}');
+      } else {
+        print('Failed to add the service: ${response.body}');
+      }
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+// Example of calling _addServices with a list of services
+
+// Example of calling _addServices with a list of services
 
   Future<void> _loadPayment(String orderId) async {
     try {
@@ -173,6 +261,29 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     setState(() {
       _imageUrls.clear();
       _imageUrls = imgData;
+    });
+  }
+
+  void caculateTotal() {
+    int total = 0;
+    for (Service service in selectedServiceCards) {
+      total += service.price;
+    }
+
+    setState(() {
+      totalPrice = total;
+    });
+  }
+
+  void updateSelectedServices(Service service, bool isSelected) {
+    setState(() {
+      if (isSelected) {
+        selectedServiceCards.add(service);
+        caculateTotal();
+      } else {
+        selectedServiceCards.remove(service);
+        caculateTotal();
+      }
     });
   }
 
@@ -396,7 +507,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           checkUpdate = false;
         });
       }
-      ;
     } catch (error) {
       print('Lỗi khi cập nhật đơn hàng: $error');
       setState(() {
@@ -431,7 +541,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 ),
               ),
             );
-            
           } else {
             final orderProvider = OrderProvider();
             print("Id: ${widget.booking.id}");
@@ -667,129 +776,314 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     );
   }
 
+  // Widget _buildOrderItemSection() {
+  //   int totalQuantity = 0; // Initialize total quantity
+  //   int totalAmount = 0; // Initialize total amount
+  //   return Column(
+  //     children: [
+  //       // Column(
+  //       //   children: [
+  //       //     Row(
+  //       //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //       //       children: [
+  //       //         Row(
+  //       //           children: [
+  //       //             CustomText(
+  //       //               text: 'Phí dịch vụ',
+  //       //               fontSize: 16,
+  //       //             ),
+  //       //             SizedBox(
+  //       //               width: 7,
+  //       //             ),
+  //       //             Tooltip(
+  //       //               triggerMode: TooltipTriggerMode.tap,
+  //       //               message:
+  //       //                   'Phí dịch vụ mặc định được tính 300.000đ mỗi đơn hàng\n\nTổng cộng = Phí dịch vụ + (Đơn giá x Khoảng cách) ',
+  //       //               textStyle: TextStyle(color: Colors.white),
+  //       //               padding: EdgeInsets.all(8),
+  //       //               margin: EdgeInsets.all(5),
+  //       //               waitDuration: Duration(seconds: 1),
+  //       //               showDuration: Duration(seconds: 7),
+  //       //               child: Icon(Icons.info),
+  //       //             ),
+  //       //           ],
+  //       //         ),
+  //       //         CustomText(
+  //       //           text: '300.000đ',
+  //       //           fontWeight: FontWeight.bold,
+  //       //           fontSize: 14,
+  //       //         ),
+  //       //       ],
+  //       //     ),
+  //       //   ],
+  //       // ),
+  //       Column(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: orderDetails.map((orderDetail) {
+  //           return FutureBuilder<Map<String, dynamic>>(
+  //             // Key for FutureBuilder
+  //             future: fetchServiceNameAndQuantity(
+  //                 orderDetail['serviceId']), // Fetch service name and quantity
+  //             builder: (context, snapshot) {
+  //               if (snapshot.connectionState == ConnectionState.done) {
+  //                 final name = snapshot.data?['name'] ?? 'Name not available';
+  //                 final quantity = orderDetail['quantity'] ?? 0;
+  //                 final price = snapshot.data?['price'] ?? 0;
+  //                 int total = orderDetail['tOtal'] ??
+  //                     1.0; // Updated to 'total' instead of 'tOtal'
+  //                 final orderId = orderDetail['id'];
+  //                 final formatter =
+  //                     NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
+  //                 final formattedTotal = formatter.format(total);
+
+  //                 return Column(
+  //                   children: [
+  //                     _buildInfoRow(
+  //                       '$name (Số lượng: $quantity) ',
+  //                       Text(
+  //                         '$formattedTotal',
+  //                         style: TextStyle(fontWeight: FontWeight.bold),
+  //                       ),
+  //                       // Include quantity selection here
+  //                     ),
+  //                     Row(
+  //                       children: [
+  //                         IconButton(
+  //                           icon: Icon(Icons.remove),
+  //                           onPressed: () async {
+  //                             if (quantity > 1) {
+  //                               setState(() {
+  //                                 _updateService(
+  //                                   orderId,
+  //                                   quantity - 1,
+  //                                   name,
+  //                                 );
+  //                                 orderDetail['quantity'] = quantity - 1;
+
+  //                                 // Recalculate total
+  //                                 orderDetail['tOtal'] = (quantity - 1) * price;
+
+  //                                 // Trigger refresh by changing the key
+  //                               });
+
+  //                               // Introduce a small delay before calling _loadPayment
+  //                               await Future.delayed(
+  //                                   Duration(milliseconds: 100));
+
+  //                               // Now, call _loadPayment after a short delay
+  //                               await _loadPayment(widget.booking.id);
+  //                             }
+  //                           },
+  //                         ),
+  //                         SizedBox(
+  //                           width: 50,
+  //                           height: 32,
+  //                           child: TextFormField(
+  //                             readOnly: true,
+  //                             textAlign: TextAlign.center,
+  //                             decoration: InputDecoration(
+  //                               border: OutlineInputBorder(),
+  //                             ),
+  //                             controller: TextEditingController(
+  //                               text: quantity.toString(),
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         IconButton(
+  //                           icon: Icon(Icons.add),
+  //                           onPressed: () async {
+  //                             setState(() {
+  //                               _updateService(
+  //                                 orderId,
+  //                                 quantity + 1,
+  //                                 name,
+  //                               );
+  //                               orderDetail['quantity'] = quantity + 1;
+
+  //                               // Recalculate total
+  //                               orderDetail['tOtal'] = (quantity + 1) * price;
+
+  //                               // Trigger refresh by changing the key
+  //                             });
+
+  //                             // Introduce a small delay before calling _loadPayment
+  //                             await Future.delayed(Duration(milliseconds: 100));
+
+  //                             // Now, call _loadPayment after a short delay
+  //                             await _loadPayment(widget.booking.id);
+  //                           },
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ],
+  //                 );
+  //               } else if (snapshot.hasError) {
+  //                 return Text('Error fetching service name and quantity');
+  //               } else {
+  //                 return SizedBox.shrink(); // Show a loading indicator
+  //               }
+  //             },
+  //           );
+  //         }).toList(),
+  //       ),
+  //     ],
+  //   );
+  // }
   Widget _buildOrderItemSection() {
-    int totalQuantity = 0; // Initialize total quantity
-    int totalAmount = 0; // Initialize total amount
     return Column(
       children: [
-        // Column(
-        //   children: [
-        //     Row(
-        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //       children: [
-        //         Row(
-        //           children: [
-        //             CustomText(
-        //               text: 'Phí dịch vụ',
-        //               fontSize: 16,
-        //             ),
-        //             SizedBox(
-        //               width: 7,
-        //             ),
-        //             Tooltip(
-        //               triggerMode: TooltipTriggerMode.tap,
-        //               message:
-        //                   'Phí dịch vụ mặc định được tính 300.000đ mỗi đơn hàng\n\nTổng cộng = Phí dịch vụ + (Đơn giá x Khoảng cách) ',
-        //               textStyle: TextStyle(color: Colors.white),
-        //               padding: EdgeInsets.all(8),
-        //               margin: EdgeInsets.all(5),
-        //               waitDuration: Duration(seconds: 1),
-        //               showDuration: Duration(seconds: 7),
-        //               child: Icon(Icons.info),
-        //             ),
-        //           ],
-        //         ),
-        //         CustomText(
-        //           text: '300.000đ',
-        //           fontWeight: FontWeight.bold,
-        //           fontSize: 14,
-        //         ),
-        //       ],
-        //     ),
-        //   ],
-        // ),
+        // Uncomment and modify this section if needed
+        // _buildFeeSection(),
+
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: orderDetails.map((orderDetail) {
-            return FutureBuilder<Map<String, dynamic>>(
-              future: fetchServiceNameAndQuantity(
-                  orderDetail['serviceId']), // Fetch service name and quantity
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  final name = snapshot.data?['name'] ?? 'Name not available';
-                  final quantity = orderDetail['quantity'] ?? 0;
-                  final price = snapshot.data?['price'] ?? 0;
-                  final total = orderDetail['tOtal'] ?? 0.0;
-                  // Accumulate the total quantity and total amount
-                  // totalQuantity = quantity as int;
-                  // totalAmount = total as int;
-                  totalQuantity += quantity as int;
-                  totalAmount += total as int;
-
-                  final formatter =
-                      NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
-                  final formattedTotal = formatter.format(total);
-
-                  return Column(
-                    children: [
-                      _buildInfoRow(
-                        '$name (Số lượng: $quantity) ',
-                        Text(
-                          '$formattedTotal',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      // _buildInfoRow(
-                      //   'Khoảng cách',
-                      //   Text(
-                      //     '$totalQuantity km',
-                      //     style: TextStyle(fontWeight: FontWeight.bold),
-                      //   ),
-                      // ),
-                      // Row(
-                      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //   children: [
-                      //     _buildPaymentMethod('Tổng cộng', ''),
-                      //     Text(currencyFormat.format(totalAmount),
-                      //         style: TextStyle(
-                      //             fontWeight: FontWeight.bold, fontSize: 17)),
-                      //   ],
-                      // ),
-                      // Container(
-                      //     decoration: BoxDecoration(
-                      //         color: Color.fromARGB(97, 164, 164, 164),
-                      //         borderRadius: BorderRadius.circular(8)),
-                      //     child: Row(
-                      //       mainAxisAlignment: MainAxisAlignment.center,
-                      //       children: [
-                      //         _buildPaymentMethod(_payment?.method ?? '', ''),
-                      //       ],
-                      //     )),
-                    ],
-                  );
-                } else if (snapshot.hasError) {
-                  return Text('Error fetching service name and quantity');
-                } else {
-                  return CircularProgressIndicator(); // Show a loading indicator
-                }
-              },
-            );
+            return _buildOrderDetail(orderDetail);
           }).toList(),
         ),
-        // Row(
-        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //   children: [
-        //     CustomText(text: 'Tổng cộng', fontSize: 16),
-        //     CustomText(
-        //       text:
-        //           '${NumberFormat.currency(symbol: '₫', locale: 'vi_VN').format(totalAmount)}',
-        //       fontWeight: FontWeight.bold,
-        //       fontSize: 16,
-        //     ),
-        //   ],
-        // ),
       ],
     );
+  }
+
+  Widget _buildOrderDetail(Map<String, dynamic> orderDetail) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: fetchServiceNameAndQuantity(orderDetail['serviceId']),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.hasData && snapshot.data is Map<String, dynamic>) {
+            final name = snapshot.data?['name'] ?? 'Name not available';
+            final quantity = orderDetail['quantity'] ?? 0;
+            final price = snapshot.data?['price'] ?? 0;
+            int total = orderDetail['tOtal'] ?? 1;
+            final orderId = orderDetail['id'];
+            final formatter =
+                NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
+            final formattedTotal = formatter.format(total);
+
+            return Column(
+              children: [
+                _buildItemRow(
+                  '$name (Số lượng: $quantity) ',
+                  Text(
+                    '$formattedTotal',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.remove),
+                          onPressed: () async {
+                            if (quantity > 1) {
+                              _updateOrderDetails(
+                                  orderDetail, quantity - 1, price);
+                              await _delayedLoadPayment();
+                            }
+                          },
+                        ),
+                        SizedBox(
+                          width: 10, // Adjust the width for spacing
+                        ),
+                        SizedBox(
+                          width: 50,
+                          height: 32,
+                          child: TextFormField(
+                            readOnly: true,
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(),
+                            ),
+                            controller: TextEditingController(
+                              text: quantity.toString(),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 10, // Adjust the width for spacing
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.add),
+                          onPressed: () async {
+                            _updateOrderDetails(
+                                orderDetail, quantity + 1, price);
+                            await _delayedLoadPayment();
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            );
+          } else {
+            // Handle the case where the data is not of the expected type
+            return Text('Invalid data format');
+          }
+        } else if (snapshot.hasError) {
+          return Text('Error fetching service name and quantity');
+        } else {
+          return SizedBox.shrink(); // Show a loading indicator
+        }
+      },
+    );
+  }
+
+  Widget _buildInfoRow(String title, Widget value) {
+    return ListTile(
+      title: Text(title),
+      subtitle: value,
+    );
+  }
+
+  void _updateOrderDetails(
+      Map<String, dynamic> orderDetail, int newQuantity, int price) async {
+    try {
+      print('Before updating:');
+      print('orderDetail: $orderDetail');
+      print('orderDetail[\'tOtal\']: ${orderDetail['tOtal']}');
+      print('orderDetail[\'id\']: ${orderDetail['id']}');
+
+      // Fetch the name using the serviceId
+      final snapshot =
+          await fetchServiceNameAndQuantity(orderDetail['serviceId']);
+
+      if (snapshot != null && snapshot is Map<String, dynamic>) {
+        final name = snapshot['name'] ?? 'Name not available';
+
+        // Update the service with the fetched name
+        _updateService(orderDetail['id'], newQuantity, name);
+
+        orderDetail['quantity'] = newQuantity;
+
+        // Check if 'tOtal' is not null and is a valid number
+        if (orderDetail['tOtal'] != null && orderDetail['tOtal'] is num) {
+          orderDetail['tOtal'] = newQuantity * price;
+        } else {
+          // Handle the case where 'tOtal' is null or not a valid number
+          // You might want to set a default value or log an error.
+          orderDetail['tOtal'] = 0;
+        }
+
+        print('After updating:');
+        print('orderDetail: $orderDetail');
+        print('orderDetail[\'tOtal\']: ${orderDetail['tOtal']}');
+      } else {
+        // Handle the case where 'name' is not available in data
+        print('Name data not available');
+      }
+    } catch (e) {
+      // Print the exception for further debugging
+      print('Exception in _updateOrderDetails: $e');
+      // Handle the error as needed
+    }
+  }
+
+  Future<void> _delayedLoadPayment() async {
+    await Future.delayed(Duration(milliseconds: 100));
+    await _loadPayment(widget.booking.id);
   }
 
   Widget _buildSectionTitle(String title) {
@@ -800,24 +1094,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           fontWeight: FontWeight.bold,
           fontSize: 24,
         ));
-  }
-
-  Widget _buildInfoRow(String label, Widget value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 5.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Flexible(
-              child: Text(
-            label,
-            style: TextStyle(fontSize: 16),
-          )),
-          SizedBox(width: 8.0), // Add spacing between label and value
-          value
-        ],
-      ),
-    );
   }
 
   Widget _buildNoteRow(String label, GlobalKey key) {
@@ -892,13 +1168,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           phone: customerInfo?.phone ?? '',
                           avatar: customerInfo?.avatar ?? '',
                         ),
-                        if(customerInfo?.fullname != 'Khách Hàng Offline')
-                        CustomerCarInfoRow(
-                          manufacturer: _car?.manufacturer ?? 'Không có',
-                          type: _carModel?.model1 ?? 'Không có',
-                          licensePlate: _car?.licensePlate ?? 'Không có',
-                          image: _car?.image ?? 'Không có',
-                        ),
+                        if (customerInfo?.fullname != 'Khách Hàng Offline')
+                          CustomerCarInfoRow(
+                            manufacturer: _car?.manufacturer ?? 'Không có',
+                            type: _carModel?.model1 ?? 'Không có',
+                            licensePlate: _car?.licensePlate ?? 'Không có',
+                            image: _car?.image ?? 'Không có',
+                          ),
                       ],
                     ),
                   ),
@@ -911,35 +1187,60 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       children: [
                         _buildSectionTitle('Thông tin đơn hàng'),
                         _buildInfoRow(
-                            "Trạng thái",
-                            BookingStatus(
-                              status: widget.booking.status,
-                              fontSize: 14,
-                            )),
+                          "Trạng thái",
+                          Row(
+                            children: [
+                              // Add some spacing if needed
+                              Flexible(
+                                child: BookingStatus(
+                                  status: widget.booking.status,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         _buildInfoRow(
                             "Địa chỉ",
-                            Text('${widget.addressesDepart[widget.booking.id]}',
-                                style: TextStyle(fontWeight: FontWeight.bold))),
+                            Text(
+                                '${widget.subAddressesDesti[widget.booking.id]}',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: FrontendConfigs.kAuthColor,
+                                    fontSize: 15))),
                         if (widget.booking.rescueType == "Towing")
                           _buildInfoRow(
                               "Điểm đến",
                               Text(
                                   '${widget.addressesDesti[widget.booking.id]}',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold))),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: FrontendConfigs.kAuthColor,
+                                      fontSize: 15))),
                         _buildInfoRow(
                             "Dịch vụ",
                             Text(widget.booking.rescueType,
-                                style: TextStyle(fontWeight: FontWeight.bold))),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: FrontendConfigs.kAuthColor,
+                                    fontSize: 15))),
                         _buildInfoRow(
                             "Ghi chú",
                             Text(widget.booking.customerNote,
-                                style: TextStyle(fontWeight: FontWeight.bold))),
-                        _buildInfoRow(
-                            "Lí do hủy đơn",
-                            Text(
-                                widget.booking.cancellationReason ?? 'Không có',
-                                style: TextStyle(fontWeight: FontWeight.bold))),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: FrontendConfigs.kAuthColor,
+                                    fontSize: 15))),
+                        if (widget.booking.status == 'CANCELLED')
+                          _buildInfoRow(
+                              "Lí do hủy đơn",
+                              Text(
+                                  widget.booking.cancellationReason ??
+                                      'Không có',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: FrontendConfigs.kAuthColor,
+                                      fontSize: 15))),
                       ],
                     ),
                   ),
@@ -957,9 +1258,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           _buildImageSection(_imageUrls),
                         ],
                       ),
-
                     ),
-                  
+
                   // _buildImageSection(imageUrls!),
 
                   // Additional Details
@@ -977,8 +1277,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           _buildNoteRow("Ghi chú", _formKey),
                         _buildInfoRow(
                             "-",
-                            Text('${_currentBooking!.staffNote ?? ''}',
-                                style: TextStyle(fontWeight: FontWeight.bold))),
+                            Text('${_currentBooking?.staffNote ?? ''}',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: FrontendConfigs.kAuthColor,
+                                    fontSize: 15))),
                         Divider(thickness: 3),
                         SizedBox(height: 8.0),
                       ],
@@ -997,36 +1300,45 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         _buildSectionTitle("Thời gian"),
                         if (widget.booking.status != "ASSIGNED" &&
                             widget.booking.startTime != null)
-                          _buildInfoRow(
+                          _buildItemRow(
                             "Bắt đầu",
                             Text(
                               DateFormat('dd-MM-yyyy | HH:mm').format(widget
                                   .booking.startTime!
                                   .toUtc()
                                   .add(Duration(hours: 14))),
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: FrontendConfigs.kAuthColor,
+                                  fontSize: 15),
                             ),
                           ),
                         if (widget.booking.status != "ASSIGNED" &&
                             widget.booking.endTime != null)
-                          _buildInfoRow(
+                          _buildItemRow(
                             "Kết thúc ",
                             Text(
                               DateFormat('dd-MM-yyyy | HH:mm').format(widget
                                   .booking.endTime!
                                   .toUtc()
                                   .add(Duration(hours: 14))),
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: FrontendConfigs.kAuthColor,
+                                  fontSize: 15),
                             ),
                           ),
-                        _buildInfoRow(
+                        _buildItemRow(
                           "Được tạo lúc",
                           Text(
                             DateFormat('dd-MM-yyyy | HH:mm').format(widget
                                 .booking.createdAt!
                                 .toUtc()
                                 .add(Duration(hours: 14))),
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: FrontendConfigs.kAuthColor,
+                                fontSize: 15),
                           ),
                         ),
                       ],
@@ -1040,7 +1352,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionTitle("Đơn giá"),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildSectionTitle("Đơn giá"),
+                            _buildSectionTitle(""),
+                          ],
+                        ),
                         _buildOrderItemSection(),
                       ],
                     ),
@@ -1056,12 +1374,111 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         _buildInfoRow(
                             "Người trả",
                             Text('${customerInfo?.fullname ?? ''}',
-                                style: TextStyle(fontWeight: FontWeight.bold))),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: FrontendConfigs.kAuthColor,
+                                    fontSize: 15))),
                         _buildInfoRow(
                             "Người nhận",
                             Text('${technicianInfo?.fullname ?? ''}',
-                                style: TextStyle(fontWeight: FontWeight.bold))),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: FrontendConfigs.kAuthColor,
+                                    fontSize: 15))),
                       ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      List<Service> selectedServices = selectedServiceCards
+                          .where((service) =>
+                              selectedServiceCards.contains(service))
+                          .toList();
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ServiceSelectionScreen(
+                              selectedServices: selectedServices,
+                              booking: widget.booking,
+                              addressesDepart: widget.addressesDepart,
+                              subAddressesDepart: widget.subAddressesDepart,
+                              addressesDesti: widget.addressesDesti,
+                              subAddressesDesti: widget.subAddressesDesti,
+                            ),
+                          ));
+                    },
+                    child: Container(
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildSectionTitle("Dịch vụ"),
+                            ],
+                          ),
+                          buildServiceList(context),
+                          if (selectedServiceCards.isNotEmpty)
+                            SingleChildScrollView(
+                              child: Container(
+                                height: 300,
+                                child: ListView.builder(
+                                  itemCount: selectedServiceCards.length,
+                                  itemBuilder: (context, index) {
+                                    int quantity =
+                                        selectedServiceCards[index].quantity;
+
+                                    return Column(
+                                      children: [
+                                        Card(
+                                          child: Column(
+                                            children: [
+                                              ListTile(
+                                                title: Text(
+                                                    selectedServiceCards[index]
+                                                        .name),
+                                                subtitle: Text(
+                                                    'Giá: ${selectedServiceCards[index].price}₫'),
+                                                trailing: IconButton(
+                                                  icon: Icon(Icons.clear),
+                                                  onPressed: () {
+                                                    // Create a copy of the list and remove the selected service
+                                                    List<Service> updatedList =
+                                                        List.from(
+                                                            selectedServiceCards);
+                                                    updatedList.removeAt(index);
+
+                                                    // Update the state with the new list
+                                                    setState(() {
+                                                      selectedServiceCards =
+                                                          updatedList;
+                                                      _updateService(
+                                                        widget.booking.id,
+                                                        quantity,
+                                                        selectedServiceCards[
+                                                                index]
+                                                            .name,
+                                                      );
+                                                      _quantity = quantity;
+                                                    });
+                                                  },
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
 
@@ -1106,12 +1523,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                 setState(() {
                                   _isLoading = true;
                                 });
+                                await _addServices(
+                                    widget.booking.id, selectedServiceCards);
+                                await _loadBooking(widget.booking.id);
                                 if (_formKey.currentState!.validate() &&
                                     pickedImages.isNotEmpty) {
                                   await uploadImage();
 
-                                  await updateOrder(widget.booking.id,
-                                      techNoteController.text, _updateImage);
                                   // await _loadImageOrders(widget.booking.id);
                                   await _loadTechInfo(
                                       widget.booking.technicianId);
@@ -1147,6 +1565,131 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           );
   }
 
+  Widget buildServiceList(BuildContext context) {
+    return Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.add_box), // Biểu tượng dấu '+'
+              SizedBox(width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
+              Text(
+                'Chọn', // Văn bản bên cạnh biểu tượng
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16, // Kích thước văn bản
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget buildServiceSelection(BuildContext context) {
+    return Container(
+      height: double.infinity,
+      child: Column(
+        children: [
+          Expanded(
+            child: FutureBuilder<List<Service>>(
+              future: availableServices,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('Không có dữ liệu.'));
+                } else {
+                  return ListView.builder(
+                    itemCount: snapshot.data!.length,
+                    itemBuilder: (context, index) {
+                      final service = snapshot.data![index];
+                      final isSelected = selectedServiceCards.contains(service);
+                      return ServiceCard(
+                        service: service,
+                        onSelected: (isSelected) {
+                          updateSelectedServices(service, isSelected);
+                        },
+                        isSelected: isSelected,
+                      );
+                    },
+                  );
+                }
+              },
+            ),
+          ),
+          Container(
+            color: Colors.white,
+            padding: EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 10),
+            width: double.infinity,
+            child: Column(
+              mainAxisSize: MainAxisSize
+                  .min, // Đặt cột để không chiếm quá nhiều không gian
+              children: [
+                SizedBox(height: 20), // Khoảng cách giữa tổng cộng tiền và nút
+                SizedBox(
+                  width: double.infinity, // Đặt chiều rộng bằng với Container
+                  height: 50, // Đặt chiều cao cố định cho nút
+                  child: ElevatedButton(
+                    child: Text(
+                      'Tiếp tục',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: FrontendConfigs
+                          .kIconColor, // Đảm bảo rằng màu này được định nghĩa trong FrontendConfigs
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(8), // Góc bo tròn cho nút
+                      ),
+                    ),
+                    onPressed: () {
+                      print(selectedServiceCards.length);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemRow(
+    String label,
+    Widget value,
+  ) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Flexible(
+            child: Row(
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 16.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 8.0), // Add spacing between label and value
+          value
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _imageUrls.clear();
@@ -1154,3 +1697,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     super.dispose();
   }
 }
+
+
+// // Usage:
+
+// Column(
+//   crossAxisAlignment: CrossAxisAlignment.start,
+//   children: orderDetails.map((orderDetail) {
+//     return OrderDetailWidget(orderDetail: orderDetail);
+//   }).toList(),
+// ),
