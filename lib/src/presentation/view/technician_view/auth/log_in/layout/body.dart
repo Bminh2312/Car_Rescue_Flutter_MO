@@ -90,12 +90,15 @@ class _TechnicianLogInBodyState extends State<TechnicianLogInBody> {
 
                   if (result != null) {
                     // Successfully logged in, navigate to the next screen
+                    print(result.role);
                     box.write("role", result.role);
+                    box.write("userId", result.userId);
+                    box.write("accountId", result.accountId);
                     print(result.role);
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => BottomNavBarView(
+                        builder: (context) => BottomNavBarTechView(
                           accountId: result.accountId,
                           userId: result.userId,
                           

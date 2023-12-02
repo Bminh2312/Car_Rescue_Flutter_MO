@@ -2,7 +2,6 @@ import 'dart:convert' as convert;
 import 'dart:convert';
 import 'package:CarRescue/src/enviroment/env.dart';
 import 'package:CarRescue/src/models/order.dart';
-import 'package:CarRescue/src/models/service.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/models/order_booking.dart';
 

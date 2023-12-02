@@ -149,7 +149,7 @@ class _CarListViewState extends State<CarListView> {
             Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => BottomNavBarView(
+                  builder: (context) => BottomNavBarCarView(
                       userId: widget.userId, accountId: widget.accountId),
                 ));
           },

@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 
-class BottomNavBarView extends StatefulWidget {
-  const BottomNavBarView({
+class BottomNavBarCarView extends StatefulWidget {
+  const BottomNavBarCarView({
     Key? key,
     required this.userId,
     required this.accountId,
@@ -18,10 +18,10 @@ class BottomNavBarView extends StatefulWidget {
   final String accountId;
   final int initialIndex;
   @override
-  _BottomNavBarViewState createState() => _BottomNavBarViewState();
+  _BottomNavBarCarViewState createState() => _BottomNavBarCarViewState();
 }
 
-class _BottomNavBarViewState extends State<BottomNavBarView> {
+class _BottomNavBarCarViewState extends State<BottomNavBarCarView> {
   late PageController _pageController;
   int _currentIndex = 0;
 

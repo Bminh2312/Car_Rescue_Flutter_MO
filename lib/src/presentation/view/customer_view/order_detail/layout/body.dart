@@ -58,7 +58,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   Vehicle? vehicleInfo;
   Payment? _payment;
   late Future<Order> _orderFuture;
-  int total = 0;
+  int total = 300000;
   bool _isLoading = true;
   List<int> prices = [];
 
@@ -317,8 +317,10 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   }
 
   Future<void> _calculateTotal(String orderId) async {
+    total = 300000;
     final List<Service> services = await _loadServicesOfCustomer(orderId);
     for (var service in services) {
+      print("Price: ${service.price}");
       setState(() {
         total += service.price;
       });
