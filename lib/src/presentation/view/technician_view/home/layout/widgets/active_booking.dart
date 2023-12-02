@@ -160,8 +160,7 @@ class _ActiveBookingCardState extends State<ActiveBookingCard> {
                         children: [
                           // Pro Name
                           Text(
-                            customerInfo?.fullname ??
-                                '', // Use customerInfo.fullname or 'Tom' as a fallback
+                            customerInfo?.fullname ?? '',
                             style: TextStyle(
                               fontSize: 18.0,
                               fontWeight: FontWeight.bold,
@@ -188,10 +187,14 @@ class _ActiveBookingCardState extends State<ActiveBookingCard> {
                                 height: 20.0,
                               ),
                               SizedBox(width: 9.5),
-                              CustomText(
-                                text: '${addressesDepart[widget.booking.id]}',
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.bold,
+                              Container(
+                                width: 190,
+                                child: CustomText(
+                                  text:
+                                      '${subAddressesDepart[widget.booking.id]}',
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),

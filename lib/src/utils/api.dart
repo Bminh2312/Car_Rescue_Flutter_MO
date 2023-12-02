@@ -33,7 +33,7 @@ class LoginResult {
   });
 }
 
-final String apiKey = 'AIzaSyCAdxREbd7ajm33jyILCLQKfHp4uF4QSi4';
+final String apiKey1 = 'AIzaSyDOI-u7wGzGG27hUGCO3z7MR8MIVsvJ2jg';
 
 class AuthService {
   //TECHNICIAN API
@@ -599,7 +599,7 @@ class AuthService {
     if (latDeparture != null && longDeparture != null) {
       // Replace with your actual API key
       final String urlDeparture =
-          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=$apiKey';
+          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=${apiKey1}';
 
       final responseDeparture = await http.get(Uri.parse(urlDeparture));
       if (responseDeparture.statusCode != 200) {
@@ -614,10 +614,11 @@ class AuthService {
               formatStreetAndRoute(addressComponentsDeparture);
           String formattedSubAddressDeparture =
               formatSubAddress(addressComponentsDeparture);
-
+          var addressComponentsDestination1 =
+              jsonResponseDeparture['results'][0]['formatted_address'];
           // Update the response map with departure address and sub-address
           response['address'] = formattedAddressDeparture;
-          response['subAddress'] = formattedSubAddressDeparture;
+          response['subAddress'] = addressComponentsDestination1;
         }
       }
     }
@@ -626,8 +627,8 @@ class AuthService {
     if (latDestination != null && longDestination != null) {
       // Replace with your actual API key
       final String urlDestination =
-          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=$apiKey';
-
+          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=$apiKey1';
+      print(apiKey1);
       final responseDestination = await http.get(Uri.parse(urlDestination));
       if (responseDestination.statusCode != 200) {
         // Handle error or return default values
@@ -637,6 +638,9 @@ class AuthService {
             jsonResponseDestination['results'].isNotEmpty) {
           var addressComponentsDestination = jsonResponseDestination['results']
               [0]['address_components'] as List<dynamic>;
+          var addressComponentsDestination1 =
+              jsonResponseDestination['results'][0]['formatted_address'];
+          print('abczx: $addressComponentsDestination1');
           String formattedAddressDestination =
               formatStreetAndRoute(addressComponentsDestination);
           String formattedSubAddressDestination =
@@ -644,7 +648,7 @@ class AuthService {
 
           // Update the response map with destination address and sub-address
           response['destinationAddress'] = formattedAddressDestination;
-          response['destinationSubAddress'] = formattedSubAddressDestination;
+          response['destinationSubAddress'] = addressComponentsDestination1;
         }
       }
     }
@@ -881,7 +885,7 @@ class AuthService {
         // You might need a separate API or endpoint to handle the image upload.
       }),
     );
-    
+
     if (response.statusCode == 200) {
       print('Successfully created the car ${response.body}');
       return true; //
@@ -965,7 +969,7 @@ class AuthService {
 
   Future<bool> acceptOrder(String orderId, bool decision) async {
     final String apiUrl =
-        "https://rescuecapstoneapi.azurewebsites.net/api/Order/AcceptOrder?id=$orderId&decision=$decision";
+        "https://rescuecapstoneapi.azurewebsites.net/api/Order/AcceptOrderForCustomer?id=$orderId&decision=$decision";
 
     final response = await http.post(
       Uri.parse(apiUrl),
@@ -1404,6 +1408,42 @@ class AuthService {
     } catch (e) {
       print('Error fetching or parsing CarModel: $e');
       throw Exception('Error fetching or parsing CarModel: $e');
+    }
+  }
+
+  Future<void> sendNotification({
+    required String deviceId,
+    required bool isAndroidDevice,
+    required String title,
+    required String body,
+  }) async {
+    final url = Uri.parse(
+        'https://rescuecapstoneapi.azurewebsites.net/api/Notification/send');
+
+    final payload = {
+      "deviceId": deviceId,
+      "isAndroiodDevice": isAndroidDevice,
+      "title": title,
+      "body": body,
+    };
+    print(payload);
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(payload),
+      );
+      print(response.statusCode);
+      if (response.statusCode == 200) {
+        print('Notification sent successfully');
+      } else {
+        print(
+            'Failed to send notification. Status code: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error sending notification: $error');
     }
   }
 }
