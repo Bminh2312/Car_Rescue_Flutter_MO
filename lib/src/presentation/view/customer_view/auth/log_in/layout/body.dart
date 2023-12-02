@@ -65,6 +65,7 @@ class _LogInBodyState extends State<LogInBody> {
         box.write("refreshToken", loginResponse.refreshToken);
         box.write("accountId", loginResponse.accountId);
         box.write("customer", customer.toJson());
+        box.write("role", "Customer");
         setState(() {
           isLoading = false;
         });

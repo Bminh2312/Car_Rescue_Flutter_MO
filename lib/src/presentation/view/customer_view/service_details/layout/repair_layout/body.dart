@@ -2,18 +2,23 @@ import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/customer.dart';
 import 'package:CarRescue/src/models/customer_car.dart';
+import 'package:CarRescue/src/models/incident.dart';
 import 'package:CarRescue/src/models/order_booking.dart';
 import 'package:CarRescue/src/models/service.dart';
+import 'package:CarRescue/src/models/symptom.dart';
 import 'package:CarRescue/src/presentation/elements/app_button.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/home/layout/home_selection_widget.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/order_status/order_processing.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/symptom_selector.dart';
 import 'package:CarRescue/src/providers/car_customer_profile_provider.dart';
 import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
+import 'package:CarRescue/src/providers/incident_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
 import 'package:CarRescue/src/providers/service_provider.dart';
+import 'package:CarRescue/src/providers/symptom_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get_storage/get_storage.dart';
@@ -45,12 +50,14 @@ class _RepairBodyState extends State<RepairBody> {
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
   CarCustomerProvider carCustomerProvider = CarCustomerProvider();
   CustomerCar? _car;
+  Symptom? selectedSymptom;
   final List<Map<String, dynamic>> dropdownItems = [
     {"name": "Quận 1", "value": 1},
     {"name": "Quận 2", "value": 2},
     {"name": "Quận 3", "value": 3},
     // Thêm các quận khác nếu cần
   ];
+  List<Symptom> _symptoms = [];
   bool isImageLoading = false;
   Future<List<Service>>? availableServices;
   List<Service> selectedServiceCards = [];
@@ -76,6 +83,16 @@ class _RepairBodyState extends State<RepairBody> {
   @override
   void dispose() {
     super.dispose();
+  }
+
+  Future<List<Symptom>> loadSymptom() async {
+    final _symptomProvider = SymptomProvider();
+    try{
+      return _symptomProvider.getAllSymptoms();
+    }catch(e){
+      print(e);
+      return [];
+    }
   }
 
   Future<List<Service>> loadService() async {
@@ -119,7 +136,7 @@ class _RepairBodyState extends State<RepairBody> {
         print("Uploaded image URL: $newUrlImage");
         setState(() {
           urlImage = newUrlImage;
-          urlImages!.add(urlImage);
+          urlImages.add(urlImage);
         });
       } else {
         print("Image capture was unsuccessful.");
@@ -145,11 +162,9 @@ class _RepairBodyState extends State<RepairBody> {
   }
 
   void createOrder() async {
-    if (selectedServiceCards.length == 0) {
-      notify.showToast("Hãy chọn ít nhất 1 dịch vụ.");
-    } else if (selectedPaymentOption == '') {
-      notify.showToast("Hãy chọn loại thanh toán.");
-    } else if (_formKey.currentState!.validate()) {
+    if (selectedSymptom == null) {
+      notify.showToast("Hãy chọn ít nhất 1 trường hợp trên.");
+    } else{
       setState(() {
         isLoading = true; // Bắt đầu hiển thị vòng quay khi bắt đầu gửi yêu cầu
       });
@@ -164,24 +179,24 @@ class _RepairBodyState extends State<RepairBody> {
           selectedServiceCards.map((service) => service.name).toList();
 
       // Bước 2: Tạo đối tượng Order
-      OrderBookServiceFixing order = OrderBookServiceFixing(
+      Incident incident = Incident(
         carId: widget.carId,
         paymentMethod: selectedPaymentOption!,
-        customerNote: customerNoteController.text,
         departure: departure,
         destination: destination,
         rescueType: rescueType,
         customerId: customer.id,
         url: urlImages,
-        service: selectedServices,
         area: selectedDropdownItem['value'],
+        symptomId: selectedSymptom!.id, 
+        distance: null,
       );
 
       // Bước 3: Gọi phương thức createOrder từ ServiceProvider
-      final orderProvider = OrderProvider();
+      final incidentProvider = IncidentProvider();
       try {
         // Gửi đơn hàng lên máy chủ
-        final status = await orderProvider.createOrderFixing(order);
+        final status = await incidentProvider.createIncident(incident);
 
         // Xử lý khi đơn hàng được tạo thành công
         // Ví dụ: Chuyển người dùng đến màn hình khác hoặc hiển thị thông báo
@@ -216,6 +231,15 @@ class _RepairBodyState extends State<RepairBody> {
     }
   }
 
+  void onSymptomSelected(Symptom? symptom) {
+  setState(() {
+    selectedSymptom = symptom;
+    if (selectedSymptom != null) {
+      print('Selected Symptom ID: ${selectedSymptom!.id}');
+    }
+  });
+}
+
   String getImageAsset(String value) {
     switch (value) {
       case 'Chuyển khoản':
@@ -226,6 +250,8 @@ class _RepairBodyState extends State<RepairBody> {
         return 'assets/images/money.png'; // Default image
     }
   }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -434,7 +460,18 @@ class _RepairBodyState extends State<RepairBody> {
               const SizedBox(
                 height: 10,
               ),
-              buildServiceList(context),
+              CustomText(
+                text: 'Bạn đang bị gì:',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              Container(
+                height: MediaQuery.of(context).size.height * 0.15,
+                child: SymptomSelector(onSymptomSelected: onSymptomSelected)
+              ),
               SizedBox(height: 10),
               if (selectedServiceCards.isNotEmpty)
                 SingleChildScrollView(
@@ -470,39 +507,39 @@ class _RepairBodyState extends State<RepairBody> {
               const SizedBox(
                 height: 10,
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Ghi chú', // Nhãn cho ô nhập liệu
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18.0,
-                    ),
-                  ),
-                  SizedBox(height: 8.0), // Khoảng cách giữa nhãn và ô nhập liệu
-                  TextFormField(
-                    controller: customerNoteController,
-                    maxLines: 3,
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return 'Hãy ghi chú';
-                      }
-                      return null;
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Nhập ghi chú của bạn', // Gợi ý cho ô nhập liệu
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                            8.0), // Định dạng bo tròn viền ô nhập liệu
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(
-                height: 10,
-              ),
+              // Column(
+              //   crossAxisAlignment: CrossAxisAlignment.start,
+              //   children: [
+              //     Text(
+              //       'Ghi chú', // Nhãn cho ô nhập liệu
+              //       style: TextStyle(
+              //         fontWeight: FontWeight.bold,
+              //         fontSize: 18.0,
+              //       ),
+              //     ),
+              //     SizedBox(height: 8.0), // Khoảng cách giữa nhãn và ô nhập liệu
+              //     TextFormField(
+              //       controller: customerNoteController,
+              //       maxLines: 3,
+              //       validator: (value) {
+              //         if (value!.isEmpty) {
+              //           return 'Hãy ghi chú';
+              //         }
+              //         return null;
+              //       },
+              //       decoration: InputDecoration(
+              //         hintText: 'Nhập ghi chú của bạn', // Gợi ý cho ô nhập liệu
+              //         border: OutlineInputBorder(
+              //           borderRadius: BorderRadius.circular(
+              //               8.0), // Định dạng bo tròn viền ô nhập liệu
+              //         ),
+              //       ),
+              //     ),
+              //   ],
+              // ),
+              // const SizedBox(
+              //   height: 10,
+              // ),
               CustomText(
                 text: 'Phương thức thanh toán',
                 fontSize: 18,
@@ -560,23 +597,22 @@ class _RepairBodyState extends State<RepairBody> {
                   mainAxisSize: MainAxisSize
                       .min, // Đặt cột để không chiếm quá nhiều không gian
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Tổng cộng (Tạm tính):',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '${NumberFormat.currency(locale: 'vi_VN', symbol: '', decimalDigits: 0).format(totalPrice)}}₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                        height: 20), // Khoảng cách giữa tổng cộng tiền và nút
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //   children: [
+                    //     Text(
+                    //       'Tổng cộng (Tạm tính):',
+                    //       style: TextStyle(
+                    //           fontSize: 18, fontWeight: FontWeight.bold),
+                    //     ),
+                    //     Text(
+                    //       '${NumberFormat.currency(locale: 'vi_VN', symbol: '', decimalDigits: 0).format(totalPrice)}₫', // Số tiền tổng cộng, cần được tính toán hoặc lấy từ state
+                    //       style: TextStyle(
+                    //           fontSize: 18, fontWeight: FontWeight.bold),
+                    //     ),
+                    //   ],
+                    // ),
+                     // Khoảng cách giữa tổng cộng tiền và nút
                     SizedBox(
                       width:
                           double.infinity, // Đặt chiều rộng bằng với Container
@@ -609,48 +645,48 @@ class _RepairBodyState extends State<RepairBody> {
     );
   }
 
-  Widget buildServiceList(BuildContext context) {
-    return Container(
-      color: FrontendConfigs.kBackgrColor,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              "Dịch vụ ", // Title
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          InkWell(
-            onTap: () {
-              showModalBottomSheet(
-                context: context,
-                builder: (context) => buildServiceSelection(context),
-              );
-            },
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.add_box), // Biểu tượng dấu '+'
-                SizedBox(width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
-                Text(
-                  'Chọn', // Văn bản bên cạnh biểu tượng
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16, // Kích thước văn bản
-                  ),
-                ),
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
+  // Widget buildServiceList(BuildContext context) {
+  //   return Container(
+  //     color: FrontendConfigs.kBackgrColor,
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Padding(
+  //           padding: EdgeInsets.symmetric(vertical: 10),
+  //           child: Text(
+  //             "Dịch vụ ", // Title
+  //             style: TextStyle(
+  //               fontSize: 18,
+  //               fontWeight: FontWeight.bold,
+  //             ),
+  //           ),
+  //         ),
+  //         InkWell(
+  //           onTap: () {
+  //             showModalBottomSheet(
+  //               context: context,
+  //               builder: (context) => buildServiceSelection(context),
+  //             );
+  //           },
+  //           child: Row(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               Icon(Icons.add_box), // Biểu tượng dấu '+'
+  //               SizedBox(width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
+  //               Text(
+  //                 'Chọn', // Văn bản bên cạnh biểu tượng
+  //                 style: TextStyle(
+  //                   fontWeight: FontWeight.bold,
+  //                   fontSize: 16, // Kích thước văn bản
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         )
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget buildServiceSelection(BuildContext context) {
     return Container(

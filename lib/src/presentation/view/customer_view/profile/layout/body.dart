@@ -41,6 +41,7 @@ class _ProfileBodyState extends State<ProfileBody> {
     gmailProvider.handleSignOut();
     if (customer.id != '') {
       GetStorage().remove("customer");
+      GetStorage().remove("role");
     }
     Navigator.pushAndRemoveUntil(
       context,
