@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 
-class BottomNavBarView extends StatefulWidget {
-  const BottomNavBarView(
+class BottomNavBarTechView extends StatefulWidget {
+  const BottomNavBarTechView(
       {Key? key,
       required this.userId,
       required this.accountId,
@@ -17,10 +17,10 @@ class BottomNavBarView extends StatefulWidget {
   final String accountId;
   
   @override
-  _BottomNavBarViewState createState() => _BottomNavBarViewState();
+  _BottomNavBarTechViewState createState() => _BottomNavBarTechViewState();
 }
 
-class _BottomNavBarViewState extends State<BottomNavBarView> {
+class _BottomNavBarTechViewState extends State<BottomNavBarTechView> {
   int _currentIndex = 0;
 
   void onTabTapped(int index) {

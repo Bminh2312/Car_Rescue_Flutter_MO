@@ -724,7 +724,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => BottomNavBarView(
+                            builder: (context) => BottomNavBarCarView(
                                   userId: widget.userId,
                                   accountId: widget.accountId,
                                   initialIndex: 2,

@@ -6,6 +6,7 @@ import 'package:CarRescue/src/presentation/elements/app_button.dart';
 import 'package:CarRescue/src/presentation/elements/auth_field.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/bottom_nav_bar/bottom_nav_bar_view.dart';
+import 'package:get_storage/get_storage.dart';
 
 class CarOwnerLogInBody extends StatefulWidget {
   CarOwnerLogInBody({
@@ -20,6 +21,8 @@ class _CarOwnerLogInBodyState extends State<CarOwnerLogInBody> {
   final TextEditingController _emailController = TextEditingController();
 
   final TextEditingController _passwordController = TextEditingController();
+
+  final box = GetStorage(); 
   String? deviceToken;
   String errorMessage = '';
   void initState() {
@@ -91,11 +94,14 @@ class _CarOwnerLogInBodyState extends State<CarOwnerLogInBody> {
                       deviceToken ?? '');
 
                   if (result != null) {
-                    // Successfully logged in, navigate to the next screen
+                    box.write("role",result.role);
+                    box.write("userId",result.userId);
+                    box.write("accountId",result.accountId);
+                    print("User id: " + result.userId);
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => BottomNavBarView(
+                        builder: (context) => BottomNavBarCarView(
                           accountId: result.accountId,
                           userId: result.userId,
                         ),
