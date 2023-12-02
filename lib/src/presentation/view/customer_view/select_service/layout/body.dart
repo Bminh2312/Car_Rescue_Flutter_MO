@@ -3,20 +3,16 @@ import 'dart:async';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:CarRescue/src/presentation/elements/empty_state.dart';
 import 'package:CarRescue/src/presentation/elements/quick_access_buttons.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/car_view/car_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/order_detail/order_detail_view.dart';
-import 'package:CarRescue/src/presentation/view/customer_view/order_status/order_processing.dart';
-import 'package:CarRescue/src/presentation/view/customer_view/orders/orders_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_car/select_car_view.dart';
-import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/animated_indicator.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/popup_service_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/selection_location_widget%20copy.dart';
-import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/service_category.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/slider_banner.dart';
 import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/customer.dart';
@@ -26,6 +22,7 @@ import 'package:CarRescue/src/providers/order_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:CarRescue/src/providers/google_map_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ServiceBody extends StatefulWidget {
   const ServiceBody({super.key});
@@ -34,14 +31,13 @@ class ServiceBody extends StatefulWidget {
   State<ServiceBody> createState() => _ServiceBodyState();
 }
 
-class _ServiceBodyState extends State<ServiceBody> {
+class _ServiceBodyState extends State<ServiceBody>
+    with SingleTickerProviderStateMixin {
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
+  late TabController _tabController;
   NotifyMessage notifyMessage = NotifyMessage();
-  TextEditingController _reasonCacelController = TextEditingController();
 
   bool isConfirmed = false;
-  final _formKey = GlobalKey<FormState>();
-
   late PageController _pageController;
   late Timer _timer;
   final List<String> _advertisements = [
@@ -63,6 +59,7 @@ class _ServiceBodyState extends State<ServiceBody> {
   void initState() {
     super.initState();
     getAllOrders("NEW");
+    _tabController = TabController(length: 2, vsync: this);
     _pageController = PageController(initialPage: 0, viewportFraction: 0.8);
 
     // Set the timer to change the advertisement every 3 seconds
@@ -81,6 +78,21 @@ class _ServiceBodyState extends State<ServiceBody> {
         );
       }
     });
+  }
+
+  void launchDialPad(String phoneNumber) async {
+    String uri = 'tel:$phoneNumber';
+
+    try {
+      if (await canLaunch(uri)) {
+        await launch(uri);
+      } else {
+        throw 'Could not launch $uri';
+      }
+    } catch (e) {
+      print('Error launching dial pad: $e');
+      throw 'Could not launch $uri';
+    }
   }
 
   @override
@@ -176,12 +188,7 @@ class _ServiceBodyState extends State<ServiceBody> {
                   icon: CupertinoIcons.phone_fill_arrow_down_left,
                   label: 'CSKH',
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => OrderProcessingScreen(),
-                      ),
-                    );
+                    launchDialPad("0983434031");
                   }),
             ],
           ),
@@ -292,11 +299,25 @@ class _ServiceBodyState extends State<ServiceBody> {
     return SliderBanner(advertisements: _advertisements);
   }
 
-  Widget buildOrders() {
+  Widget buildOrdersTabView() {
+    return SizedBox(
+      height:
+          MediaQuery.of(context).size.height * 0.3, // Set your desired height
+      child: TabBarView(
+        controller: _tabController,
+        children: [
+          buildOrders("ASSIGNED"),
+          buildOrders("INPROGRESS"),
+        ],
+      ),
+    );
+  }
+
+  Widget buildOrders(String type) {
     return Container(
       height: 300, // Reduced height
       child: FutureBuilder<List<Order>>(
-        future: getAllOrders("ASSIGNED"),
+        future: getAllOrders("$type"),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -304,7 +325,9 @@ class _ServiceBodyState extends State<ServiceBody> {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else {
             final orders = snapshot.data ?? [];
-
+            if (orders.isEmpty) {
+              return EmptyState();
+            }
             return ListView.builder(
               itemCount: orders.length,
               itemBuilder: (context, index) {
@@ -316,6 +339,7 @@ class _ServiceBodyState extends State<ServiceBody> {
                   children: [
                     Card(
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           ListTile(
                             leading: CircleAvatar(
@@ -334,57 +358,6 @@ class _ServiceBodyState extends State<ServiceBody> {
                             onTap: () {
                               // Action to view details or cancel the order
                             },
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 2),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    SvgPicture.asset(
-                                        "assets/svg/location_icon.svg",
-                                        color: FrontendConfigs.kPrimaryColor),
-                                    const SizedBox(
-                                      width: 10,
-                                    ),
-                                    CustomText(
-                                      text: "6.5 km",
-                                      fontWeight: FontWeight.w600,
-                                    )
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    SvgPicture.asset(
-                                        "assets/svg/watch_icon.svg"),
-                                    const SizedBox(
-                                      width: 10,
-                                    ),
-                                    CustomText(
-                                      text: "15 mins",
-                                      fontWeight: FontWeight.w600,
-                                    )
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    SvgPicture.asset(
-                                      "assets/svg/wallet_icon.svg",
-                                      color: FrontendConfigs.kPrimaryColor,
-                                    ),
-                                    const SizedBox(
-                                      width: 10,
-                                    ),
-                                    CustomText(
-                                      text: "\$56.00",
-                                      fontWeight: FontWeight.w600,
-                                    )
-                                  ],
-                                ),
-                              ],
-                            ),
                           ),
                           Divider(
                             color: FrontendConfigs.kIconColor,
@@ -667,8 +640,8 @@ class _ServiceBodyState extends State<ServiceBody> {
                               Row(
                                 children: [
                                   CustomText(
-                                    text: 'Các đơn được duyệt',
-                                    fontSize: 22,
+                                    text: 'Các đơn duyệt và hoạt động',
+                                    fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                   ),
                                   SizedBox(
@@ -680,7 +653,25 @@ class _ServiceBodyState extends State<ServiceBody> {
                                   ),
                                 ],
                               ),
-                              buildOrders(),
+                              TabBar(
+                                controller: _tabController,
+                                tabs: [
+                                  Tab(
+                                    child: BookingStatus(
+                                      status: "ASSIGNED",
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  Tab(
+                                    child: BookingStatus(
+                                      status: "INPROGRESS",
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              buildOrdersTabView(),
                             ],
                           ),
                         ),

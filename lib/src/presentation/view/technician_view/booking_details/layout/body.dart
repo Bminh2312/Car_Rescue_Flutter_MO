@@ -7,7 +7,6 @@ import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/customerInfo.dart';
 import 'package:CarRescue/src/models/customer_car.dart';
-import 'package:CarRescue/src/models/order.dart';
 import 'package:CarRescue/src/models/service.dart';
 import 'package:CarRescue/src/models/technician.dart';
 import 'package:CarRescue/src/presentation/elements/app_button.dart';
@@ -542,24 +541,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 ),
               ),
             );
-            // Navigator.push(context,
-            //       MaterialPageRoute(
-            //         builder: (context) => BookingListView(userId:technicianInfo!.id , accountId:technicianInfo!.accountId ,
-            //             ),
-            //       ),);
           } else {
             final orderProvider = OrderProvider();
             print("Id: ${widget.booking.id}");
             dynamic data = await orderProvider.endOrder(widget.booking.id);
-            // Navigator.pushReplacement(
-            //   context,
-            //   MaterialPageRoute(
-            //     builder: (context) => BottomNavBarView(
-            //       accountId: technicianInfo!.accountId,
-            //       userId: technicianInfo!.id,
-            //     ),
-            //   ),
-            // );
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -1261,18 +1246,20 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   ),
 
                   // Image
-                  // if (widget.booking.status.toUpperCase() == 'ASSIGNED' &&
-                  //     _imageUrls.isNotEmpty)
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      children: [
-                        _buildImageSection(_imageUrls),
-                      ],
+
+                  if (widget.booking.status.toUpperCase() == 'ASSIGNED')
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+                          _buildImageSection(_imageUrls),
+                        ],
+                      ),
                     ),
-                  ),
+
                   // _buildImageSection(imageUrls!),
 
                   // Additional Details
@@ -1539,6 +1526,30 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                 await _addServices(
                                     widget.booking.id, selectedServiceCards);
                                 await _loadBooking(widget.booking.id);
+                                if (_formKey.currentState!.validate() &&
+                                    pickedImages.isNotEmpty) {
+                                  await uploadImage();
+
+                                  // await _loadImageOrders(widget.booking.id);
+                                  await _loadTechInfo(
+                                      widget.booking.technicianId);
+                                  await _loadBooking(widget.booking.id);
+
+                                  await _loadImageOrders(widget.booking.id);
+
+                                  setState(() {
+                                    techNoteController.clear();
+                                    _loadCustomerInfo(
+                                        widget.booking.customerId);
+                                    _calculateTotal(widget.booking.id);
+                                  });
+                                } else {
+                                  print("Note or pickedImages empty");
+                                  notifyMessage.showToast("Cần ghi chú");
+                                  setState(() {
+                                    _isLoading = false;
+                                  });
+                                }
                               },
                               btnLabel: checkUpdate
                                   ? "Đang gửi về hệ thống"

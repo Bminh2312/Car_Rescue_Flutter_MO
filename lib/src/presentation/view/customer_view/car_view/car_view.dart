@@ -22,7 +22,10 @@ class CarListView extends StatefulWidget {
   _CarListViewState createState() => _CarListViewState();
 }
 
+
 enum SortingOption { byName, byStatus, defaultSort }
+
+
 
 class _CarListViewState extends State<CarListView> {
   List<CustomerCar> carData = [];
@@ -30,8 +33,9 @@ class _CarListViewState extends State<CarListView> {
   String searchQuery = '';
   bool isLoading = true;
   bool isAscending = true;
-  CarModel? carModel;
   String selectedStatus = 'ACTIVE';
+  CarModel? carModel;
+
   @override
   void initState() {
     super.initState();
@@ -181,9 +185,11 @@ class _CarListViewState extends State<CarListView> {
     if (selectedSortingOption == SortingOption.byName) {
       filteredCars = sortCarsByName(filteredCars, isAscending);
     }
+
     if (selectedSortingOption == SortingOption.byStatus) {
       filteredCars = sortCarsByStatus(filteredCars, selectedStatus);
     }
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -241,7 +247,7 @@ class _CarListViewState extends State<CarListView> {
               });
             },
             decoration: InputDecoration(
-              labelText: 'Tìm kiếm bằng tên hoặc biển số',
+              labelText: 'Tìm kiếm bằng tên xe',
               prefixIcon: Icon(Icons.search),
             ),
           ),

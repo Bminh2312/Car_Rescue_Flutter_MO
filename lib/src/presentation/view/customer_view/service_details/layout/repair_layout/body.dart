@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 
 class RepairBody extends StatefulWidget {
   final LatLng latLng;
@@ -684,6 +685,7 @@ class _RepairBodyState extends State<RepairBody> {
                           updateSelectedServices(service, isSelected);
                         },
                         isSelected: isSelected,
+                      
                       );
                     },
                   );

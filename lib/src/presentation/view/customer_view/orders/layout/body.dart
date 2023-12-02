@@ -121,6 +121,8 @@ class _OrderListState extends State<OrderList> {
             background: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
+                if(type != 'Fixing')
+                _buildFilterButton('NEW', Colors.yellow),
                 _buildFilterButton('ASSIGNING', Colors.blue),
                 _buildFilterButton('COMPLETED', Colors.green),
                 _buildFilterButton('CANCELLED', Colors.red),
@@ -261,60 +263,60 @@ class _OrderListState extends State<OrderList> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 2),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                SvgPicture.asset(
-                                                    "assets/svg/location_icon.svg",
-                                                    color: FrontendConfigs
-                                                        .kPrimaryColor),
-                                                const SizedBox(
-                                                  width: 10,
-                                                ),
-                                                CustomText(
-                                                  text: "6.5 km",
-                                                  fontWeight: FontWeight.w600,
-                                                )
-                                              ],
-                                            ),
-                                            Row(
-                                              children: [
-                                                SvgPicture.asset(
-                                                    "assets/svg/watch_icon.svg"),
-                                                const SizedBox(
-                                                  width: 10,
-                                                ),
-                                                CustomText(
-                                                  text: "15 mins",
-                                                  fontWeight: FontWeight.w600,
-                                                )
-                                              ],
-                                            ),
-                                            Row(
-                                              children: [
-                                                SvgPicture.asset(
-                                                  "assets/svg/wallet_icon.svg",
-                                                  color: FrontendConfigs
-                                                      .kPrimaryColor,
-                                                ),
-                                                const SizedBox(
-                                                  width: 10,
-                                                ),
-                                                CustomText(
-                                                  text: "\$56.00",
-                                                  fontWeight: FontWeight.w600,
-                                                )
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                                      // Padding(
+                                      //   padding: const EdgeInsets.symmetric(
+                                      //       horizontal: 12, vertical: 2),
+                                      //   child: Row(
+                                      //     mainAxisAlignment:
+                                      //         MainAxisAlignment.spaceBetween,
+                                      //     children: [
+                                      //       Row(
+                                      //         children: [
+                                      //           SvgPicture.asset(
+                                      //               "assets/svg/location_icon.svg",
+                                      //               color: FrontendConfigs
+                                      //                   .kPrimaryColor),
+                                      //           const SizedBox(
+                                      //             width: 10,
+                                      //           ),
+                                      //           CustomText(
+                                      //             text: "6.5 km",
+                                      //             fontWeight: FontWeight.w600,
+                                      //           )
+                                      //         ],
+                                      //       ),
+                                      //       Row(
+                                      //         children: [
+                                      //           SvgPicture.asset(
+                                      //               "assets/svg/watch_icon.svg"),
+                                      //           const SizedBox(
+                                      //             width: 10,
+                                      //           ),
+                                      //           CustomText(
+                                      //             text: "15 mins",
+                                      //             fontWeight: FontWeight.w600,
+                                      //           )
+                                      //         ],
+                                      //       ),
+                                      //       Row(
+                                      //         children: [
+                                      //           SvgPicture.asset(
+                                      //             "assets/svg/wallet_icon.svg",
+                                      //             color: FrontendConfigs
+                                      //                 .kPrimaryColor,
+                                      //           ),
+                                      //           const SizedBox(
+                                      //             width: 10,
+                                      //           ),
+                                      //           CustomText(
+                                      //             text: "\$56.00",
+                                      //             fontWeight: FontWeight.w600,
+                                      //           )
+                                      //         ],
+                                      //       ),
+                                      //     ],
+                                      //   ),
+                                      // ),
                                       Divider(
                                         color: FrontendConfigs.kIconColor,
                                       ),
@@ -467,11 +469,13 @@ class _OrderListState extends State<OrderList> {
     String translatedText = type;
 
     if (type == 'ASSIGNING') {
-      translatedText = 'Đã duyệt';
+      translatedText = 'Đang duyệt';
     } else if (type == 'COMPLETED') {
       translatedText = 'Hoàn Thành';
     } else if (type == 'CANCELLED') {
       translatedText = 'Đã hủy';
+    } else if (type == 'NEW'){
+      translatedText = 'Mới';
     }
     return ElevatedButton(
       style: ButtonStyle(
