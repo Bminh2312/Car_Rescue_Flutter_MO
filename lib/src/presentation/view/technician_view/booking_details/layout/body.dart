@@ -1,8 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:CarRescue/src/models/symptom.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
+
+import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/change_rescue_type.dart';
+
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/map_tech_view.dart';
+
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/select_service.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/widgets/selection_location_widget.dart';
 import 'package:geolocator/geolocator.dart';
@@ -66,6 +71,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   Payment? _payment;
   CustomerCar? _car;
   CarModel? _carModel;
+  Symptom? selectedSymptom;
   List<String> _imageUrls = [];
   List<String> pickedImages = [];
   List<String> _updateImage = [];
@@ -80,9 +86,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   int _quantity = 1;
   int totalQuantity = 0;
   int totalAmount = 0;
+
+  bool _isExpanded = false;
+
   final ScrollController _scrollController = ScrollController();
   double _savedScrollPosition = 0.0;
   Timer? myTimer;
+
   @override
   void initState() {
     super.initState();
@@ -199,6 +209,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         _currentBooking = updatedBooking;
         _isLoading = false;
       });
+      if (_currentBooking != null) {
+      print('Booking ID: ${_currentBooking!.id}');
+      print('Booking Status: ${_currentBooking?.status ?? 'N/A'}');
+      // Access other properties in a similar way
+    } else {
+      print('The fetched booking is null.');
+    }
     } catch (e) {
       print('Error loading payment: $e');
     }
@@ -344,6 +361,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       } else {
         selectedServiceCards.remove(service);
         caculateTotal();
+      }
+    });
+  }
+
+  void onSymptomSelected(Symptom? symptom) {
+    setState(() {
+      selectedSymptom = symptom;
+      if (selectedSymptom != null) {
+        print('Selected Symptom ID: ${selectedSymptom!.id}');
       }
     });
   }
@@ -559,6 +585,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               ));
         });
   }
+
+  
 
   Future<void> updateOrder(
     String orderId,
@@ -1069,6 +1097,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       child: Icon(Icons.delete, color: Colors.white),
                     ),
                   ),
+
                   child: Column(
                     children: [
                       _buildItemRow(
@@ -1168,6 +1197,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           : SizedBox.shrink()
                     ],
                   ),
+
                 ),
                 if (localIsLoading)
                   Positioned.fill(
@@ -1631,46 +1661,80 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
               // Action Buttons
 
-              SizedBox(height: 24.0), // Additional spacing at the bottom
-            ],
-          ),
-        ]),
-        bottomNavigationBar: Container(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  List<Service> selectedServices = selectedServiceCards
-                      .where(
-                          (service) => selectedServiceCards.contains(service))
-                      .toList();
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ServiceSelectionScreen(
-                          selectedServices: selectedServices,
-                          booking: widget.booking,
-                          addressesDepart: widget.addressesDepart,
-                          subAddressesDepart: widget.subAddressesDepart,
-                          addressesDesti: widget.addressesDesti,
-                          subAddressesDesti: widget.subAddressesDesti,
-                        ),
-                      ));
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.white,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  SizedBox(height: 24.0), // Additional spacing at the bottom
+                ],
+              ),
+            ),
+            bottomNavigationBar: Container(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [SizedBox()],
+                      GestureDetector(
+                      onTap: () {
+                        List<Service> selectedServices = selectedServiceCards
+                            .where((service) =>
+                                selectedServiceCards.contains(service))
+                            .toList();
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ServiceSelectionScreen(
+                                selectedServices: selectedServices,
+                                booking: widget.booking,
+                                addressesDepart: widget.addressesDepart,
+                                subAddressesDepart: widget.subAddressesDepart,
+                                addressesDesti: widget.addressesDesti,
+                                subAddressesDesti: widget.subAddressesDesti,
+                              ),
+                            ));
+                      },
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        color: Colors.white,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [SizedBox()],
+                            ),
+                            buildServiceList(context,"Chọn dịch vụ",Icon(Icons.add_box)),
+                          ],
+                        ),
                       ),
-                      if (widget.booking.status != 'COMPLETED')
-                        buildServiceList(context),
-                    ],
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        print("IncidentID: ${widget.booking.indicentId}");
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => 
+                              ChangeRescueScreen(
+                                incidentId: widget.booking.indicentId ?? '',departure: widget.booking.departure,paymentMethod:_payment?.method ?? '' ,rescueType: "Towing", orderId: widget.booking.id,),
+                            ));
+                      },
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        color: Colors.white,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [SizedBox()],
+                            ),
+                            buildServiceList(context, "Chuyển đơn", Icon(Icons.next_plan)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    ]
                   ),
                 ),
               ),
@@ -1688,8 +1752,57 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         )
                       ],
                     ),
-                  ],
-                ),
+
+                  ),
+                  // if (widget.booking.status == "ASSIGNED") _slider(true),
+                  if (widget.booking.status == "INPROGRESS") _slider(false),
+
+                  if (widget.booking.status == "ASSIGNED")
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          SizedBox(width: 24.0),
+                          AppButton(
+                              onPressed: () async { 
+                                setState(() {
+                                  _isLoading = true;
+                                });
+
+                                await _loadBooking(widget.booking.id);
+                                if (_formKey.currentState!.validate() &&
+                                    pickedImages.isNotEmpty) {
+                                  await uploadImage();
+                                  await updateOrder(widget.booking.id,
+                                      techNoteController.text, _updateImage);
+                                  // await _loadImageOrders(widget.booking.id);
+                                  await _loadTechInfo(
+                                      widget.booking.technicianId);
+                                  await _loadBooking(widget.booking.id);
+
+                                  await _loadImageOrders(widget.booking.id);
+
+                                  setState(() {
+                                    techNoteController.clear();
+                                    _loadCustomerInfo(
+                                        widget.booking.customerId);
+                                    _calculateTotal(widget.booking.id);
+                                  });
+                                } else {
+                                  print("Note or pickedImages empty");
+                                  notifyMessage.showToast("Cần ghi chú");
+                                  setState(() {
+                                    _isLoading = false;
+                                  });
+                                }
+                              },
+                              btnLabel: checkUpdate
+                                  ? "Đang gửi về hệ thống"
+                                  : "Hoàn thiện đơn hàng"),
+                        ],
+                      ),
+                    ),
+                ],
               ),
               // if (widget.booking.status == "ASSIGNED") _slider(true),
               if (widget.booking.status == "INPROGRESS") _slider(false),
@@ -1754,7 +1867,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     ]);
   }
 
-  Widget buildServiceList(BuildContext context) {
+  Widget buildServiceList(BuildContext context, String content, Icon icon) {
     return Container(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1762,10 +1875,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.add_box), // Biểu tượng dấu '+'
+              icon, // Biểu tượng dấu '+'
               SizedBox(width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
               Text(
-                'Chọn dịch vụ', // Văn bản bên cạnh biểu tượng
+                content, // Văn bản bên cạnh biểu tượng
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16, // Kích thước văn bản
@@ -1804,7 +1917,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         onSelected: (isSelected) {
                           updateSelectedServices(service, isSelected);
                         },
-                        isSelected: isSelected, rescueType: '',
+                        isSelected: isSelected,
+                        rescueType: '',
                       );
                     },
                   );

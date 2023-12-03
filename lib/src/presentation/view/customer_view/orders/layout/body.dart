@@ -309,6 +309,7 @@ class _OrderListState extends State<OrderList> {
                                           fontSize: 16,
                                           status: order.status,
                                         ),
+                                         if(order.status == "COMPLETED")
                                         Expanded(
                                           child:
                                               FutureBuilder<FeedbackCustomer?>(

@@ -15,13 +15,17 @@ class FeedBackProvider {
   final String apiUrlGetFeedBackOfOrder =
       Environment.API_URL + 'api/Feedback/GetFeedbackOfOrder';
 
+  String accessToken = GetStorage().read("accessToken");
+
   Future<FeedbackCustomer> getFeedbackOfOrder(String orderId) async {
     final Uri url = Uri.parse('$apiUrlGetFeedBackOfOrder?id=${orderId}');
     final response = await http.get(
+
       url,headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $accessToken'
         });
+
 
     if (response.statusCode == 200) {
       // If the server returns a 200 OK response, parse the JSON
@@ -43,7 +47,10 @@ class FeedBackProvider {
     final Uri url = Uri.parse('$apiUrlGetAllFeedBack?id=$customerId');
 
     try {
-      final response = await http.get(url, headers: {'accept': '*/*'});
+      final response = await http.get(url, headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody =
             convert.json.decode(response.body);
@@ -85,9 +92,9 @@ class FeedBackProvider {
     try {
       final response = await http.post(
         Uri.parse(apiUrlCreateFeedBack),
-        headers: {
-          'accept': '*/*',
-          'Content-Type': 'application/json-patch+json',
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
         body: convert.jsonEncode(feedbackData),
       );

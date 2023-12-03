@@ -93,6 +93,7 @@ class _TechnicianLogInBodyState extends State<TechnicianLogInBody> {
                     box.write("role", result.role);
                     box.write("userId", result.userId);
                     box.write("accountId", result.accountId);
+
                     box.write('accessToken', result.accessToken);
                     print(result.role);
                     Navigator.push(
