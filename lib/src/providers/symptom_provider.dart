@@ -1,34 +1,40 @@
 import 'package:CarRescue/src/enviroment/env.dart';
 import 'package:CarRescue/src/models/symptom.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 
-class SymptomProvider{
-  final String apiGetAllSymptom = Environment.API_URL + 'api/Symptom/GetAllSymptom';
-
+class SymptomProvider {
+  final String apiGetAllSymptom =
+      Environment.API_URL + 'api/Symptom/GetAllSymptom';
+  String? accessToken = GetStorage().read<String>("accessToken");
   Future<List<Symptom>> getAllSymptoms() async {
-  final String url = 'https://rescuecapstoneapi.azurewebsites.net/api/Symptom/GetAllSymptom';
+    final String url =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Symptom/GetAllSymptom';
 
-  try {
-    final response = await http.get(Uri.parse(url), headers: {'accept': '*/*'});
+    try {
+      final response = await http.get(Uri.parse(url),
+          headers: {'accept': '*/*', 'Authorization': 'Bearer $accessToken'});
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonBody = convert.json.decode(response.body);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonBody =
+            convert.json.decode(response.body);
 
-      if (jsonBody['status'] == 'Success') {
-        final List<dynamic> data = jsonBody['data'];
-        final List<Symptom> symptoms = data.map((symptomJson) => Symptom.fromJson(symptomJson)).toList();
-        return symptoms;
+        if (jsonBody['status'] == 'Success') {
+          final List<dynamic> data = jsonBody['data'];
+          final List<Symptom> symptoms =
+              data.map((symptomJson) => Symptom.fromJson(symptomJson)).toList();
+          return symptoms;
+        } else {
+          print('Error: ${jsonBody['message']}');
+        }
       } else {
-        print('Error: ${jsonBody['message']}');
+        print('Error: ${response.statusCode}');
       }
-    } else {
-      print('Error: ${response.statusCode}');
+    } catch (e) {
+      print('Request Error: $e');
     }
-  } catch (e) {
-    print('Request Error: $e');
-  }
 
-  return [];
-}
+    return [];
+  }
 }

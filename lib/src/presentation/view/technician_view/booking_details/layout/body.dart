@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
+import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/map_tech_view.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/select_service.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/widgets/selection_location_widget.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
@@ -32,6 +36,7 @@ import '../../../../../models/payment.dart';
 import 'package:intl/intl.dart';
 import 'package:CarRescue/src/models/car_model.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/customer_car_info.dart';
+import 'dart:ui';
 
 class BookingDetailsBody extends StatefulWidget {
   final Booking booking;
@@ -47,10 +52,11 @@ class BookingDetailsBody extends StatefulWidget {
 }
 
 class _BookingDetailsBodyState extends State<BookingDetailsBody> {
+  String? accessToken = GetStorage().read<String>("accessToken");
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   TextEditingController techNoteController = TextEditingController();
   TextEditingController quantityController = TextEditingController();
-  bool _isLoading = true;
+  bool _isLoading = false;
   int total = 0;
   AuthService authService = AuthService();
   OrderProvider orderProvider = OrderProvider();
@@ -74,6 +80,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   int _quantity = 1;
   int totalQuantity = 0;
   int totalAmount = 0;
+  final ScrollController _scrollController = ScrollController();
+  double _savedScrollPosition = 0.0;
+  Timer? myTimer;
   @override
   void initState() {
     super.initState();
@@ -88,8 +97,88 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     fetchServiceData(widget.booking.id);
     selectedServices = [];
     availableServices = loadService();
-
+    _loadCreateLocation();
+    // _loadLocation();
+    print(widget.booking.status);
     // _imageUrls.clear();
+  }
+
+  Future<void> _loadCreateLocation() async {
+    try {
+      Position? currentPosition = await getCurrentLocation();
+      if (currentPosition != null) {
+        await AuthService().createLocation(
+          id: widget.booking.technicianId,
+          lat: '${currentPosition.latitude}',
+          long: '${currentPosition.longitude}',
+        );
+      }
+    } catch (e) {
+      print('Error in _loadcreateLocation: $e');
+    }
+  }
+
+  void loadUpdateLocation() async {
+    try {
+      Position? currentPosition = await getCurrentLocation();
+      if (currentPosition != null) {
+        await AuthService().updateLocation(
+          id: widget.booking.technicianId,
+          lat: '${currentPosition.latitude}',
+          long: '${currentPosition.longitude}',
+        );
+        print(currentPosition);
+      }
+    } catch (error) {
+      print('Error loading updateLocation: $error');
+    }
+  }
+
+  Future<Position?> getCurrentLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        // Request location permission from the user
+        permission = await Geolocator.requestPermission();
+        if (permission != LocationPermission.whileInUse &&
+            permission != LocationPermission.always) {
+          // Handle the case where the user denied location permission
+          print("User denied location permission");
+          return null;
+        }
+      }
+
+      // Get the current location
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      return position;
+    } catch (e) {
+      print("Error getting current location: $e");
+      return null;
+    }
+  }
+
+  Future<void> deleteServiceInOrder(String id) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Order/DeleteOrderDetail?id=$id';
+
+    final response =
+        await http.put(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
+    print(response.statusCode);
+    try {
+      if (response.statusCode == 201) {
+        print('Change status successfuly');
+      } else {
+        throw Exception('Failed to load data from API');
+      }
+    } catch (e) {
+      print('Delete not ok: $e');
+      // Handle the error appropriately
+    }
   }
 
   Future<List<Service>> loadService() async {
@@ -117,13 +206,16 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
   Future<void> _updateService(
       String orderDetailId, int quantity, String service) async {
+    setState(() {
+      _isLoading = true;
+    });
     final String apiUrl =
         "https://rescuecapstoneapi.azurewebsites.net/api/Order/ManagerUpdateService"; // Replace with your endpoint URL
 
     final response = await http.post(Uri.parse(apiUrl),
-        headers: {
-          "Content-Type": "application/json",
-          // Add other headers if needed, like authorization headers
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
         body: json.encode({
           'orderDetailId': orderDetailId,
@@ -138,49 +230,16 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     print(requestBody);
     if (response.statusCode == 200) {
       print('Successfully update the car ${response.body}');
+      setState(() {
+        _isLoading = false;
+      });
+      onLoadingComplete();
     } else {
       print('Failed to update the car: ${response.body}');
     }
   }
 
-  Future<void> _addServices(String orderId, List<Service> services) async {
-    final String apiUrl =
-        "https://rescuecapstoneapi.azurewebsites.net/api/Order/ManagerAddService";
-
-    final List<Map<String, dynamic>> serviceData = services
-        .map((service) => {
-              'orderId': orderId,
-              'quantity': service.quantity,
-              'service': service.name,
-            })
-        .toList();
-
-    // Iterate through serviceData and make the API call for each service
-    for (var service in serviceData) {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          "Content-Type": "application/json",
-          // Add other headers if needed, like authorization headers
-        },
-        body: json.encode(service),
-      );
-      print('Request body for service update: ${json.encode(service)}');
-
-      if (response.statusCode == 200) {
-        print('Successfully add the service: ${response.body}');
-      } else {
-        print('Failed to add the service: ${response.body}');
-      }
-    }
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-// Example of calling _addServices with a list of services
-
-// Example of calling _addServices with a list of services
+  //
 
   Future<void> _loadPayment(String orderId) async {
     try {
@@ -293,7 +352,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
@@ -318,7 +381,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Service/Get?id=$serviceId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
@@ -339,7 +406,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     final String fetchCarUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Car/Get?id=$carId'; // Replace with your actual API endpoint for fetching car data
 
-    final response = await http.get(Uri.parse(fetchCarUrl));
+    final response =
+        await http.get(Uri.parse(fetchCarUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
     try {
       if (response.statusCode == 200) {
         Map<String, dynamic> data = json.decode(response.body);
@@ -942,19 +1013,28 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         // Uncomment and modify this section if needed
         // _buildFeeSection(),
 
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: orderDetails.map((orderDetail) {
-            return _buildOrderDetail(orderDetail);
-          }).toList(),
+        Expanded(
+          child: ListView.builder(
+            key: PageStorageKey<String>('page'),
+            physics: ClampingScrollPhysics(),
+            itemCount: orderDetails.length,
+            itemBuilder: (context, index) {
+              return _buildOrderDetail(orderDetails[index]);
+            },
+          ),
         ),
       ],
     );
   }
 
   Widget _buildOrderDetail(Map<String, dynamic> orderDetail) {
+    final quantityController = TextEditingController();
     quantityController.text = orderDetail['quantity'].toString();
-    // Add this line
+    bool localIsLoading = false;
+
+    // Generate a unique key for each Dismissible widget based on the orderDetail's id
+    Key dismissibleKey = Key(orderDetail['id'].toString());
+
     return FutureBuilder<Map<String, dynamic>>(
       future: fetchServiceNameAndQuantity(orderDetail['serviceId']),
       builder: (context, snapshot) {
@@ -968,72 +1048,136 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
             final formatter =
                 NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
             final formattedTotal = formatter.format(total);
-            TextEditingController quantityController =
-                TextEditingController(text: quantity.toString());
-            return Column(
+
+            return Stack(
               children: [
-                _buildItemRow(
-                  '$name (Số lượng: $quantity) ',
-                  Text(
-                    '$formattedTotal',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  isLoading: _isLoading,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.remove),
-                          onPressed: () async {
-                            if (quantity > 1) {
-                              _updateOrderDetails(orderDetail, quantity - 1,
-                                  price, (loading) => _isLoading = loading);
-                              await _delayedLoadPayment();
-                            }
-                          },
-                        ),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        SizedBox(
-                          width: 50,
-                          height: 32,
-                          child: TextFormField(
-                            textAlign: TextAlign.center,
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(),
-                            ),
-                            controller: quantityController,
-                            onChanged: (value) {
-                              // Update the local quantity when the text changes
-                              quantity = int.tryParse(value) ?? 0;
-                            },
-                            onEditingComplete: () async {
-                              // Trigger the update when the confirm button is pressed
-                              _updateOrderDetails(orderDetail, quantity, price,
-                                  (loading) => _isLoading = loading);
-                              await _delayedLoadPayment();
-                            },
-                          ),
-                        ),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.add),
-                          onPressed: () async {
-                            _updateOrderDetails(orderDetail, quantity + 1,
-                                price, (loading) => _isLoading = loading);
-                            await _delayedLoadPayment();
-                          },
-                        ),
-                      ],
+                Dismissible(
+                  key: dismissibleKey, // Use a unique key
+                  direction: DismissDirection.endToStart,
+                  confirmDismiss: (direction) async {
+                    return await _showConfirmationDialog(context);
+                  },
+                  onDismissed: (direction) async {
+                    await _deleteOrderDetail(orderId);
+                    // Optionally, you can add a snackbar or handle UI updates after deletion
+                  },
+                  background: Container(
+                    alignment: AlignmentDirectional.centerEnd,
+                    color: Colors.red,
+                    child: Padding(
+                      padding: EdgeInsets.only(right: 16),
+                      child: Icon(Icons.delete, color: Colors.white),
                     ),
-                  ],
+                  ),
+                  child: Column(
+                    children: [
+                      _buildItemRow(
+                        '$name (Số lượng: $quantity) ',
+                        Text(
+                          '$formattedTotal',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        isLoading: localIsLoading,
+                      ),
+                      widget.booking.status.toUpperCase() != 'COMPLETED'
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(Icons.remove),
+                                      onPressed: () async {
+                                        if (quantity > 1) {
+                                          setState(() {
+                                            localIsLoading = true;
+                                          });
+                                          await _updateOrderDetails(
+                                            orderDetail,
+                                            quantity - 1,
+                                            price,
+                                            (loading) {
+                                              setState(() {
+                                                localIsLoading = loading;
+                                              });
+                                            },
+                                          );
+                                          await _delayedLoadPayment();
+                                        }
+                                      },
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    SizedBox(
+                                      width: 50,
+                                      height: 32,
+                                      child: TextFormField(
+                                        textAlign: TextAlign.center,
+                                        decoration: InputDecoration(
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        controller: quantityController,
+                                        onChanged: (value) {
+                                          quantity = int.tryParse(value) ?? 0;
+                                        },
+                                        onEditingComplete: () async {
+                                          setState(() {
+                                            localIsLoading = true;
+                                          });
+                                          await _updateOrderDetails(
+                                            orderDetail,
+                                            quantity,
+                                            price,
+                                            (loading) {
+                                              setState(() {
+                                                localIsLoading = loading;
+                                              });
+                                            },
+                                          );
+                                          await _delayedLoadPayment();
+                                        },
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    IconButton(
+                                      icon: Icon(Icons.add),
+                                      onPressed: () async {
+                                        setState(() {
+                                          localIsLoading = true;
+                                        });
+                                        await _updateOrderDetails(
+                                          orderDetail,
+                                          quantity + 1,
+                                          price,
+                                          (loading) {
+                                            setState(() {
+                                              localIsLoading = loading;
+                                            });
+                                          },
+                                        );
+                                        await _delayedLoadPayment();
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            )
+                          : SizedBox.shrink()
+                    ],
+                  ),
                 ),
+                if (localIsLoading)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black.withOpacity(0.5),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                  ),
               ],
             );
           } else {
@@ -1064,35 +1208,81 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   //     ],
   //   );
   // }
+  Future<bool> _showConfirmationDialog(BuildContext context) async {
+    return await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Xác nhận'),
+          content: Text('Bạn có chắc chắn xóa dịch vụ này?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Yes'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('No'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-  void _updateOrderDetails(Map<String, dynamic> orderDetail, int newQuantity,
-      int price, Function(bool) setLoading) async {
+  Future<void> _deleteOrderDetail(String id) async {
+    setState(() {
+      _isLoading = true; // Set loading to true before starting deletion
+    });
+
+    try {
+      await deleteServiceInOrder(id);
+
+      // Assuming you have a list of order details in your state
+      // Update the list by removing the deleted item
+      setState(() {
+        orderDetails.removeWhere((detail) => detail['id'] == id);
+        _delayedLoadPayment();
+        _isLoading = false; // Set loading to false after deletion
+      });
+    } catch (error) {
+      print('Error deleting order detail: $error');
+      setState(() {
+        _isLoading = false; // Set loading to false in case of an error
+      });
+    }
+  }
+
+  Future<void> _updateOrderDetails(Map<String, dynamic> orderDetail,
+      int newQuantity, int price, Function(bool) setLoading) async {
     try {
       setLoading(true);
 
+      // Perform your actual asynchronous operation here
       final snapshot =
           await fetchServiceNameAndQuantity(orderDetail['serviceId']);
-
       final name = snapshot['name'] ?? 'Name not available';
+      await _updateService(orderDetail['id'], newQuantity, name);
+      // Update the UI state
+      setState(() {
+        orderDetail['quantity'] = newQuantity;
 
-      _updateService(orderDetail['id'], newQuantity, name);
-
-      orderDetail['quantity'] = newQuantity;
-
-      if (orderDetail['tOtal'] != null && orderDetail['tOtal'] is num) {
-        orderDetail['tOtal'] = newQuantity * price;
-      } else {
-        orderDetail['tOtal'] = 0;
-      }
-
-      setLoading(false);
+        if (orderDetail['tOtal'] != null && orderDetail['tOtal'] is num) {
+          orderDetail['tOtal'] = newQuantity * price;
+        } else {
+          orderDetail['tOtal'] = 0;
+        }
+      });
     } catch (e) {
       print('Exception in _updateOrderDetails: $e');
+    } finally {
+      // Ensure that setLoading(false) is always called, even if an exception occurs
+      setLoading(false);
     }
   }
 
   Future<void> _delayedLoadPayment() async {
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future.delayed(Duration(milliseconds: 300));
     await _loadPayment(widget.booking.id);
   }
 
@@ -1133,7 +1323,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 });
               },
               validator: (value) {
-                if (value!.isEmpty) {
+                if (value?.isEmpty ?? '' == value) {
                   return 'Hãy ghi chú';
                 }
                 return null;
@@ -1145,388 +1335,423 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     );
   }
 
+  void onLoadingComplete() {
+    _scrollController.jumpTo(_savedScrollPosition);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return _isLoading
-        ? LoadingState()
-        : Scaffold(
-            backgroundColor: FrontendConfigs.kBackgrColor,
-            body: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  // Header
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Center(
-                      child: Column(
-                        children: [
-                          CustomText(
-                            text: "Mã đơn hàng",
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          CustomText(
-                            text: " ${widget.booking.id}",
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ],
+    return Stack(children: [
+      Scaffold(
+        backgroundColor: FrontendConfigs.kBackgrColor,
+        body: ListView(key: PageStorageKey<String>('page'), children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              // Header
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.white,
+                child: Center(
+                  child: Column(
+                    children: [
+                      CustomText(
+                        text: "Mã đơn hàng",
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ),
+                      CustomText(
+                        text: " ${widget.booking.id}",
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ],
                   ),
+                ),
+              ),
 
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        CustomerInfoRow(
-                          name: customerInfo?.fullname ?? '',
-                          phone: customerInfo?.phone ?? '',
-                          avatar: customerInfo?.avatar ?? '',
-                        ),
-                        if (customerInfo?.fullname != 'Khách Hàng Offline')
-                          CustomerCarInfoRow(
-                            manufacturer: _car?.manufacturer ?? 'Không có',
-                            type: _carModel?.model1 ?? 'Không có',
-                            licensePlate: _car?.licensePlate ?? 'Không có',
-                            image: _car?.image ?? 'Không có',
-                          ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildSectionTitle('Đơn hàng'),
-                            Flexible(
-                              child: BookingStatus(
-                                status: widget.booking.status,
-                                fontSize: 14,
+                        _buildSectionTitle("Khách hàng"),
+                        InkWell(
+                          onTap: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => MapTechScreen(
+                                  cus: customerInfo!,
+                                  booking: widget.booking,
+                                  techImg: technicianInfo?.avatar ?? '',
+                                  techId: technicianInfo?.id ?? '',
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                          child: RideSelectionWidget(
-                            icon: 'assets/svg/pickup_icon.svg',
-                            title: widget.addressesDepart[widget.booking.id] ??
-                                '', // Use addresses parameter
-                            body:
-                                widget.subAddressesDepart[widget.booking.id] ??
-                                    '',
-                            onPressed: () {},
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              // Add your section title
+                              Image.asset('assets/icons/location.png')
+                            ],
                           ),
-                        ),
-                        _buildInfoRow(
-                          "Loại dịch vụ",
-                          Text(
-                            widget.booking.rescueType == "Towing"
-                                ? "Keo xe cứu hộ"
-                                : (widget.booking.rescueType == "Fixing"
-                                    ? "Sửa chữa tại chỗ"
-                                    : widget.booking.rescueType),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: FrontendConfigs.kAuthColor,
-                            ),
-                          ),
-                        ),
-                        _buildInfoRow(
-                            "Ghi chú của khách hàng",
-                            Text(widget.booking.customerNote,
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: FrontendConfigs.kAuthColor,
-                                    fontSize: 15))),
-                        if (widget.booking.status == 'CANCELLED')
-                          _buildInfoRow(
-                              "Lí do hủy đơn",
-                              Text(
-                                  widget.booking.cancellationReason ??
-                                      'Không có',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: FrontendConfigs.kAuthColor,
-                                      fontSize: 15))),
+                        )
                       ],
                     ),
-                  ),
-
-                  // Image
-
-                  if (widget.booking.status.toUpperCase() == 'ASSIGNED')
-                    Container(
-                      margin: EdgeInsets.symmetric(vertical: 4),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      color: Colors.white,
-                      child: Column(
-                        children: [
-                          _buildImageSection(_imageUrls),
-                        ],
+                    CustomerInfoRow(
+                      name: customerInfo?.fullname ?? '',
+                      phone: customerInfo?.phone ?? '',
+                      avatar: customerInfo?.avatar ??
+                          'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/images%2Favatars-2.png?alt=media&token=ebea458f-13c0-4c20-9d52-15eca7f652ac',
+                    ),
+                    if (customerInfo?.fullname != 'Khách Hàng Offline')
+                      CustomerCarInfoRow(
+                        manufacturer: _car?.manufacturer ?? 'Không có',
+                        type: _carModel?.model1 ?? 'Không có',
+                        licensePlate: _car?.licensePlate ?? 'Không có',
+                        image: _car?.image ??
+                            'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/images%2Favatars-2.png?alt=media&token=ebea458f-13c0-4c20-9d52-15eca7f652ac',
+                      ),
+                  ],
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildSectionTitle('Đơn hàng'),
+                        Flexible(
+                          child: BookingStatus(
+                            status: widget.booking.status,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: RideSelectionWidget(
+                        icon: 'assets/svg/pickup_icon.svg',
+                        title: widget.addressesDepart[widget.booking.id] ??
+                            '', // Use addresses parameter
+                        body:
+                            widget.subAddressesDepart[widget.booking.id] ?? '',
+                        onPressed: () {},
                       ),
                     ),
-
-                  // _buildImageSection(imageUrls!),
-
-                  // Additional Details
-                  // You can replace this with the actual payment details
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 8.0),
-                        _buildSectionTitle("Ghi chú của kĩ thuật viên"),
-                        if (widget.booking.status == "ASSIGNED")
-                          _buildNoteRow("Nhập nội dung ghi chú", _formKey),
-                        _buildInfoRow(
-                            "Nội dung ghi chú",
-                            Text('${_currentBooking?.staffNote ?? 'Không có'}',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: FrontendConfigs.kAuthColor,
-                                    fontSize: 15))),
-                      ],
+                    _buildInfoRow(
+                      "Loại dịch vụ",
+                      Text(
+                        widget.booking.rescueType == "Towing"
+                            ? "Keo xe cứu hộ"
+                            : (widget.booking.rescueType == "Fixing"
+                                ? "Sửa chữa tại chỗ"
+                                : widget.booking.rescueType),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: FrontendConfigs.kAuthColor,
+                        ),
+                      ),
                     ),
-                  ),
-                  // Notes
-
-                  // Timing
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionTitle("Thời gian"),
-                        if (widget.booking.status != "ASSIGNED" &&
-                            widget.booking.startTime != null)
-                          _buildItemRow(
-                            "Bắt đầu",
-                            Text(
-                              DateFormat('dd-MM-yyyy | HH:mm').format(widget
-                                  .booking.startTime!
-                                  .toUtc()
-                                  .add(Duration(hours: 14))),
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: FrontendConfigs.kAuthColor,
-                                  fontSize: 15),
-                            ),
-                          ),
-                        if (widget.booking.status != "ASSIGNED" &&
-                            widget.booking.endTime != null)
-                          _buildItemRow(
-                            "Kết thúc ",
-                            Text(
-                              DateFormat('dd-MM-yyyy | HH:mm').format(widget
-                                  .booking.endTime!
-                                  .toUtc()
-                                  .add(Duration(hours: 14))),
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: FrontendConfigs.kAuthColor,
-                                  fontSize: 15),
-                            ),
-                          ),
-                        _buildItemRow(
-                          "Được tạo lúc",
-                          Text(
-                            DateFormat('dd-MM-yyyy | HH:mm').format(widget
-                                .booking.createdAt!
-                                .toUtc()
-                                .add(Duration(hours: 14))),
+                    _buildInfoRow(
+                        "Ghi chú của khách hàng",
+                        Text(widget.booking.customerNote,
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: FrontendConfigs.kAuthColor,
-                                fontSize: 15),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildSectionTitle("Đơn giá"),
-                            _buildSectionTitle(""),
-                          ],
-                        ),
-                        _buildOrderItemSection(),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.symmetric(vertical: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionTitle("Thanh toán"),
-                        _buildInfoRow(
-                            "Người trả",
-                            Text('${customerInfo?.fullname ?? ''}',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: FrontendConfigs.kAuthColor,
-                                    fontSize: 15))),
-                        _buildInfoRow(
-                            "Người nhận",
-                            Text('${technicianInfo?.fullname ?? ''}',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: FrontendConfigs.kAuthColor,
-                                    fontSize: 15))),
-                      ],
-                    ),
-                  ),
-
-                  // Action Buttons
-
-                  SizedBox(height: 24.0), // Additional spacing at the bottom
-                ],
+                                fontSize: 15))),
+                    if (widget.booking.status == 'CANCELLED')
+                      _buildInfoRow(
+                          "Lí do hủy đơn",
+                          Text(widget.booking.cancellationReason ?? 'Không có',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: FrontendConfigs.kAuthColor,
+                                  fontSize: 15))),
+                  ],
+                ),
               ),
-            ),
-            bottomNavigationBar: Container(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      List<Service> selectedServices = selectedServiceCards
-                          .where((service) =>
-                              selectedServiceCards.contains(service))
-                          .toList();
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ServiceSelectionScreen(
-                              selectedServices: selectedServices,
-                              booking: widget.booking,
-                              addressesDepart: widget.addressesDepart,
-                              subAddressesDepart: widget.subAddressesDepart,
-                              addressesDesti: widget.addressesDesti,
-                              subAddressesDesti: widget.subAddressesDesti,
-                            ),
-                          ));
-                    },
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      color: Colors.white,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [SizedBox()],
-                          ),
-                          buildServiceList(context),
-                        ],
+
+              // Image
+
+              if (widget.booking.status.toUpperCase() == 'ASSIGNED')
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Column(
+                    children: [
+                      _buildImageSection(_imageUrls),
+                    ],
+                  ),
+                ),
+
+              // _buildImageSection(imageUrls!),
+
+              // Additional Details
+              // You can replace this with the actual payment details
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 8.0),
+                    _buildSectionTitle("Ghi chú của kĩ thuật viên"),
+                    if (widget.booking.status == "ASSIGNED")
+                      _buildNoteRow("Nhập nội dung ghi chú", _formKey),
+                    _buildInfoRow(
+                        "Nội dung ghi chú",
+                        Text('${_currentBooking?.staffNote ?? 'Không có'}',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: FrontendConfigs.kAuthColor,
+                                fontSize: 15))),
+                  ],
+                ),
+              ),
+              // Notes
+
+              // Timing
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle("Thời gian"),
+                    if (widget.booking.status != "ASSIGNED" &&
+                        widget.booking.startTime != null)
+                      _buildItemRow(
+                        "Bắt đầu",
+                        Text(
+                          DateFormat('dd-MM-yyyy | HH:mm').format(widget
+                              .booking.startTime!
+                              .toUtc()
+                              .add(Duration(hours: 14))),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: FrontendConfigs.kAuthColor,
+                              fontSize: 15),
+                        ),
+                      ),
+                    if (widget.booking.status != "ASSIGNED" &&
+                        widget.booking.endTime != null)
+                      _buildItemRow(
+                        "Kết thúc ",
+                        Text(
+                          DateFormat('dd-MM-yyyy | HH:mm').format(widget
+                              .booking.endTime!
+                              .toUtc()
+                              .add(Duration(hours: 14))),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: FrontendConfigs.kAuthColor,
+                              fontSize: 15),
+                        ),
+                      ),
+                    _buildItemRow(
+                      "Được tạo lúc",
+                      Text(
+                        DateFormat('dd-MM-yyyy | HH:mm').format(widget
+                            .booking.createdAt!
+                            .toUtc()
+                            .add(Duration(hours: 14))),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: FrontendConfigs.kAuthColor,
+                            fontSize: 15),
                       ),
                     ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
+                  ],
+                ),
+              ),
+
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildPaymentMethod(
-                              _payment?.method ?? '',
-                              NumberFormat('#,##0₫', 'vi_VN')
-                                  .format(_payment?.amount ?? ''),
-                            ),
-                          ],
-                        ),
+                        _buildSectionTitle("Đơn giá"),
+                        _buildSectionTitle(""),
                       ],
                     ),
-                  ),
-                  // if (widget.booking.status == "ASSIGNED") _slider(true),
-                  if (widget.booking.status == "INPROGRESS") _slider(false),
-                  if (widget.booking.status == "ASSIGNED")
-                    Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          SizedBox(width: 24.0),
-                          AppButton(
-                              onPressed: () async {
-                                setState(() {
-                                  _isLoading = true;
-                                });
-
-                                await _loadBooking(widget.booking.id);
-                                if (_formKey.currentState!.validate() &&
-                                    pickedImages.isNotEmpty) {
-                                  await uploadImage();
-                                  await updateOrder(widget.booking.id,
-                                      techNoteController.text, _updateImage);
-                                  // await _loadImageOrders(widget.booking.id);
-                                  await _loadTechInfo(
-                                      widget.booking.technicianId);
-                                  await _loadBooking(widget.booking.id);
-
-                                  await _loadImageOrders(widget.booking.id);
-
-                                  setState(() {
-                                    techNoteController.clear();
-                                    _loadCustomerInfo(
-                                        widget.booking.customerId);
-                                    _calculateTotal(widget.booking.id);
-                                  });
-                                } else {
-                                  print("Note or pickedImages empty");
-                                  notifyMessage.showToast("Cần ghi chú");
-                                  setState(() {
-                                    _isLoading = false;
-                                  });
-                                }
-                              },
-                              btnLabel: checkUpdate
-                                  ? "Đang gửi về hệ thống"
-                                  : "Hoàn thiện đơn hàng"),
-                        ],
-                      ),
-                    ),
-                ],
+                    Container(height: 350, child: _buildOrderItemSection()),
+                  ],
+                ),
               ),
-            ),
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle("Thanh toán"),
+                    _buildInfoRow(
+                        "Người trả",
+                        Text('${customerInfo?.fullname ?? ''}',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: FrontendConfigs.kAuthColor,
+                                fontSize: 15))),
+                    _buildInfoRow(
+                        "Người nhận",
+                        Text('${technicianInfo?.fullname ?? ''}',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: FrontendConfigs.kAuthColor,
+                                fontSize: 15))),
+                  ],
+                ),
+              ),
 
-            // Conditionally display the order item section
-          );
+              // Action Buttons
+
+              SizedBox(height: 24.0), // Additional spacing at the bottom
+            ],
+          ),
+        ]),
+        bottomNavigationBar: Container(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  List<Service> selectedServices = selectedServiceCards
+                      .where(
+                          (service) => selectedServiceCards.contains(service))
+                      .toList();
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ServiceSelectionScreen(
+                          selectedServices: selectedServices,
+                          booking: widget.booking,
+                          addressesDepart: widget.addressesDepart,
+                          subAddressesDepart: widget.subAddressesDepart,
+                          addressesDesti: widget.addressesDesti,
+                          subAddressesDesti: widget.subAddressesDesti,
+                        ),
+                      ));
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [SizedBox()],
+                      ),
+                      if (widget.booking.status != 'COMPLETED')
+                        buildServiceList(context),
+                    ],
+                  ),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildPaymentMethod(
+                          _payment?.method ?? '',
+                          currencyFormat.format(_payment?.amount ?? 0),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // if (widget.booking.status == "ASSIGNED") _slider(true),
+              if (widget.booking.status == "INPROGRESS") _slider(false),
+              if (widget.booking.status == "ASSIGNED")
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      SizedBox(width: 24.0),
+                      AppButton(
+                          onPressed: () async {
+                            setState(() {
+                              _isLoading = true;
+                            });
+
+                            await _loadBooking(widget.booking.id);
+                            if (_formKey.currentState!.validate() &&
+                                pickedImages.isNotEmpty) {
+                              await uploadImage();
+                              await updateOrder(widget.booking.id,
+                                  techNoteController.text, _updateImage);
+                              // await _loadImageOrders(widget.booking.id);
+                              await _loadTechInfo(widget.booking.technicianId);
+                              await _loadBooking(widget.booking.id);
+
+                              await _loadImageOrders(widget.booking.id);
+
+                              setState(() {
+                                techNoteController.clear();
+                                _loadCustomerInfo(widget.booking.customerId);
+                                _calculateTotal(widget.booking.id);
+                              });
+                            } else {
+                              print("Note or pickedImages empty");
+                              notifyMessage.showToast("Cần ghi chú");
+                              setState(() {
+                                _isLoading = false;
+                              });
+                            }
+                          },
+                          btnLabel: checkUpdate
+                              ? "Đang gửi về hệ thống"
+                              : "Hoàn thiện đơn hàng"),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+
+        // Conditionally display the order item section
+      ),
+      if (_isLoading)
+        Positioned.fill(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 9, sigmaY: 9),
+            child: Center(
+              child: LoadingState(),
+            ),
+          ),
+        ),
+    ]);
   }
 
   Widget buildServiceList(BuildContext context) {
@@ -1657,10 +1882,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     _imageUrls.clear();
     techNoteController.dispose();
     quantityController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 }
-
 
 // // Usage:
 

@@ -51,7 +51,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   String? _selectedGenderString;
   File? _profileImage;
   String? _downloadURL;
-
+String? accessToken = GetStorage().read<String>("accessToken");
 // Chuyển đổi sang đối tượng DateTime
   String updatedAtString = DateFormat('yyyy-MM-dd').format(DateTime.now());
   final ImagePicker imagePicker = ImagePicker();
@@ -115,10 +115,10 @@ class _EditProfileBodyState extends State<EditProfileBody> {
 
     final response = await http.put(
       Uri.parse(
-          'https://rescuecapstoneapi.azurewebsites.net/api/RescueVehicleOwner/Update'),
-      headers: {
-        'Content-Type': 'application/json-patch+json',
-      },
+          'https://rescuecapstoneapi.azurewebsites.net/api/RescueVehicleOwner/Update'),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
       body: jsonEncode(requestBody),
     );
 

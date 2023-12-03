@@ -7,6 +7,7 @@ import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart'; // Import the intl package
@@ -29,6 +30,7 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
   String? _dropdownError;
   String? radioGroupValue;
   String? _bankNumber;
+  String? accessToken = GetStorage().read<String>("accessToken");
   List<BankingInfo> bankings =
       []; // Make sure to fetch or pass this data as required
   TextEditingController _amountController = TextEditingController();
@@ -139,10 +141,9 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
     print("Amount: $amount");
     try {
       final response = await http.post(
-        Uri.parse('$apiUrl'), // Replace with your actual API endpoint
-        headers: {
-          "Content-Type": "application/json",
-          // Add other headers if needed, like authorization headers
+        Uri.parse('$apiUrl'),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
         body: json.encode({
           "walletId": walletId,

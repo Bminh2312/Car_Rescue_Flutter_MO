@@ -442,7 +442,10 @@ class _ServiceBodyState extends State<ServiceBody>
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => OrderDetail(
-                                          orderId: order.id, techId: null),
+                                        orderId: order.id,
+                                        techId: null,
+                                        hasFailedStatus: false,
+                                      ),
                                     ),
                                   );
                                 } else if (order.technicianId == '') {
@@ -450,7 +453,10 @@ class _ServiceBodyState extends State<ServiceBody>
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => OrderDetail(
-                                          orderId: order.id, techId: ''),
+                                        orderId: order.id,
+                                        techId: '',
+                                        hasFailedStatus: false,
+                                      ),
                                     ),
                                   );
                                 } else {
@@ -458,8 +464,10 @@ class _ServiceBodyState extends State<ServiceBody>
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => OrderDetail(
-                                          orderId: order.id,
-                                          techId: order.technicianId),
+                                        orderId: order.id,
+                                        techId: order.technicianId,
+                                        hasFailedStatus: false,
+                                      ),
                                     ),
                                   );
                                 }

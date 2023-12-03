@@ -2,6 +2,7 @@ import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -54,6 +55,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   DateTime _birthday = DateTime(2000, 1, 1);
   bool _profileImageChanged = false;
   bool _isUpdating = false;
+  String? accessToken = GetStorage().read<String>("accessToken");
   @override
   void initState() {
     super.initState();
@@ -111,8 +113,9 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     final response = await http.put(
       Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Technician/Update'),
-      headers: {
-        'Content-Type': 'application/json-patch+json',
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
       },
       body: jsonEncode(requestBody),
     );

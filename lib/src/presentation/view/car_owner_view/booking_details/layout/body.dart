@@ -10,6 +10,7 @@ import 'package:CarRescue/src/presentation/view/car_owner_view/layout/selection_
 import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
 import 'package:dotted_line/dotted_line.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/booking.dart';
@@ -85,6 +86,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   NotifyMessage notifyMessage = NotifyMessage();
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   TextEditingController techNoteController = TextEditingController();
+  String? accessToken = GetStorage().read<String>("accessToken");
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
 
   Future<void> _loadPayment(String orderId) async {
@@ -149,7 +151,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
@@ -174,7 +180,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Service/Get?id=$serviceId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
@@ -195,7 +205,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     final String fetchCarUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Car/Get?id=$carId'; // Replace with your actual API endpoint for fetching car data
 
-    final response = await http.get(Uri.parse(fetchCarUrl));
+    final response =
+        await http.get(Uri.parse(fetchCarUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
     try {
       if (response.statusCode == 200) {
         Map<String, dynamic> data = json.decode(response.body);
@@ -650,7 +664,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         _buildInfoRow(
                             'Nội dung đánh giá',
                             Text(
-                              widget.booking.note ?? 'Không có',
+                              widget.booking.staffNote ?? 'Không có',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             )),
                     ],

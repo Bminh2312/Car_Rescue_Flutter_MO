@@ -6,6 +6,7 @@ import 'package:CarRescue/src/models/work_shift.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -28,6 +29,7 @@ class _CalendarViewState extends State<CalendarView> {
   CurrentWeek? _nextWeek;
   DateTime? _focusedDay = DateTime.now();
   bool isTrue = true;
+  String? accessToken = GetStorage().read<String>("accessToken");
   @override
   void initState() {
     super.initState();
@@ -559,10 +561,10 @@ class _CalendarViewState extends State<CalendarView> {
         "https://rescuecapstoneapi.azurewebsites.net/api/Schedule/CreateShiftForTechnician";
     try {
       final response = await http.post(
-        Uri.parse('$apiUrl'), // Replace with your actual API endpoint
-        headers: {
-          "Content-Type": "application/json",
-          // Add other headers if needed, like authorization headers
+        Uri.parse('$apiUrl'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
         body: json.encode({
           "technicianId": technicianId,
@@ -598,9 +600,9 @@ class _CalendarViewState extends State<CalendarView> {
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {
-          "Content-Type": "application/json",
-          // Add other headers if needed, like authorization headers
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
         body: json.encode({
           "id": id,
