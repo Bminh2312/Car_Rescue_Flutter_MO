@@ -1,6 +1,7 @@
 import 'dart:convert' as convert;
 import 'package:CarRescue/src/enviroment/env.dart';
 import 'package:CarRescue/src/models/service.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/models/order_booking.dart';
 
@@ -8,14 +9,17 @@ class ServiceProvider {
   final String apiUrl = Environment.API_URL + 'api/Service/GetAll';
 
   final String apiUrlGetAllServiceById = Environment.API_URL + '/api/Service/Get';
-
+String? accessToken = GetStorage().read<String>("accessToken");
   Future<List<Service>> getServiceById(List<String> idService) async {
   final List<Service> serviceList = [];
 
   for (String id in idService) {
   final String apiUrl = '${apiUrlGetAllServiceById}?id=$id';
   try {
-    final response = await http.get(Uri.parse(apiUrl));
+    final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        });
 
     if (response.statusCode == 200) {
       final dynamic jsonData = convert.json.decode(response.body);
@@ -41,7 +45,10 @@ class ServiceProvider {
 
   Future<List<Service>> getAllServicesFixing() async {
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = convert.jsonDecode(response.body);
@@ -64,7 +71,10 @@ class ServiceProvider {
 
   Future<List<Service>> getAllServicesTowing() async {
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = convert.jsonDecode(response.body);

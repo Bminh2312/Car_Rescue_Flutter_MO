@@ -8,6 +8,7 @@ import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/car_view/car_view.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
@@ -45,6 +46,7 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
   String _vinNumber = '';
   String _selectedType = '';
   String _color = '';
+  String? accessToken = GetStorage().read<String>("accessToken");
   String id = '2159f9ad-9a4e-4128-9914-5d12d5924184';
   int _manufacturingYear = 0;
   bool _isLoading = false;
@@ -101,8 +103,10 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
     // Make the API call
     var response = await http.put(
       Uri.parse(
-          'https://rescuecapstoneapi.azurewebsites.net/api/Vehicle/UpdateApproval'),
-      headers: {"Content-Type": "application/json"},
+          'https://rescuecapstoneapi.azurewebsites.net/api/Vehicle/UpdateApproval'),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
       body: jsonEncode(payload),
     );
 

@@ -83,7 +83,6 @@ class _TechnicianLogInBodyState extends State<TechnicianLogInBody> {
                 onPressed: () async {
                   final token = await authService.getDeviceToken();
                   final result = await authService.login(
-
                       _emailController.text.toString(),
                       _passwordController.text.toString(),
                       token ?? '');
@@ -94,6 +93,7 @@ class _TechnicianLogInBodyState extends State<TechnicianLogInBody> {
                     box.write("role", result.role);
                     box.write("userId", result.userId);
                     box.write("accountId", result.accountId);
+                    box.write('accessToken', result.accessToken);
                     print(result.role);
                     Navigator.push(
                       context,
@@ -101,11 +101,9 @@ class _TechnicianLogInBodyState extends State<TechnicianLogInBody> {
                         builder: (context) => BottomNavBarTechView(
                           accountId: result.accountId,
                           userId: result.userId,
-                          
                         ),
                       ),
                     );
-
                   } else {
                     // Handle login failure or show an error message
                     setState(() {

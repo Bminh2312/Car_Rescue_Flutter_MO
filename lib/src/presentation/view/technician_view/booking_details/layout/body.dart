@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
+import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/map_tech_view.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/select_service.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/widgets/selection_location_widget.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
@@ -48,6 +52,7 @@ class BookingDetailsBody extends StatefulWidget {
 }
 
 class _BookingDetailsBodyState extends State<BookingDetailsBody> {
+  String? accessToken = GetStorage().read<String>("accessToken");
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   TextEditingController techNoteController = TextEditingController();
   TextEditingController quantityController = TextEditingController();
@@ -77,6 +82,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   int totalAmount = 0;
   final ScrollController _scrollController = ScrollController();
   double _savedScrollPosition = 0.0;
+  Timer? myTimer;
   @override
   void initState() {
     super.initState();
@@ -91,15 +97,77 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     fetchServiceData(widget.booking.id);
     selectedServices = [];
     availableServices = loadService();
-
+    _loadCreateLocation();
+    // _loadLocation();
+    print(widget.booking.status);
     // _imageUrls.clear();
+  }
+
+  Future<void> _loadCreateLocation() async {
+    try {
+      Position? currentPosition = await getCurrentLocation();
+      if (currentPosition != null) {
+        await AuthService().createLocation(
+          id: widget.booking.technicianId,
+          lat: '${currentPosition.latitude}',
+          long: '${currentPosition.longitude}',
+        );
+      }
+    } catch (e) {
+      print('Error in _loadcreateLocation: $e');
+    }
+  }
+
+  void loadUpdateLocation() async {
+    try {
+      Position? currentPosition = await getCurrentLocation();
+      if (currentPosition != null) {
+        await AuthService().updateLocation(
+          id: widget.booking.technicianId,
+          lat: '${currentPosition.latitude}',
+          long: '${currentPosition.longitude}',
+        );
+        print(currentPosition);
+      }
+    } catch (error) {
+      print('Error loading updateLocation: $error');
+    }
+  }
+
+  Future<Position?> getCurrentLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        // Request location permission from the user
+        permission = await Geolocator.requestPermission();
+        if (permission != LocationPermission.whileInUse &&
+            permission != LocationPermission.always) {
+          // Handle the case where the user denied location permission
+          print("User denied location permission");
+          return null;
+        }
+      }
+
+      // Get the current location
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      return position;
+    } catch (e) {
+      print("Error getting current location: $e");
+      return null;
+    }
   }
 
   Future<void> deleteServiceInOrder(String id) async {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Order/DeleteOrderDetail?id=$id';
 
-    final response = await http.put(Uri.parse(apiUrl));
+    final response =
+        await http.put(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
     print(response.statusCode);
     try {
       if (response.statusCode == 201) {
@@ -145,9 +213,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         "https://rescuecapstoneapi.azurewebsites.net/api/Order/ManagerUpdateService"; // Replace with your endpoint URL
 
     final response = await http.post(Uri.parse(apiUrl),
-        headers: {
-          "Content-Type": "application/json",
-          // Add other headers if needed, like authorization headers
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
         body: json.encode({
           'orderDetailId': orderDetailId,
@@ -284,7 +352,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
@@ -309,7 +381,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Service/Get?id=$serviceId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
@@ -330,7 +406,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     final String fetchCarUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Car/Get?id=$carId'; // Replace with your actual API endpoint for fetching car data
 
-    final response = await http.get(Uri.parse(fetchCarUrl));
+    final response =
+        await http.get(Uri.parse(fetchCarUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
     try {
       if (response.statusCode == 200) {
         Map<String, dynamic> data = json.decode(response.body);
@@ -999,91 +1079,93 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         ),
                         isLoading: localIsLoading,
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.remove),
-                                onPressed: () async {
-                                  if (quantity > 1) {
-                                    setState(() {
-                                      localIsLoading = true;
-                                    });
-                                    await _updateOrderDetails(
-                                      orderDetail,
-                                      quantity - 1,
-                                      price,
-                                      (loading) {
-                                        setState(() {
-                                          localIsLoading = loading;
-                                        });
+                      widget.booking.status.toUpperCase() != 'COMPLETED'
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(Icons.remove),
+                                      onPressed: () async {
+                                        if (quantity > 1) {
+                                          setState(() {
+                                            localIsLoading = true;
+                                          });
+                                          await _updateOrderDetails(
+                                            orderDetail,
+                                            quantity - 1,
+                                            price,
+                                            (loading) {
+                                              setState(() {
+                                                localIsLoading = loading;
+                                              });
+                                            },
+                                          );
+                                          await _delayedLoadPayment();
+                                        }
                                       },
-                                    );
-                                    await _delayedLoadPayment();
-                                  }
-                                },
-                              ),
-                              SizedBox(
-                                width: 10,
-                              ),
-                              SizedBox(
-                                width: 50,
-                                height: 32,
-                                child: TextFormField(
-                                  textAlign: TextAlign.center,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  controller: quantityController,
-                                  onChanged: (value) {
-                                    quantity = int.tryParse(value) ?? 0;
-                                  },
-                                  onEditingComplete: () async {
-                                    setState(() {
-                                      localIsLoading = true;
-                                    });
-                                    await _updateOrderDetails(
-                                      orderDetail,
-                                      quantity,
-                                      price,
-                                      (loading) {
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    SizedBox(
+                                      width: 50,
+                                      height: 32,
+                                      child: TextFormField(
+                                        textAlign: TextAlign.center,
+                                        decoration: InputDecoration(
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        controller: quantityController,
+                                        onChanged: (value) {
+                                          quantity = int.tryParse(value) ?? 0;
+                                        },
+                                        onEditingComplete: () async {
+                                          setState(() {
+                                            localIsLoading = true;
+                                          });
+                                          await _updateOrderDetails(
+                                            orderDetail,
+                                            quantity,
+                                            price,
+                                            (loading) {
+                                              setState(() {
+                                                localIsLoading = loading;
+                                              });
+                                            },
+                                          );
+                                          await _delayedLoadPayment();
+                                        },
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    IconButton(
+                                      icon: Icon(Icons.add),
+                                      onPressed: () async {
                                         setState(() {
-                                          localIsLoading = loading;
+                                          localIsLoading = true;
                                         });
+                                        await _updateOrderDetails(
+                                          orderDetail,
+                                          quantity + 1,
+                                          price,
+                                          (loading) {
+                                            setState(() {
+                                              localIsLoading = loading;
+                                            });
+                                          },
+                                        );
+                                        await _delayedLoadPayment();
                                       },
-                                    );
-                                    await _delayedLoadPayment();
-                                  },
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              SizedBox(
-                                width: 10,
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.add),
-                                onPressed: () async {
-                                  setState(() {
-                                    localIsLoading = true;
-                                  });
-                                  await _updateOrderDetails(
-                                    orderDetail,
-                                    quantity + 1,
-                                    price,
-                                    (loading) {
-                                      setState(() {
-                                        localIsLoading = loading;
-                                      });
-                                    },
-                                  );
-                                  await _delayedLoadPayment();
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                              ],
+                            )
+                          : SizedBox.shrink()
                     ],
                   ),
                 ),
@@ -1295,17 +1377,46 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 color: Colors.white,
                 child: Column(
                   children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildSectionTitle("Khách hàng"),
+                        InkWell(
+                          onTap: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => MapTechScreen(
+                                  cus: customerInfo!,
+                                  booking: widget.booking,
+                                  techImg: technicianInfo?.avatar ?? '',
+                                  techId: technicianInfo?.id ?? '',
+                                ),
+                              ),
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              // Add your section title
+                              Image.asset('assets/icons/location.png')
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
                     CustomerInfoRow(
                       name: customerInfo?.fullname ?? '',
                       phone: customerInfo?.phone ?? '',
-                      avatar: customerInfo?.avatar ?? '',
+                      avatar: customerInfo?.avatar ??
+                          'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/images%2Favatars-2.png?alt=media&token=ebea458f-13c0-4c20-9d52-15eca7f652ac',
                     ),
                     if (customerInfo?.fullname != 'Khách Hàng Offline')
                       CustomerCarInfoRow(
                         manufacturer: _car?.manufacturer ?? 'Không có',
                         type: _carModel?.model1 ?? 'Không có',
                         licensePlate: _car?.licensePlate ?? 'Không có',
-                        image: _car?.image ?? 'Không có',
+                        image: _car?.image ??
+                            'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/images%2Favatars-2.png?alt=media&token=ebea458f-13c0-4c20-9d52-15eca7f652ac',
                       ),
                   ],
                 ),
@@ -1557,7 +1668,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [SizedBox()],
                       ),
-                      buildServiceList(context),
+                      if (widget.booking.status != 'COMPLETED')
+                        buildServiceList(context),
                     ],
                   ),
                 ),
@@ -1572,9 +1684,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       children: [
                         _buildPaymentMethod(
                           _payment?.method ?? '',
-                          NumberFormat('#,##0₫', 'vi_VN')
-                              .format(_payment?.amount ?? ''),
-                        ),
+                          currencyFormat.format(_payment?.amount ?? 0),
+                        )
                       ],
                     ),
                   ],

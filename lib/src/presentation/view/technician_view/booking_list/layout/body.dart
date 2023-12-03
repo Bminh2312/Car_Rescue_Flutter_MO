@@ -13,6 +13,7 @@ import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/booking_details_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:geocoding/geocoding.dart'; // Import the geocoding package
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -41,6 +42,7 @@ class BookingListBody extends StatefulWidget {
 }
 
 class _BookingListBodyState extends State<BookingListBody> {
+  String? accessToken = GetStorage().read<String>("accessToken");
   List<Booking> waitingBookings = [];
   List<Booking> inprogressBookings = [];
   List<Booking> assignedBookings = [];
@@ -83,7 +85,11 @@ class _BookingListBodyState extends State<BookingListBody> {
         'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
 
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
       print(response.statusCode);
 
       if (response.statusCode == 200) {
@@ -266,7 +272,7 @@ class _BookingListBodyState extends State<BookingListBody> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         body: Column(
           children: [

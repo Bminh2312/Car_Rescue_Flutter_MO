@@ -9,6 +9,7 @@ import 'package:CarRescue/src/models/work_shift.dart';
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/models/wallet.dart';
 import 'package:CarRescue/src/models/banking_info.dart';
+import 'package:get_storage/get_storage.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:geocoding/geocoding.dart';
@@ -24,18 +25,24 @@ class LoginResult {
   final String fullname;
   final String? avatar;
   final String role;
+  final String accessToken;
   LoginResult({
     required this.userId,
     required this.accountId,
     required this.fullname,
     required this.avatar,
     required this.role,
+    required this.accessToken,
   });
 }
 
 final String apiKey1 = 'AIzaSyDOI-u7wGzGG27hUGCO3z7MR8MIVsvJ2jg';
+final String fcmToken =
+    'eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTUxMiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6IlRlY2huaWNpYW5AZ21haWwuY29tIiwiQWNjb3VudElEIjoiZGQyZjFhMjAtNTc2OS00MDUyLTg1MTktOTIyYmZkYzk5NWViIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiVGVjaG5pY2lhbiIsImV4cCI6MTcwMTYwNTIyOH0.OaLPzJzbtudoQYRPwlEjG1WEUGVPVc6lFZa2xoxxlCEGyoCvrKGckemMvceeMgtPwffbDy-MJcROKs3ad78nhw';
 
 class AuthService {
+  String? accessToken = GetStorage().read<String>("accessToken");
+
   //TECHNICIAN API
   Future<LoginResult?> login(
       String email, String password, String deviceToken) async {
@@ -48,14 +55,17 @@ class AuthService {
             {'email': email, 'password': password, 'devicetoken': deviceToken}),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken',
         },
       );
+      print('zzzz: $accessToken');
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
 
         if (data['status'] == 200) {
           final technician = data['data']['technician'];
           final role = data['data']['role'];
+          final accessToken = data['data']['accessToken'];
           if (technician != null) {
             final userId = technician['id'];
             final accountId = technician['accountId'];
@@ -76,7 +86,8 @@ class AuthService {
                 accountId: accountId,
                 fullname: fullname,
                 avatar: avatar,
-                role: role);
+                role: role,
+                accessToken: accessToken);
           }
         } else {
           return null; // Return null for failed login (adjust as needed)
@@ -96,7 +107,11 @@ class AuthService {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://rescuecapstoneapi.azurewebsites.net/api/Technician/Get?id=$userId'), // Replace with your actual API endpoint
+            'https://rescuecapstoneapi.azurewebsites.net/api/Technician/Get?id=$userId'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        }, // Replace with your actual API endpoint
       );
 
       if (response.statusCode == 200) {
@@ -116,7 +131,13 @@ class AuthService {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetOrdersOfTechnician?id=$userId');
-      final response = await http.get(apiUrl);
+      final response = await http.get(
+        apiUrl,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
+      );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -155,6 +176,7 @@ class AuthService {
             {'email': email, 'password': password, 'deviceToken': deviceToken}),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
       );
       if (response.statusCode == 200) {
@@ -163,6 +185,7 @@ class AuthService {
         if (data['status'] == 200) {
           final rescueVehicleOwner = data['data']['rescueVehicleOwner'];
           final role = data['data']['role'];
+          final accessToken = data['data']['accessToken'];
           if (rescueVehicleOwner != null) {
             final rescueVehicleOwnerId = rescueVehicleOwner['id'];
             final accountId = rescueVehicleOwner['accountId'];
@@ -175,7 +198,8 @@ class AuthService {
                 accountId: accountId,
                 fullname: fullname,
                 avatar: avatar,
-                role: role);
+                role: role,
+                accessToken: accessToken);
           }
         } else {
           return null; // Return null for failed login (adjust as needed)
@@ -196,7 +220,11 @@ class AuthService {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://rescuecapstoneapi.azurewebsites.net/api/RescueVehicleOwner/Get?id=$userId'), // Replace with your actual API endpoint
+            'https://rescuecapstoneapi.azurewebsites.net/api/RescueVehicleOwner/Get?id=$userId'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        }, // Replace with your actual API endpoint
       );
 
       if (response.statusCode == 200) {
@@ -216,7 +244,13 @@ class AuthService {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetOrdersOfRVO?id=$userId');
-      final response = await http.get(apiUrl);
+      final response = await http.get(
+        apiUrl,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
+      );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -247,7 +281,13 @@ class AuthService {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetOrder?id=$orderId');
-      final response = await http.get(apiUrl);
+      final response = await http.get(
+        apiUrl,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
+      );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -270,7 +310,10 @@ class AuthService {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetAllOrderCompletedOfRVO?id=$userId');
-      final response = await http.get(apiUrl);
+      final response = await http.get(apiUrl, headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -296,7 +339,10 @@ class AuthService {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetAllOrderCancelledOfRVO?id=$userId');
-      final response = await http.get(apiUrl);
+      final response = await http.get(apiUrl, headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -322,7 +368,10 @@ class AuthService {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetAllOrderAssigningOfRVO?id=$userId');
-      final response = await http.get(apiUrl);
+      final response = await http.get(apiUrl, headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -348,7 +397,10 @@ class AuthService {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetAllOrderAssignedOfRVO?id=$userId');
-      final response = await http.get(apiUrl);
+      final response = await http.get(apiUrl, headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -374,7 +426,10 @@ class AuthService {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetAllOrderInprogressOfTech?id=$userId');
-      final response = await http.get(apiUrl);
+      final response = await http.get(apiUrl, headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -400,7 +455,10 @@ class AuthService {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetAllOrderAssignedOfTech?id=$userId');
-      final response = await http.get(apiUrl);
+      final response = await http.get(apiUrl, headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -426,7 +484,10 @@ class AuthService {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetAllOrderCompletedOfTech?id=$userId');
-      final response = await http.get(apiUrl);
+      final response = await http.get(apiUrl, headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -453,7 +514,10 @@ class AuthService {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetAllOrderCancelledOfTech?id=$userId');
-      final response = await http.get(apiUrl);
+      final response = await http.get(apiUrl, headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -480,7 +544,10 @@ class AuthService {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetAllOrderInprogressOfRVO?id=$userId');
-      final response = await http.get(apiUrl);
+      final response = await http.get(apiUrl, headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -506,7 +573,10 @@ class AuthService {
     try {
       final apiUrl = Uri.parse(
           'https://rescuecapstoneapi.azurewebsites.net/api/Vehicle/Get?id=$vehicleId');
-      final response = await http.get(apiUrl);
+      final response = await http.get(apiUrl, headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -517,7 +587,7 @@ class AuthService {
 
           // Create a VehicleInfo object from the JSON data
           final Vehicle vehicleInfo = Vehicle.fromJson(data);
-          print('day la ${vehicleInfo}');
+
           return vehicleInfo;
         } else {
           throw Exception('Vehicle info not found');
@@ -791,12 +861,15 @@ class AuthService {
   Future<Map<String, dynamic>?> fetchCustomerInfo(String customerId) async {
     try {
       final response = await http.get(
-        Uri.parse(
-            'https://rescuecapstoneapi.azurewebsites.net/api/Customer/Get?id=$customerId'), // Replace with your actual API endpoint
-      );
+          Uri.parse(
+              'https://rescuecapstoneapi.azurewebsites.net/api/Customer/Get?id=$customerId'),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer $accessToken'
+          } // Replace with your actual API endpoint
+          );
 
       if (response.statusCode == 200) {
-        print(response.statusCode);
         return json.decode(response.body);
       } else {
         // Handle non-200 status code when fetching the user profile
@@ -863,9 +936,9 @@ class AuthService {
 
     final response = await http.post(
       Uri.parse(apiUrl),
-      headers: {
-        "Content-Type": "application/json",
-        // Add other headers if needed, like authorization headers
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
       },
       body: json.encode({
         'id': id,
@@ -973,9 +1046,9 @@ class AuthService {
 
     final response = await http.post(
       Uri.parse(apiUrl),
-      headers: {
-        "Content-Type": "application/json",
-        // Add other headers if needed, like authorization headers
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
       },
       body: json.encode({'id': orderId, 'decision': decision}),
     );
@@ -995,9 +1068,9 @@ class AuthService {
 
     final response = await http.post(
       Uri.parse(apiUrl),
-      headers: {
-        "Content-Type": "application/json",
-        // Add other headers if needed, like authorization headers
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
       },
       body: json.encode({'id': orderId}),
     );
@@ -1017,9 +1090,9 @@ class AuthService {
 
     final response = await http.post(
       Uri.parse(apiUrl),
-      headers: {
-        "Content-Type": "application/json",
-        // Add other headers if needed, like authorization headers
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
       },
       body: json.encode({'id': orderId}),
     );
@@ -1045,7 +1118,11 @@ class AuthService {
         "https://rescuecapstoneapi.azurewebsites.net/api/Feedback/GetFeedbacksOfRVO?id=$userId"; // Your API endpoint
 
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         var jsonResponse = json.decode(response.body);
@@ -1077,7 +1154,11 @@ class AuthService {
         "https://rescuecapstoneapi.azurewebsites.net/api/Feedback/GetFeedbacksOfRVO?id=$userId"; // Replace with your API endpoint
 
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         var jsonResponse = json.decode(response.body);
@@ -1101,7 +1182,11 @@ class AuthService {
         "https://rescuecapstoneapi.azurewebsites.net/api/Feedback/GetFeedbacksOfTeachnician?id=$userId"; // Your API endpoint
 
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         var jsonResponse = json.decode(response.body);
@@ -1133,7 +1218,11 @@ class AuthService {
         "https://rescuecapstoneapi.azurewebsites.net/api/Feedback/GetFeedbacksOfTeachnician?id=$userId"; // Replace with your API endpoint
 
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         var jsonResponse = json.decode(response.body);
@@ -1155,7 +1244,11 @@ class AuthService {
     final String apiUrl =
         "https://rescuecapstoneapi.azurewebsites.net/api/Order/GetImagesOfOrder?id=$orderId";
     // Make the HTTP GET request to the API
-    final response = await http.get(Uri.parse(apiUrl));
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     // Check if the response is successful
     if (response.statusCode == 200) {
@@ -1190,7 +1283,11 @@ class AuthService {
 
     try {
       // Make the HTTP GET request to the API
-      final response = await http.get(Uri.parse(apiUrl));
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       // Check if the response is successful
       if (response.statusCode == 200) {
@@ -1213,7 +1310,11 @@ class AuthService {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Schedule/GetWeeklyShiftOfTechnician?id=$weekId&techID=$techId';
     try {
-      final response = await http.post(Uri.parse(apiUrl));
+      final response =
+          await http.post(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -1234,7 +1335,11 @@ class AuthService {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Schedule/GetWeeklyShiftOfRVO?id=$weekId&rvoId=$rvoId';
     try {
-      final response = await http.post(Uri.parse(apiUrl));
+      final response =
+          await http.post(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
       print('${response.body}');
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -1254,7 +1359,11 @@ class AuthService {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Schedule/GetWorkWeeks';
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
       print(response.body);
 
       if (response.statusCode == 200) {
@@ -1279,7 +1388,11 @@ class AuthService {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Schedule/GetWorkWeeksByStartDate?startdate=$startDate';
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
       print(response.body);
 
       if (response.statusCode == 200) {
@@ -1304,7 +1417,11 @@ class AuthService {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Wallet/GetWalletOfRVO?id=$userId';
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
       print(response.body);
       print(response.statusCode);
       if (response.statusCode == 200) {
@@ -1327,7 +1444,11 @@ class AuthService {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Transaction/GetTransactionOfWallet?id=$walletId';
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
       print(response.body);
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
@@ -1349,7 +1470,11 @@ class AuthService {
   Future<List<BankingInfo>> getBankingInfo() async {
     final String apiUrl = 'https://api.vietqr.io/v2/banks';
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
       print(response.body);
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
@@ -1373,9 +1498,9 @@ class AuthService {
 
     final response = await http.post(
       Uri.parse(apiUrl),
-      headers: {
-        "Content-Type": "application/json",
-        // Add other headers if needed, like authorization headers
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
       },
       body: json.encode({'id': orderId, 'decision': decision}),
     );
@@ -1394,7 +1519,11 @@ class AuthService {
         'https://rescuecapstoneapi.azurewebsites.net/api/Model/Get?id=$modelId';
 
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         Map<String, dynamic> data = json.decode(response.body);
@@ -1409,6 +1538,56 @@ class AuthService {
       print('Error fetching or parsing CarModel: $e');
       throw Exception('Error fetching or parsing CarModel: $e');
     }
+  }
+
+  Future<Map<String, double>> getLiveLocation(String techId) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Location/GetLocation?id=$techId';
+
+    try {
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
+      print('codew real :${response.statusCode}');
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = json.decode(response.body);
+        var dataField = data['data'];
+
+        print('day la1: $dataField');
+        if (dataField != null && dataField is Map<String, dynamic>) {
+          // Parse the "body" string as JSON
+          Map<String, dynamic> bodyData = json.decode(dataField['body']);
+          print(json.decode(dataField['body']));
+          // Access "Lat" and "Long"
+          double lat = double.parse(bodyData['Lat']);
+          double long = double.parse(bodyData['Long']);
+
+          print('Latitude: $lat, Longitude: $long');
+
+          // Return the latitude and longitude as a Map
+          return {'lat': lat, 'long': long};
+        } else {
+          print('Invalid or missing "data" field in the API response.');
+        }
+      } else {
+        throw Exception('Failed to load data from API: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (e is http.ClientException) {
+        print('Error fetching data: ${e.message}');
+      } else if (e is http.Response) {
+        print('Error in HTTP request. Status code: ${e.statusCode}');
+        print('Response body: ${e.body}');
+      } else {
+        print('Error fetching or parsing data: $e');
+      }
+      throw Exception('Error fetching or parsing data: $e');
+    }
+
+    // Return an empty Map in case of an error
+    return {};
   }
 
   Future<void> sendNotification({
@@ -1430,8 +1609,9 @@ class AuthService {
     try {
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json',
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
         body: json.encode(payload),
       );
@@ -1444,6 +1624,66 @@ class AuthService {
       }
     } catch (error) {
       print('Error sending notification: $error');
+    }
+  }
+
+  Future<void> createLocation({
+    required String id,
+    required String lat,
+    required String long,
+  }) async {
+    final url = Uri.parse(
+        'https://rescuecapstoneapi.azurewebsites.net/api/Location/Create');
+
+    final payload = {'id': id, 'lat': lat, 'long': long};
+    print(payload);
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
+        body: json.encode(payload),
+      );
+      print(response.statusCode);
+      if (response.statusCode == 200) {
+        print('Create location successfully');
+      } else {
+        print('Failed to create location. Status code: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error to create location: $error');
+    }
+  }
+
+  Future<void> updateLocation({
+    required String id,
+    required String lat,
+    required String long,
+  }) async {
+    final url = Uri.parse(
+        'https://rescuecapstoneapi.azurewebsites.net/api/Location/Update');
+
+    final payload = {'id': id, 'lat': lat, 'long': long};
+    print(payload);
+    try {
+      final response = await http.put(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
+        body: json.encode(payload),
+      );
+      print(response.statusCode);
+      if (response.statusCode == 200) {
+        print('Update location successfully');
+      } else {
+        print('Failed to update location. Status code: ${response.statusCode}');
+      }
+    } catch (error) {
+      print('Error to update location: $error');
     }
   }
 }

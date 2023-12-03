@@ -2,6 +2,7 @@ import 'dart:convert' as convert;
 import 'dart:convert';
 import 'package:CarRescue/src/enviroment/env.dart';
 import 'package:CarRescue/src/models/order.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/models/order_booking.dart';
 
@@ -24,7 +25,7 @@ class OrderProvider {
   final String apiUrlEndOrder = Environment.API_URL + 'api/Order/EndOrder';
   final String apiUrlUpdateOrderForTech =
       Environment.API_URL + 'api/Order/UpdateOrderForTeachnician';
-
+String? accessToken = GetStorage().read<String>("accessToken");
   Future<int?> createOrderFixing(OrderBookServiceFixing order) async {
     try {
       final String orderJson = convert.jsonEncode(order.toJson());
@@ -34,6 +35,7 @@ class OrderProvider {
         Uri.parse(apiUrlCreateFixing),
         headers: <String, String>{
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken'
         },
         body: orderJson,
       );
@@ -65,6 +67,7 @@ class OrderProvider {
         Uri.parse(apiUrlCancelOrder),
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken'
         },
         body: convert.jsonEncode(requestBody),
       );
@@ -92,6 +95,7 @@ class OrderProvider {
         Uri.parse(apiUrlCreateTowing),
         headers: <String, String>{
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken'
         },
         body: orderJson,
       );
@@ -141,7 +145,10 @@ class OrderProvider {
   Future<List<Order>> getAllOrders(String id) async {
   try {
     final response =
-        await http.get(Uri.parse("${apiUrlGetAllOfCustomer}?id=${id}"));
+        await http.get(Uri.parse("${apiUrlGetAllOfCustomer}?id=${id}"),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        });
     if (response.statusCode == 200) {
       final dynamic data = convert.json.decode(response.body);
 
@@ -172,7 +179,10 @@ class OrderProvider {
   Future<Order> getOrderDetail(String id) async {
     try {
       final response =
-          await http.get(Uri.parse("${apiUrlGetOrderDetail}?id=${id}"));
+          await http.get(Uri.parse("${apiUrlGetOrderDetail}?id=${id}"),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        });
       print(response.body); // Add this line for debugging
       if (response.statusCode == 200) {
         final dynamic data = convert.json.decode(response.body);
@@ -204,6 +214,7 @@ class OrderProvider {
         Uri.parse('$apiUrlGetImage?id=$orderId'),
         headers: {
           'accept': '*/*',
+          'Authorization': 'Bearer $accessToken'
         },
       );
 
@@ -232,7 +243,10 @@ class OrderProvider {
   Future<List<String>> getServiceIdInOrderDetails(String orderId) async {
     final String apiUrl = '${apiUrlGetOrderDetails}?id=$orderId';
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData =
@@ -302,7 +316,7 @@ class OrderProvider {
     try {
       final response = await http.post(
         Uri.parse('$apiUrl?id=$orderId'),
-        headers: {'accept': '*'},
+        headers: {'accept': '*','Authorization': 'Bearer $accessToken'},
       );
 
       if (response.statusCode == 201) {
@@ -327,6 +341,7 @@ class OrderProvider {
       Uri.parse(apiUrl),
       headers: {
         "Content-Type": "application/json",
+        'Authorization': 'Bearer $accessToken'
         // Add other headers if needed, like authorization headers
       },
       body: json.encode({'id': orderId}),
@@ -361,7 +376,7 @@ class OrderProvider {
     };
     final response = await http.post(
       Uri.parse(apiUrl),
-      headers: {'Content-Type': 'application/json-patch+json'},
+      headers: {'Content-Type': 'application/json-patch+json','Authorization': 'Bearer $accessToken'},
       body: convert.json.encode(requestBody),
     );
 

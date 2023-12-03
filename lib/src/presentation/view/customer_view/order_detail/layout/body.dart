@@ -7,6 +7,7 @@ import 'package:CarRescue/src/models/vehicle_item.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/vehicle_info.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/feedback/layout/widgets/report_view.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/order_detail/widget/map_view.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/widgets/selection_location_widget.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
@@ -68,7 +69,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   int total = 300000;
   bool _isLoading = true;
   List<int> prices = [];
-
+  String? accessToken = GetStorage().read<String>("accessToken");
   List<String> _imageUrls = [];
   List<Map<String, dynamic>> orderDetails = [];
   num totalQuantity = 0;
@@ -83,7 +84,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
       _loadTechInfo(widget.techId ?? '');
     }
     _loadImageOrders(widget.orderId);
-    _calculateTotal(widget.orderId);
+    // _calculateTotal(widget.orderId);
     fetchFeedback(widget.orderId);
     fetchServiceData(widget.orderId);
     _orderFuture = fetchOrderDetail(widget.orderId).then((order) {
@@ -152,7 +153,11 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
     final String fetchCarUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Car/Get?id=$carId'; // Replace with your actual API endpoint for fetching car data
 
-    final response = await http.get(Uri.parse(fetchCarUrl));
+    final response =
+        await http.get(Uri.parse(fetchCarUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
     try {
       if (response.statusCode == 200) {
         Map<String, dynamic> data = json.decode(response.body);
@@ -225,7 +230,11 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
@@ -250,7 +259,11 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Service/Get?id=$serviceId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
@@ -323,16 +336,16 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
     }
   }
 
-  Future<void> _calculateTotal(String orderId) async {
-    total = 300000;
-    final List<Service> services = await _loadServicesOfCustomer(orderId);
-    for (var service in services) {
-      print("Price: ${service.price}");
-      setState(() {
-        total += service.price;
-      });
-    }
-  }
+  // Future<void> _calculateTotal(String orderId) async {
+  //   total = 300000;
+  //   final List<Service> services = await _loadServicesOfCustomer(orderId);
+  //   for (var service in services) {
+  //     print("Price: ${service.price}");
+  //     setState(() {
+  //       total += service.price;
+  //     });
+  //   }
+  // }
 
   Future<void> _loadImageOrders(String id) async {
     final orderProvider = OrderProvider();
@@ -544,15 +557,27 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // if (widget.techId != '' && widget.techId != null)
-
-                          // Use the 'order' object as needed
-
-                          // Example: Text(order.id),
-
-                          // if (widget.techId != '' && widget.techId != null)
-                          _buildSectionTitle("Khách hàng"),
-                          // if (widget.techId != '' && widget.techId != null)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildSectionTitle("Khách hàng"),
+                              InkWell(
+                                  onTap: () {
+                                    Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => MapScreen(
+                                                cus: customer,
+                                                booking: order,
+                                                techImg:
+                                                    technicianInfo?.avatar ??
+                                                        '',
+                                                techId:
+                                                    technicianInfo?.id ?? '')));
+                                  },
+                                  child: _buildSectionTitle('Theo dõi vị trí')),
+                            ],
+                          ),
                           if (_car != null)
                             CustomerCarInfoRow(
                               manufacturer: _car?.manufacturer ?? 'Không có',
@@ -1069,7 +1094,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                   print("Total:$totalAmount");
                   final formatter =
                       NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
-                  final formattedTotal = formatter.format(price);
+                  final formattedTotal = formatter.format(total);
                   if (widget.techId != null) {
                     prices.add(price);
                   }
@@ -1097,7 +1122,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             _buildPaymentMethod('Tổng cộng', ''),
-                            Text(currencyFormat.format(totalAmount),
+                            Text(currencyFormat.format(_payment?.amount),
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold, fontSize: 17)),
                           ],
@@ -1129,7 +1154,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildPaymentMethod('Tổng cộng', ''),
-              Text(currencyFormat.format(total),
+              Text(currencyFormat.format(_payment?.amount),
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
             ],
           ),

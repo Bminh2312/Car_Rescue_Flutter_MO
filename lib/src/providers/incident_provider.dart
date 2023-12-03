@@ -1,5 +1,6 @@
 import 'package:CarRescue/src/enviroment/env.dart';
 import 'package:CarRescue/src/models/incident.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 
@@ -7,7 +8,7 @@ import 'dart:convert' as convert;
 class IncidentProvider{
 
   final String apiCreateIncident = Environment.API_URL + "api/Incident/CreateIncident";
-
+String? accessToken = GetStorage().read<String>("accessToken");
   Future<int?> createIncident(Incident incident) async {
 
   try {
@@ -17,6 +18,7 @@ class IncidentProvider{
       headers: {
         'accept': '*/*',
         'Content-Type': 'application/json-patch+json',
+        'Authorization': 'Bearer $accessToken'
       },
       body: incidentBody,
     );
