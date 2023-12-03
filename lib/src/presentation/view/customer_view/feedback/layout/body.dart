@@ -94,7 +94,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     if (widget.techId != null) {
       _loadTechInfo(widget.techId!);
     }
-
     super.initState();
   }
 

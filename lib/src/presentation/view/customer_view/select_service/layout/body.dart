@@ -59,7 +59,7 @@ class _ServiceBodyState extends State<ServiceBody>
   void initState() {
     super.initState();
     getAllOrders("NEW");
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _pageController = PageController(initialPage: 0, viewportFraction: 0.8);
 
     // Set the timer to change the advertisement every 3 seconds
@@ -306,6 +306,7 @@ class _ServiceBodyState extends State<ServiceBody>
       child: TabBarView(
         controller: _tabController,
         children: [
+          buildOrders("ASSIGNED"),
           buildOrders("WAITING"),
           buildOrders("INPROGRESS"),
         ],
@@ -655,17 +656,24 @@ class _ServiceBodyState extends State<ServiceBody>
                               ),
                               TabBar(
                                 controller: _tabController,
+                                labelPadding: EdgeInsets.symmetric(horizontal: 0),
                                 tabs: [
                                   Tab(
                                     child: BookingStatus(
+                                      status: "ASSIGNED",
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  Tab(
+                                    child: BookingStatus(
                                       status: "WAITING",
-                                      fontSize: 16,
+                                      fontSize: 15,
                                     ),
                                   ),
                                   Tab(
                                     child: BookingStatus(
                                       status: "INPROGRESS",
-                                      fontSize: 16,
+                                      fontSize: 15,
                                     ),
                                   ),
                                 ],

@@ -598,7 +598,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
                         data: '',
                         payment: payments,
                         userId: '',
-                        booking: Booking(
+                        booking: Booking(indicentId: null,
                             carId: 'carId',
                             id: 'id',
                             customerId: 'customerId',

@@ -24,12 +24,14 @@ class LoginResult {
   final String fullname;
   final String? avatar;
   final String role;
+  final String accessToken;
   LoginResult({
     required this.userId,
     required this.accountId,
     required this.fullname,
     required this.avatar,
     required this.role,
+    required this.accessToken,
   });
 }
 
@@ -56,6 +58,7 @@ class AuthService {
         if (data['status'] == 200) {
           final technician = data['data']['technician'];
           final role = data['data']['role'];
+          final accessToken = data['data']['accessToken'];
           if (technician != null) {
             final userId = technician['id'];
             final accountId = technician['accountId'];
@@ -76,7 +79,8 @@ class AuthService {
                 accountId: accountId,
                 fullname: fullname,
                 avatar: avatar,
-                role: role);
+                role: role,
+                accessToken: accessToken);
           }
         } else {
           return null; // Return null for failed login (adjust as needed)
@@ -163,6 +167,7 @@ class AuthService {
         if (data['status'] == 200) {
           final rescueVehicleOwner = data['data']['rescueVehicleOwner'];
           final role = data['data']['role'];
+          final accessToken = data['data']['accessToken'];
           if (rescueVehicleOwner != null) {
             final rescueVehicleOwnerId = rescueVehicleOwner['id'];
             final accountId = rescueVehicleOwner['accountId'];
@@ -175,7 +180,8 @@ class AuthService {
                 accountId: accountId,
                 fullname: fullname,
                 avatar: avatar,
-                role: role);
+                role: role,
+                accessToken: accessToken);
           }
         } else {
           return null; // Return null for failed login (adjust as needed)

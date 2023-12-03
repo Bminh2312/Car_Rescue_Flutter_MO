@@ -2,6 +2,7 @@ import 'dart:convert' as convert;
 import 'dart:convert';
 import 'package:CarRescue/src/enviroment/env.dart';
 import 'package:CarRescue/src/models/order.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:CarRescue/src/models/order_booking.dart';
 
@@ -24,6 +25,10 @@ class OrderProvider {
   final String apiUrlEndOrder = Environment.API_URL + 'api/Order/EndOrder';
   final String apiUrlUpdateOrderForTech =
       Environment.API_URL + 'api/Order/UpdateOrderForTeachnician';
+  final String apiUrlChangeOrder =
+      Environment.API_URL + 'api/Order/ChangeRescueType';
+
+  String accessToken = GetStorage().read("accessToken");
 
   Future<int?> createOrderFixing(OrderBookServiceFixing order) async {
     try {
@@ -33,21 +38,24 @@ class OrderProvider {
       final response = await http.post(
         Uri.parse(apiUrlCreateFixing),
         headers: <String, String>{
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
         body: orderJson,
       );
 
+      var responseData = convert.json.decode(response.body);
+
       if (response.statusCode == 200) {
         print('Đơn hàng đã được tạo thành công');
-        return response.statusCode;
+        return responseData["status"];
       } else if (response.statusCode == 500) {
         print('External Error');
-        return response.statusCode;
+        return responseData["status"];
       } else {
         print('Đã xảy ra lỗi khi tạo đơn hàng. Mã lỗi: ${response.statusCode}');
         print('Đã xảy ra lỗi khi tạo đơn hàng. Body: ${response.body}');
-        return response.statusCode;
+        return responseData["status"];
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -63,8 +71,9 @@ class OrderProvider {
     try {
       final response = await http.post(
         Uri.parse(apiUrlCancelOrder),
-        headers: {
-          'Content-Type': 'application/json',
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
         body: convert.jsonEncode(requestBody),
       );
@@ -91,14 +100,15 @@ class OrderProvider {
       final response = await http.post(
         Uri.parse(apiUrlCreateTowing),
         headers: <String, String>{
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
         body: orderJson,
       );
-
+      var responseData = convert.json.decode(response.body);
       if (response.statusCode == 200) {
         print('Đơn hàng đã được tạo thành công');
-        return response.statusCode;
+        return responseData["status"];
       } else if (response.statusCode == 500) {
         print('External Error');
         return response.statusCode;
@@ -139,40 +149,49 @@ class OrderProvider {
   // }
 
   Future<List<Order>> getAllOrders(String id) async {
-  try {
-    final response =
-        await http.get(Uri.parse("${apiUrlGetAllOfCustomer}?id=${id}"));
-    if (response.statusCode == 200) {
-      final dynamic data = convert.json.decode(response.body);
+    try {
+      final response = await http.get(
+        Uri.parse("${apiUrlGetAllOfCustomer}?id=${id}"),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
+      );
+      if (response.statusCode == 200) {
+        final dynamic data = convert.json.decode(response.body);
 
-      if (data != null && data['data'] != null) {
-        final List<dynamic> orderData = data['data'];
-        List<Order> orders =
-            orderData.map((data) => Order.fromJson(data)).toList();
+        if (data != null && data['data'] != null) {
+          final List<dynamic> orderData = data['data'];
+          List<Order> orders =
+              orderData.map((data) => Order.fromJson(data)).toList();
 
-        // Sort orders by date in descending order (latest date first)
-        orders.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
+          // Sort orders by date in descending order (latest date first)
+          orders.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
 
-        return orders;
+          return orders;
+        } else {
+          // Handle empty or invalid response
+          throw Exception('Empty or invalid response data');
+        }
       } else {
-        // Handle empty or invalid response
-        throw Exception('Empty or invalid response data');
+        throw Exception('Failed to load orders');
       }
-    } else {
-      throw Exception('Failed to load orders');
+    } catch (e) {
+      // Handle other exceptions or errors
+      print('Error: $e');
+      throw e;
     }
-  } catch (e) {
-    // Handle other exceptions or errors
-    print('Error: $e');
-    throw e;
   }
-}
-
 
   Future<Order> getOrderDetail(String id) async {
     try {
-      final response =
-          await http.get(Uri.parse("${apiUrlGetOrderDetail}?id=${id}"));
+      final response = await http.get(
+        Uri.parse("${apiUrlGetOrderDetail}?id=${id}"),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
+      );
       print(response.body); // Add this line for debugging
       if (response.statusCode == 200) {
         final dynamic data = convert.json.decode(response.body);
@@ -202,8 +221,9 @@ class OrderProvider {
     try {
       final response = await http.get(
         Uri.parse('$apiUrlGetImage?id=$orderId'),
-        headers: {
-          'accept': '*/*',
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
       );
 
@@ -232,7 +252,13 @@ class OrderProvider {
   Future<List<String>> getServiceIdInOrderDetails(String orderId) async {
     final String apiUrl = '${apiUrlGetOrderDetails}?id=$orderId';
     try {
-      final response = await http.get(Uri.parse(apiUrl));
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
+      );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData =
@@ -302,7 +328,10 @@ class OrderProvider {
     try {
       final response = await http.post(
         Uri.parse('$apiUrl?id=$orderId'),
-        headers: {'accept': '*'},
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
       );
 
       if (response.statusCode == 201) {
@@ -325,9 +354,9 @@ class OrderProvider {
 
     final response = await http.post(
       Uri.parse(apiUrl),
-      headers: {
-        "Content-Type": "application/json",
-        // Add other headers if needed, like authorization headers
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
       },
       body: json.encode({'id': orderId}),
     );
@@ -361,7 +390,10 @@ class OrderProvider {
     };
     final response = await http.post(
       Uri.parse(apiUrl),
-      headers: {'Content-Type': 'application/json-patch+json'},
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      },
       body: convert.json.encode(requestBody),
     );
 
@@ -375,6 +407,63 @@ class OrderProvider {
       print('Lỗi khi cập nhật đơn hàng: ${response.statusCode}');
       print('Lỗi khi cập nhật đơn hàng: ${response.body}');
       return false;
+    }
+  }
+
+  Future<int?> changeRescueType(
+    String incidentID,
+    String orderID,
+    String symptomID,
+    String serviceID,
+    String departure,
+    String destination,
+    String paymentMethod,
+    String rescueType,
+    int distance,
+  ) async {
+    // Tạo một Map chứa dữ liệu của request
+    final Map<String, dynamic> requestData = {
+      "incidentID": incidentID,
+      "orderID": orderID,
+      "symptomID": symptomID,
+      "serviceID": serviceID,
+      "departure": departure,
+      "destination": destination,
+      "paymentMethod": paymentMethod,
+      "rescueType": rescueType,
+      "distance": distance,
+    };
+
+    // Chuyển Map thành chuỗi JSON
+    final String requestBody = convert.json.encode(requestData);
+
+    try {
+      // Gửi yêu cầu POST
+      final response = await http.post(
+        Uri.parse(apiUrlChangeOrder),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
+        body: requestBody,
+      );
+        var responseData = convert.json.decode(response.body);
+      // Kiểm tra mã trạng thái của phản hồi
+      if (response.statusCode == 200) {
+        // Xử lý dữ liệu phản hồi nếu cần
+        print('Request successful');
+        print('Response data: ${response.body}');
+        return responseData["status"];
+      } else {
+        // Xử lý lỗi nếu có
+        print('Error: ${response.statusCode}');
+        print('Error message: ${response.body}');
+        return responseData["status"];
+      }
+    } catch (error) {
+      // Xử lý lỗi nếu có lỗi trong quá trình gửi yêu cầu
+      print('Error: $error');
+      throw Exception('Error: $error');
     }
   }
 }

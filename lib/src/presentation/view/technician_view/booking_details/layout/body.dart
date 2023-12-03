@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:CarRescue/src/models/symptom.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
+import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/change_rescue_type.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/select_service.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/widgets/selection_location_widget.dart';
 import 'package:http/http.dart' as http;
@@ -60,6 +62,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   Payment? _payment;
   CustomerCar? _car;
   CarModel? _carModel;
+  Symptom? selectedSymptom;
   List<String> _imageUrls = [];
   List<String> pickedImages = [];
   List<String> _updateImage = [];
@@ -74,6 +77,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   int _quantity = 1;
   int totalQuantity = 0;
   int totalAmount = 0;
+  bool _isExpanded = false;
   @override
   void initState() {
     super.initState();
@@ -110,6 +114,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         _currentBooking = updatedBooking;
         _isLoading = false;
       });
+      if (_currentBooking != null) {
+      print('Booking ID: ${_currentBooking!.id}');
+      print('Booking Status: ${_currentBooking?.status ?? 'N/A'}');
+      // Access other properties in a similar way
+    } else {
+      print('The fetched booking is null.');
+    }
     } catch (e) {
       print('Error loading payment: $e');
     }
@@ -285,6 +296,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       } else {
         selectedServiceCards.remove(service);
         caculateTotal();
+      }
+    });
+  }
+
+  void onSymptomSelected(Symptom? symptom) {
+    setState(() {
+      selectedSymptom = symptom;
+      if (selectedSymptom != null) {
+        print('Selected Symptom ID: ${selectedSymptom!.id}');
       }
     });
   }
@@ -488,6 +508,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               ));
         });
   }
+
+  
 
   Future<void> updateOrder(
     String orderId,
@@ -985,17 +1007,18 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   children: [
                     Row(
                       children: [
-                        if(widget.booking.status == "ASSIGNED")
-                        IconButton(
-                          icon: Icon(Icons.remove),
-                          onPressed: () async {
-                            if (quantity > 1) {
-                              _updateOrderDetails(orderDetail, quantity - 1,
-                                  price, (loading) => _isLoading = loading);
-                              await _delayedLoadPayment();
-                            }
-                          },
-                        ),
+                        if (widget.booking.status == "ASSIGNED" ||
+                            widget.booking.status == "INPROGRESS")
+                          IconButton(
+                            icon: Icon(Icons.remove),
+                            onPressed: () async {
+                              if (quantity > 1) {
+                                _updateOrderDetails(orderDetail, quantity - 1,
+                                    price, (loading) => _isLoading = loading);
+                                await _delayedLoadPayment();
+                              }
+                            },
+                          ),
                         SizedBox(
                           width: 10,
                         ),
@@ -1023,15 +1046,16 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         SizedBox(
                           width: 10,
                         ),
-                        if(widget.booking.status == "ASSIGNED")
-                        IconButton(
-                          icon: Icon(Icons.add),
-                          onPressed: () async {
-                            _updateOrderDetails(orderDetail, quantity + 1,
-                                price, (loading) => _isLoading = loading);
-                            await _delayedLoadPayment();
-                          },
-                        ),
+                        if (widget.booking.status == "ASSIGNED" ||
+                            widget.booking.status == "INPROGRESS")
+                          IconButton(
+                            icon: Icon(Icons.add),
+                            onPressed: () async {
+                              _updateOrderDetails(orderDetail, quantity + 1,
+                                  price, (loading) => _isLoading = loading);
+                              await _delayedLoadPayment();
+                            },
+                          ),
                       ],
                     ),
                   ],
@@ -1423,40 +1447,72 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      List<Service> selectedServices = selectedServiceCards
-                          .where((service) =>
-                              selectedServiceCards.contains(service))
-                          .toList();
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ServiceSelectionScreen(
-                              selectedServices: selectedServices,
-                              booking: widget.booking,
-                              addressesDepart: widget.addressesDepart,
-                              subAddressesDepart: widget.subAddressesDepart,
-                              addressesDesti: widget.addressesDesti,
-                              subAddressesDesti: widget.subAddressesDesti,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      GestureDetector(
+                      onTap: () {
+                        List<Service> selectedServices = selectedServiceCards
+                            .where((service) =>
+                                selectedServiceCards.contains(service))
+                            .toList();
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ServiceSelectionScreen(
+                                selectedServices: selectedServices,
+                                booking: widget.booking,
+                                addressesDepart: widget.addressesDepart,
+                                subAddressesDepart: widget.subAddressesDepart,
+                                addressesDesti: widget.addressesDesti,
+                                subAddressesDesti: widget.subAddressesDesti,
+                              ),
+                            ));
+                      },
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        color: Colors.white,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [SizedBox()],
                             ),
-                          ));
-                    },
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      color: Colors.white,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [SizedBox()],
-                          ),
-                          buildServiceList(context),
-                        ],
+                            buildServiceList(context,"Chọn dịch vụ",Icon(Icons.add_box)),
+                          ],
+                        ),
                       ),
                     ),
+                    GestureDetector(
+                      onTap: () {
+                        print("IncidentID: ${widget.booking.indicentId}");
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => 
+                              ChangeRescueScreen(
+                                incidentId: widget.booking.indicentId ?? '',departure: widget.booking.departure,paymentMethod:_payment?.method ?? '' ,rescueType: "Towing", orderId: widget.booking.id,),
+                            ));
+                      },
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        color: Colors.white,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [SizedBox()],
+                            ),
+                            buildServiceList(context, "Chuyển đơn", Icon(Icons.next_plan)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    ]
                   ),
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1478,6 +1534,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   ),
                   // if (widget.booking.status == "ASSIGNED") _slider(true),
                   if (widget.booking.status == "INPROGRESS") _slider(false),
+
                   if (widget.booking.status == "ASSIGNED")
                     Center(
                       child: Row(
@@ -1485,7 +1542,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         children: <Widget>[
                           SizedBox(width: 24.0),
                           AppButton(
-                              onPressed: () async {
+                              onPressed: () async { 
                                 setState(() {
                                   _isLoading = true;
                                 });
@@ -1531,7 +1588,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           );
   }
 
-  Widget buildServiceList(BuildContext context) {
+  Widget buildServiceList(BuildContext context, String content, Icon icon) {
     return Container(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1539,10 +1596,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.add_box), // Biểu tượng dấu '+'
+              icon, // Biểu tượng dấu '+'
               SizedBox(width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
               Text(
-                'Chọn dịch vụ', // Văn bản bên cạnh biểu tượng
+                content, // Văn bản bên cạnh biểu tượng
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16, // Kích thước văn bản
@@ -1581,7 +1638,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         onSelected: (isSelected) {
                           updateSelectedServices(service, isSelected);
                         },
-                        isSelected: isSelected, rescueType: '',
+                        isSelected: isSelected,
+                        rescueType: '',
                       );
                     },
                   );
