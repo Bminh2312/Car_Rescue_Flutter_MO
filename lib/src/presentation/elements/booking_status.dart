@@ -19,6 +19,14 @@ class BookingStatus extends StatelessWidget {
           fontSize: fontSize,
         );
         break;
+      case 'waiting':
+        statusColor = Color.fromARGB(255, 222, 235, 246);
+        statusTextStyle = TextStyle(
+          color: Color.fromARGB(255, 0, 36, 114),
+          fontWeight: FontWeight.bold,
+          fontSize: fontSize,
+        );
+        break;
       case 'assigned':
         statusColor = Color(0xffc9e5fb);
         statusTextStyle = TextStyle(
@@ -101,7 +109,8 @@ class BookingStatus extends StatelessWidget {
         case 'FAILD':
           return 'Thất bại';
         case 'WAITING':
-          return 'Chờ duyệt';
+
+          return 'Chờ chấp nhận';
         default:
           return '';
       }

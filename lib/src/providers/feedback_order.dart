@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 
 class FeedBackProvider {
+  String? accessToken = GetStorage().read<String>("accessToken");
   final String apiUrlCreateFeedBack =
       Environment.API_URL + 'api/Feedback/Update';
 
@@ -19,12 +20,12 @@ class FeedBackProvider {
   Future<FeedbackCustomer> getFeedbackOfOrder(String orderId) async {
     final Uri url = Uri.parse('$apiUrlGetFeedBackOfOrder?id=${orderId}');
     final response = await http.get(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $accessToken'
-      },
-    );
+
+      url,headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        });
+
 
     if (response.statusCode == 200) {
       // If the server returns a 200 OK response, parse the JSON

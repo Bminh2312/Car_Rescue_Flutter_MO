@@ -9,17 +9,21 @@ class IncidentProvider{
 
   final String apiCreateIncident = Environment.API_URL + "api/Incident/CreateIncident";
 
-  String accessToken = GetStorage().read("accessToken");
+String? accessToken = GetStorage().read<String>("accessToken");
+
   Future<int?> createIncident(Incident incident) async {
 
   try {
     final String incidentBody = convert.jsonEncode(incident.toJson());
     final response = await http.post(
       Uri.parse(apiCreateIncident),
-      headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $accessToken'
-        },
+
+      headers: {
+        'accept': '*/*',
+        'Content-Type': 'application/json-patch+json',
+        'Authorization': 'Bearer $accessToken'
+      },
+
       body: incidentBody,
     );
 

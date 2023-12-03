@@ -87,9 +87,9 @@ class _RepairBodyState extends State<RepairBody> {
 
   Future<List<Symptom>> loadSymptom() async {
     final _symptomProvider = SymptomProvider();
-    try{
+    try {
       return _symptomProvider.getAllSymptoms();
-    }catch(e){
+    } catch (e) {
       print(e);
       return [];
     }
@@ -164,7 +164,7 @@ class _RepairBodyState extends State<RepairBody> {
   void createOrder() async {
     if (selectedSymptom == null) {
       notify.showToast("Hãy chọn ít nhất 1 trường hợp trên.");
-    } else{
+    } else {
       setState(() {
         isLoading = true; // Bắt đầu hiển thị vòng quay khi bắt đầu gửi yêu cầu
       });
@@ -188,7 +188,7 @@ class _RepairBodyState extends State<RepairBody> {
         customerId: customer.id,
         url: urlImages,
         area: selectedDropdownItem['value'],
-        symptomId: selectedSymptom!.id, 
+        symptomId: selectedSymptom!.id,
         distance: null,
       );
 
@@ -232,13 +232,13 @@ class _RepairBodyState extends State<RepairBody> {
   }
 
   void onSymptomSelected(Symptom? symptom) {
-  setState(() {
-    selectedSymptom = symptom;
-    if (selectedSymptom != null) {
-      print('Selected Symptom ID: ${selectedSymptom!.id}');
-    }
-  });
-}
+    setState(() {
+      selectedSymptom = symptom;
+      if (selectedSymptom != null) {
+        print('Selected Symptom ID: ${selectedSymptom!.id}');
+      }
+    });
+  }
 
   String getImageAsset(String value) {
     switch (value) {
@@ -250,8 +250,6 @@ class _RepairBodyState extends State<RepairBody> {
         return 'assets/images/money.png'; // Default image
     }
   }
-
-  
 
   @override
   Widget build(BuildContext context) {
@@ -463,7 +461,7 @@ class _RepairBodyState extends State<RepairBody> {
                 height: 10,
               ),
               CustomText(
-                text: 'Bạn đang bị gì:',
+                text: 'Vấn đề đang gặp',
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -471,9 +469,8 @@ class _RepairBodyState extends State<RepairBody> {
                 height: 10,
               ),
               Container(
-                height: MediaQuery.of(context).size.height * 0.15,
-                child: SymptomSelector(onSymptomSelected: onSymptomSelected)
-              ),
+                  height: MediaQuery.of(context).size.height * 0.15,
+                  child: SymptomSelector(onSymptomSelected: onSymptomSelected)),
               SizedBox(height: 10),
               if (selectedServiceCards.isNotEmpty)
                 SingleChildScrollView(
@@ -663,12 +660,11 @@ class _RepairBodyState extends State<RepairBody> {
                       final service = snapshot.data![index];
                       final isSelected = selectedServiceCards.contains(service);
                       return ServiceCard(
-                        service: service,
-                        onSelected: (isSelected) {
-                          updateSelectedServices(service, isSelected);
-                        },
-                        isSelected: isSelected, rescueType: 'Fixing',
-                      );
+                          service: service,
+                          onSelected: (isSelected) {
+                            updateSelectedServices(service, isSelected);
+                          },
+                          isSelected: isSelected);
                     },
                   );
                 }

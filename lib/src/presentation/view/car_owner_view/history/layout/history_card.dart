@@ -9,6 +9,7 @@ import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import '../../../../../configuration/frontend_configs.dart';
 // import '../../layout/selection_location_widget.dart';
@@ -51,6 +52,7 @@ class _HistoryCardState extends State<HistoryCard>
   TabController? _tabController;
   bool isCompletedEmpty = false;
   bool isCanceledEmpty = false;
+  String? accessToken = GetStorage().read<String>("accessToken");
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
   void initState() {
     super.initState();
@@ -64,7 +66,10 @@ class _HistoryCardState extends State<HistoryCard>
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);

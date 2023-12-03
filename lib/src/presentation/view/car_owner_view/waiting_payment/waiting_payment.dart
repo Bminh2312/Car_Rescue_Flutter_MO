@@ -10,6 +10,7 @@ import 'package:CarRescue/src/presentation/view/technician_view/bottom_nav_bar/b
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:lottie/lottie.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
@@ -47,6 +48,7 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
   int total = 0;
   Payment? _payment;
   Booking? booking;
+  String? accessToken = GetStorage().read<String>("accessToken");
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
 
   void calculateTotals() {
@@ -73,7 +75,10 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
@@ -97,7 +102,10 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Service/Get?id=$serviceId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);

@@ -25,10 +25,12 @@ class OrderProvider {
   final String apiUrlEndOrder = Environment.API_URL + 'api/Order/EndOrder';
   final String apiUrlUpdateOrderForTech =
       Environment.API_URL + 'api/Order/UpdateOrderForTeachnician';
+
   final String apiUrlChangeOrder =
       Environment.API_URL + 'api/Order/ChangeRescueType';
 
-  String accessToken = GetStorage().read("accessToken");
+ 
+String? accessToken = GetStorage().read<String>("accessToken");
 
   Future<int?> createOrderFixing(OrderBookServiceFixing order) async {
     try {
@@ -39,6 +41,7 @@ class OrderProvider {
         Uri.parse(apiUrlCreateFixing),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
+
           'Authorization': 'Bearer $accessToken'
         },
         body: orderJson,
@@ -71,6 +74,7 @@ class OrderProvider {
     try {
       final response = await http.post(
         Uri.parse(apiUrlCancelOrder),
+
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $accessToken'
@@ -101,6 +105,7 @@ class OrderProvider {
         Uri.parse(apiUrlCreateTowing),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
+
           'Authorization': 'Bearer $accessToken'
         },
         body: orderJson,
@@ -149,6 +154,7 @@ class OrderProvider {
   // }
 
   Future<List<Order>> getAllOrders(String id) async {
+
     try {
       final response = await http.get(
         Uri.parse("${apiUrlGetAllOfCustomer}?id=${id}"),
@@ -159,6 +165,7 @@ class OrderProvider {
       );
       if (response.statusCode == 200) {
         final dynamic data = convert.json.decode(response.body);
+
 
         if (data != null && data['data'] != null) {
           final List<dynamic> orderData = data['data'];
@@ -192,6 +199,7 @@ class OrderProvider {
           'Authorization': 'Bearer $accessToken'
         },
       );
+
       print(response.body); // Add this line for debugging
       if (response.statusCode == 200) {
         final dynamic data = convert.json.decode(response.body);
@@ -223,6 +231,7 @@ class OrderProvider {
         Uri.parse('$apiUrlGetImage?id=$orderId'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
+
           'Authorization': 'Bearer $accessToken'
         },
       );
@@ -328,10 +337,12 @@ class OrderProvider {
     try {
       final response = await http.post(
         Uri.parse('$apiUrl?id=$orderId'),
+
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $accessToken'
         },
+
       );
 
       if (response.statusCode == 201) {
@@ -354,9 +365,11 @@ class OrderProvider {
 
     final response = await http.post(
       Uri.parse(apiUrl),
+
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $accessToken'
+
       },
       body: json.encode({'id': orderId}),
     );
@@ -394,6 +407,7 @@ class OrderProvider {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $accessToken'
       },
+
       body: convert.json.encode(requestBody),
     );
 

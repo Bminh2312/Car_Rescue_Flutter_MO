@@ -9,6 +9,7 @@ import 'package:CarRescue/src/presentation/view/car_owner_view/car_view/widgets/
 import 'package:CarRescue/src/presentation/view/car_owner_view/homepage/homepage_view.dart';
 
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -31,7 +32,7 @@ class _CarListViewState extends State<CarListView> {
   bool isLoading = true;
   bool isAscending = true;
   final TextEditingController _controller = TextEditingController();
-
+String? accessToken = GetStorage().read<String>("accessToken");
   PopupMenuItem<String> buildItem(String value) {
     return PopupMenuItem(
       value: value,
@@ -90,7 +91,10 @@ class _CarListViewState extends State<CarListView> {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Vehicle/GetAllOfUser?id=$userId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        });
 
     if (response.statusCode == 200) {
       Map<String, dynamic> data = json.decode(response.body);

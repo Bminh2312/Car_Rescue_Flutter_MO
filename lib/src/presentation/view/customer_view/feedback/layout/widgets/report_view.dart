@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -24,7 +25,10 @@ class _ReportScreenState extends State<ReportScreen> {
   String status = '';
   File? imageFile;
   File? image2File;
-
+  String reportTextError = '';
+  String image1Error = '';
+  String image2Error = '';
+  bool isSubmitting = false;
   Future<void> _getImage(ImageSource source, int imageIndex) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
@@ -47,6 +51,11 @@ class _ReportScreenState extends State<ReportScreen> {
     File image2File,
   ) async {
     try {
+      if (imageFile == null || image2File == null) {
+        // Handle case where images are not selected
+        print('Please select both images');
+        return;
+      }
       // Upload images to Firebase and get download URLs
       String? imageUrl =
           await AuthService().uploadImageToFirebase(imageFile, 'images');
@@ -93,23 +102,55 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _onSubmitReport() async {
-    if (reportText.isNotEmpty && imageFile != null && image2File != null) {
-      // Assuming you have createReport in a separate file named `your_report_file.dart`
-      await createReport(widget.orderId, reportText, imageFile!, image2File!);
+    setState(() {
+      // Set loading state
+      isSubmitting = true;
 
-      // Optionally, you can show a success message or navigate to another screen
+      if (reportText.isEmpty) {
+        reportTextError = 'Vui lòng nhập mô tả sự cố'; // Set error message
+      } else {
+        reportTextError = ''; // Clear error if text is not empty
+      }
+
+      if (imageFile == null) {
+        image1Error = 'Vui lòng chọn hình ảnh '; // Set error message
+      } else {
+        image1Error = ''; // Clear error if image is selected
+      }
+
+      if (image2File == null) {
+        image2Error = 'Vui lòng chọn hình ảnh '; // Set error message
+      } else {
+        image2Error = ''; // Clear error if image is selected
+      }
+    });
+
+    try {
+      print('Attempting to create report...');
+      await createReport(widget.orderId, reportText, imageFile!, image2File!);
+      print('Report created successfully!');
+
+      // Hide loading indicator
+      setState(() {
+        isSubmitting = false;
+      });
+
+      // Pop the current screen
+      Navigator.pop(context);
+
+      // Show success dialog
       showDialog(
         context: context,
         builder: (context) {
           return AlertDialog(
             title: Text('Thành công'),
             content: Text(
-                'Cảm ơn bạn đã gửi báo cáo.\nHệ thống đã tiếp nhận và giải quyết cho bạn trong thời gian sớm nhất'),
+              'Hệ thống đã tiếp nhận báo cáo của bạn\nChúng tôi sẽ giải quyết vấn đề trong thời gian sớm nhất',
+            ),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  // Optionally, navigate to another screen
                 },
                 child: Text('OK'),
               ),
@@ -117,6 +158,13 @@ class _ReportScreenState extends State<ReportScreen> {
           );
         },
       );
+    } catch (error) {
+      // Hide loading indicator on error
+      setState(() {
+        isSubmitting = false;
+      });
+
+      print('Error creating report: $error');
     }
   }
 
@@ -124,87 +172,131 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: customAppBar(context, text: 'Báo cáo sự cố', showText: true),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CustomText(
-              text: 'Đơn hàng ${widget.orderId}',
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Mô tả sự cố:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            TextField(
-              maxLines: 5,
-              onChanged: (value) {
-                setState(() {
-                  reportText = value;
-                });
-              },
-              decoration: InputDecoration(
-                hintText: 'Nhập mô tả sự cố...',
-                border: OutlineInputBorder(),
+      body: isSubmitting
+          ? LoadingState()
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  CustomText(
+                    text: 'Đơn hàng ${widget.orderId}',
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Mô tả sự cố',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  TextField(
+                    maxLines: 5,
+                    onChanged: (value) {
+                      setState(() {
+                        reportText = value;
+                        reportTextError = '';
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Nhập mô tả sự cố...',
+                      border: OutlineInputBorder(),
+                      errorText:
+                          reportTextError.isNotEmpty ? reportTextError : null,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  CustomText(
+                    text: 'Hình ảnh sự cố',
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildImageFrame(imageFile, image1Error),
+                      _buildImageFrame(image2File, image2Error),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildImageButton(1, Icons.photo, "gallery"),
+                      _buildImageButton(1, Icons.camera_alt, "camera"),
+                      SizedBox(width: 1),
+                      _buildImageButton(2, Icons.photo, "gallery"),
+                      _buildImageButton(2, Icons.camera_alt, "camera"),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  Spacer(),
+                  Container(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _onSubmitReport();
+                      },
+                      child: Text('Báo cáo'),
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(height: 16),
-            Row(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    _getImage(ImageSource.gallery, 1);
-                  },
-                  icon: Icon(Icons.photo),
-                ),
-                SizedBox(width: 8),
-                IconButton(
-                  onPressed: () {
-                    _getImage(ImageSource.camera, 1);
-                  },
-                  icon: Icon(Icons.camera_alt),
-                ),
-                SizedBox(width: 16),
-                if (imageFile != null) Image.file(imageFile!, height: 100),
-              ],
+    );
+  }
+
+  Widget _buildImageFrame(File? imageFile, String error) {
+    return Column(
+      children: [
+        Container(
+          width: 150,
+          height: 150,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.black,
+              width: 2,
             ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    _getImage(ImageSource.gallery, 2);
-                  },
-                  icon: Icon(Icons.photo),
-                ),
-                SizedBox(width: 8),
-                IconButton(
-                  onPressed: () {
-                    _getImage(ImageSource.camera, 2);
-                  },
-                  icon: Icon(Icons.camera_alt),
-                ),
-                SizedBox(width: 16),
-                if (image2File != null) Image.file(image2File!, height: 100),
-              ],
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                _onSubmitReport();
-                if (reportText.isNotEmpty) {
-                  // Update other fields based on your logic
-                  // ...
-                }
-              },
-              child: Text('Báo cáo'),
-            ),
-          ],
+          ),
+          child: imageFile != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(
+                    imageFile,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : Icon(Icons.add, size: 40),
         ),
+        if (error.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              error,
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildImageButton(int imageIndex, IconData icon, String action) {
+    return GestureDetector(
+      onTap: () {
+        _getImage(action == "camera" ? ImageSource.camera : ImageSource.gallery,
+            imageIndex);
+      },
+      child: Container(
+        width: 40, // Adjust the width as needed
+        height: 40, // Adjust the height as needed
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.grey.withOpacity(0.3),
+        ),
+        child: Icon(icon),
       ),
     );
   }

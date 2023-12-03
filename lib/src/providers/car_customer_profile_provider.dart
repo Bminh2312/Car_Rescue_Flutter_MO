@@ -6,17 +6,18 @@ import 'package:CarRescue/src/models/customer_car.dart';
 
 class CarCustomerProvider {
   final String apiUrlGetCarCustomer = Environment.API_URL + 'api/Car/Get';
-  String accessToken = GetStorage().read("accessToken");
+
+String? accessToken = GetStorage().read<String>("accessToken");
+
   Future<CustomerCar> getCar(String carId) async {
     final String apiUrl = '$apiUrlGetCarCustomer?id=$carId';
 
-    final response = await http.get(
-      Uri.parse(apiUrl),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $accessToken'
-      },
-    );
+
+  final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        });
+
 
     if (response.statusCode == 200) {
       Map<String, dynamic> data = convert.json.decode(response.body);

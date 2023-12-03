@@ -21,6 +21,7 @@ class ServiceProvider {
       try {
         final response =
             await http.get(Uri.parse(apiUrl), headers: <String, String>{
+
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $accessToken'
         });
@@ -37,6 +38,7 @@ class ServiceProvider {
         }
       } catch (e) {
         print('Error: $e');
+
       }
     }
     print("${serviceList.length}");
@@ -54,6 +56,7 @@ class ServiceProvider {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $accessToken'
       });
+
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = convert.jsonDecode(response.body);
@@ -84,6 +87,7 @@ class ServiceProvider {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $accessToken'
       });
+
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = convert.jsonDecode(response.body);
