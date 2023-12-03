@@ -168,10 +168,9 @@ class _ProfileBodyState extends State<ProfileBody> {
             InkWell(
               onTap: () async {
                 // Perform logout actions (e.g., clear session, remove tokens, etc.)
-                // box.remove("role");
-                // box.remove("userId");
-                // box.remove("accountId");
-                box.erase();
+                box.remove("role");
+                box.remove("userId");
+                box.remove("accountId");
                 // Navigate to the login screen and replace the current screen
                 Navigator.pushReplacement(
                   context,
