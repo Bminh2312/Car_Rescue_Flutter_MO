@@ -325,25 +325,27 @@ class _RepairBodyState extends State<RepairBody> {
                             ),
                           ],
                         ),
-                        Column(
-                          children: [
-                            IconButton(
-                                onPressed: () {},
-                                icon: SvgPicture.asset(
-                                    'assets/svg/edit_icon.svg')),
-                            Container(
-                              height: 10,
-                            ),
-                            // SizedBox(
-                            //   height: 20,
-                            //   child: CustomText(
-                            //     text: widget.amount,
-                            //     fontSize: 16,
-                            //     fontWeight: FontWeight.w600,
-                            //   ),
-                            // ),
-                          ],
-                        ),
+                        // Column(
+                        //   children: [
+                        //     IconButton(
+                        //         onPressed: () {
+
+                        //         },
+                        //         icon: SvgPicture.asset(
+                        //             'assets/svg/edit_icon.svg')),
+                        //     Container(
+                        //       height: 10,
+                        //     ),
+                        //     // SizedBox(
+                        //     //   height: 20,
+                        //     //   child: CustomText(
+                        //     //     text: widget.amount,
+                        //     //     fontSize: 16,
+                        //     //     fontWeight: FontWeight.w600,
+                        //     //   ),
+                        //     // ),
+                        //   ],
+                        // ),
                       ],
                     ),
                   ),
@@ -636,75 +638,75 @@ class _RepairBodyState extends State<RepairBody> {
   //   );
   // }
 
-  Widget buildServiceSelection(BuildContext context) {
-    return Container(
-      height: double.infinity,
-      child: Column(
-        children: [
-          Expanded(
-            child: FutureBuilder<List<Service>>(
-              future: availableServices,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('Không có dữ liệu.'));
-                } else {
-                  return ListView.builder(
-                    itemCount: snapshot.data!.length,
-                    itemBuilder: (context, index) {
-                      final service = snapshot.data![index];
-                      final isSelected = selectedServiceCards.contains(service);
-                      return ServiceCard(
-                          service: service,
-                          onSelected: (isSelected) {
-                            updateSelectedServices(service, isSelected);
-                          },
-                          isSelected: isSelected);
-                    },
-                  );
-                }
-              },
-            ),
-          ),
-          Container(
-            color: Colors.white,
-            padding: EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 10),
-            width: double.infinity,
-            child: Column(
-              mainAxisSize: MainAxisSize
-                  .min, // Đặt cột để không chiếm quá nhiều không gian
-              children: [
-                SizedBox(height: 20), // Khoảng cách giữa tổng cộng tiền và nút
-                SizedBox(
-                  width: double.infinity, // Đặt chiều rộng bằng với Container
-                  height: 50, // Đặt chiều cao cố định cho nút
-                  child: ElevatedButton(
-                    child: Text(
-                      'Tiếp tục',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: FrontendConfigs
-                          .kIconColor, // Đảm bảo rằng màu này được định nghĩa trong FrontendConfigs
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(8), // Góc bo tròn cho nút
-                      ),
-                    ),
-                    onPressed: () {
-                      print(selectedServiceCards.length);
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget buildServiceSelection(BuildContext context) {
+  //   return Container(
+  //     height: double.infinity,
+  //     child: Column(
+  //       children: [
+  //         Expanded(
+  //           child: FutureBuilder<List<Service>>(
+  //             future: availableServices,
+  //             builder: (context, snapshot) {
+  //               if (snapshot.connectionState == ConnectionState.waiting) {
+  //                 return Center(child: CircularProgressIndicator());
+  //               } else if (snapshot.hasError) {
+  //                 return Center(child: Text('Error: ${snapshot.error}'));
+  //               } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+  //                 return Center(child: Text('Không có dữ liệu.'));
+  //               } else {
+  //                 return ListView.builder(
+  //                   itemCount: snapshot.data!.length,
+  //                   itemBuilder: (context, index) {
+  //                     final service = snapshot.data![index];
+  //                     final isSelected = selectedServiceCards.contains(service);
+  //                     return ServiceCard(
+  //                         service: service,
+  //                         onSelected: (isSelected) {
+  //                           updateSelectedServices(service, isSelected);
+  //                         },
+  //                         isSelected: isSelected, rescueType: '',);
+  //                   },
+  //                 );
+  //               }
+  //             },
+  //           ),
+  //         ),
+  //         Container(
+  //           color: Colors.white,
+  //           padding: EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 10),
+  //           width: double.infinity,
+  //           child: Column(
+  //             mainAxisSize: MainAxisSize
+  //                 .min, // Đặt cột để không chiếm quá nhiều không gian
+  //             children: [
+  //               SizedBox(height: 20), // Khoảng cách giữa tổng cộng tiền và nút
+  //               SizedBox(
+  //                 width: double.infinity, // Đặt chiều rộng bằng với Container
+  //                 height: 50, // Đặt chiều cao cố định cho nút
+  //                 child: ElevatedButton(
+  //                   child: Text(
+  //                     'Tiếp tục',
+  //                     style: TextStyle(fontSize: 18),
+  //                   ),
+  //                   style: ElevatedButton.styleFrom(
+  //                     backgroundColor: FrontendConfigs
+  //                         .kIconColor, // Đảm bảo rằng màu này được định nghĩa trong FrontendConfigs
+  //                     shape: RoundedRectangleBorder(
+  //                       borderRadius:
+  //                           BorderRadius.circular(8), // Góc bo tròn cho nút
+  //                     ),
+  //                   ),
+  //                   onPressed: () {
+  //                     print(selectedServiceCards.length);
+  //                     Navigator.pop(context);
+  //                   },
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }

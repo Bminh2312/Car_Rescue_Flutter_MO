@@ -1,8 +1,8 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
-import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/booking_details_view.dart';
+import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/select_service_card.dart';
 import 'package:CarRescue/src/providers/service_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:CarRescue/src/models/service.dart';

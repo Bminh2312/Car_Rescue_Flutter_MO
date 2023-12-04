@@ -759,7 +759,7 @@ class _TowBodyState extends State<TowBody> {
                         onSelected: (isSelected) {
                           updateSelectedServices(service, isSelected);
                         },
-                        isSelected: isSelected,
+                        isSelected: isSelected, rescueType: 'Towing',
                       );
                     },
                   );

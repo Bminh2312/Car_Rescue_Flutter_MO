@@ -120,7 +120,7 @@ class ServiceCard extends StatefulWidget {
     Key? key,
     required this.service,
     required this.isSelected,
-    required this.onSelected,
+    required this.onSelected, required String rescueType,
   }) : super(key: key);
 
   @override
