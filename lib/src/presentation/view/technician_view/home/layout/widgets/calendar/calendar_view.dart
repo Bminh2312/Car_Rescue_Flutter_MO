@@ -765,7 +765,7 @@ class _CalendarViewState extends State<CalendarView> {
                                     alignment: Alignment.centerLeft,
                                     child: Chip(
                                       padding: EdgeInsets.zero,
-                                      label: Text("SCHEDULED"),
+                                      label: Text("Đã Lên Lịch"),
                                       backgroundColor: Colors.green,
                                       labelStyle: TextStyle(
                                           color: Colors.white,

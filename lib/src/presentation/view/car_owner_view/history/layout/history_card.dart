@@ -66,10 +66,11 @@ class _HistoryCardState extends State<HistoryCard>
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
 
-    final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $accessToken'
-        });
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
@@ -378,13 +379,10 @@ class _HistoryCardState extends State<HistoryCard>
                         ],
                       ),
                     ),
-                    Divider(
-                      color: FrontendConfigs.kIconColor,
-                    ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                         Divider(
+                        Divider(
                           color: FrontendConfigs.kIconColor,
                         ),
                         const SizedBox(
