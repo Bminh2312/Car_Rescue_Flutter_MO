@@ -15,13 +15,16 @@ class BookingCard extends StatelessWidget {
   final Map<String, String> subAddressesDepart;
   final Map<String, String> addressesDesti;
   final Map<String, String> subAddressesDesti;
-
+  final String userId;
+  final String accountId;
   BookingCard(
       {required this.booking,
       required this.addressesDepart,
       required this.addressesDesti,
       required this.subAddressesDepart,
-      required this.subAddressesDesti});
+      required this.subAddressesDesti,
+      required this.userId,
+      required this.accountId});
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +57,8 @@ class BookingCard extends StatelessWidget {
                 ),
                 subtitle: Text(booking.rescueType),
                 trailing: BookingStatus(
-                  status: booking.status,fontSize: 14,
+                  status: booking.status,
+                  fontSize: 14,
                 ),
               ),
               Divider(
@@ -157,6 +161,8 @@ class BookingCard extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => BookingDetailsView(
+                                  userId: userId,
+                                  accountId: accountId,
                                   booking: booking,
                                   addressesDepart: addressesDepart,
                                   addressesDesti: addressesDesti,

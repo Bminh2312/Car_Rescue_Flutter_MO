@@ -1,5 +1,8 @@
+import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/customer.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
+import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:CarRescue/src/presentation/view/technician_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
 import 'layout/body.dart';
@@ -37,11 +40,10 @@ class _BookingListViewState extends State<BookingListView> {
 
   Future<void> _loadData() async {
     try {
-      final bookingsFromApi = await authService.fetchBookings(
-          widget.userId);
+      final bookingsFromApi = await authService.fetchBookings(widget.userId);
       await authService.getDestiForBookings(
           bookingsFromApi, setState, addressesDesti, subAddressesDesti);
-      
+
       await authService.getAddressesForBookings(
           bookingsFromApi, setState, addressesDepart, subAddressesDepart);
       setState(() {
@@ -57,8 +59,34 @@ class _BookingListViewState extends State<BookingListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: customAppBar(context, text: 'Đơn làm việc', showText: true),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.black,
+            size: 20,
+          ),
+          onPressed: () {
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BottomNavBarTechView(
+                      userId: widget.userId, accountId: widget.accountId),
+                ));
+          },
+        ),
+        title: CustomText(
+          text: 'Đơn làm việc',
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: FrontendConfigs.kPrimaryColor,
+        ),
+        centerTitle: true,
+      ),
       body: BookingListBody(
+        accountId: widget.accountId,
         userId: widget.userId,
         bookings: bookings,
         addressesDepart: addressesDepart,

@@ -105,6 +105,8 @@ class _ActiveBookingCardState extends State<ActiveBookingCard> {
           context,
           MaterialPageRoute(
             builder: (context) => BookingDetailsView(
+              userId: widget.userId,
+              accountId:widget.userId ,
               booking: widget.booking,
               addressesDepart: addressesDepart,
               addressesDesti: addressesDesti,

@@ -664,7 +664,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         _buildInfoRow(
                             'Nội dung đánh giá',
                             Text(
-                              widget.booking.staffNote ?? 'Không có',
+                              widget.booking.note ?? 'Không có',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             )),
                     ],
@@ -699,7 +699,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     children: [
                       SizedBox(height: 8.0),
                       _buildSectionTitle("Ghi chú của nhân viên"),
-                      _buildNoteRow('Nhập nội dung ghi chú', _formKey),
+                      if (widget.booking.status != 'COMPLETED' &&
+                          widget.booking.status != 'CANCELLED')
+                        _buildNoteRow('Nhập nội dung ghi chú', _formKey),
                       _buildInfoRow(
                           "Nội dung",
                           Text('${_currentBooking!.staffNote ?? 'Không có'}',
@@ -826,56 +828,59 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         icon: SvgPicture.asset("assets/svg/cancel_icon.svg"),
                       ),
                     ),
-                  Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        SizedBox(width: 24.0),
-                        AppButton(
-                            onPressed: () async {
-                              setState(() {
-                                _isLoading = true;
-                              });
-                              if (_formKey.currentState!.validate() &&
-                                  pickedImages.isNotEmpty) {
-                                await uploadImage();
-                                await updateOrder(widget.booking.id,
-                                    techNoteController.text, _updateImage);
-                                // await _loadImageOrders(widget.booking.id);
-                                await _loadVehicleInfo(
-                                    widget.booking.vehicleId ?? '');
-                                // await _loadBooking(widget.booking.id);
-
-                                await _loadImageOrders(widget.booking.id);
-                                Booking updatedBooking = await authService
-                                    .fetchBookingById(widget.booking.id);
+                  if (widget.booking.status != 'COMPLETED' &&
+                      widget.booking.status != 'CANCELLED')
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          SizedBox(width: 24.0),
+                          AppButton(
+                              onPressed: () async {
                                 setState(() {
-                                  _currentBooking = updatedBooking;
-                                  techNoteController.clear();
-                                  _loadCustomerInfo(widget.booking.customerId);
+                                  _isLoading = true;
                                 });
-                                if (_imageUrls.isNotEmpty) {
+                                if (_formKey.currentState!.validate() &&
+                                    pickedImages.isNotEmpty) {
+                                  await uploadImage();
+                                  await updateOrder(widget.booking.id,
+                                      techNoteController.text, _updateImage);
+                                  // await _loadImageOrders(widget.booking.id);
+                                  await _loadVehicleInfo(
+                                      widget.booking.vehicleId ?? '');
+                                  // await _loadBooking(widget.booking.id);
+
+                                  await _loadImageOrders(widget.booking.id);
+                                  Booking updatedBooking = await authService
+                                      .fetchBookingById(widget.booking.id);
+                                  setState(() {
+                                    _currentBooking = updatedBooking;
+                                    techNoteController.clear();
+                                    _loadCustomerInfo(
+                                        widget.booking.customerId);
+                                  });
+                                  if (_imageUrls.isNotEmpty) {
+                                  } else {
+                                    print("Image empty");
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                  }
                                 } else {
-                                  print("Image empty");
+                                  print("Note or pickedImages empty");
+                                  notifyMessage
+                                      .showToast("Cần có ảnh và ghi chú");
                                   setState(() {
                                     _isLoading = false;
                                   });
                                 }
-                              } else {
-                                print("Note or pickedImages empty");
-                                notifyMessage
-                                    .showToast("Cần có ảnh và ghi chú");
-                                setState(() {
-                                  _isLoading = false;
-                                });
-                              }
-                            },
-                            btnLabel: checkUpdate
-                                ? "Đang gửi về hệ thống"
-                                : "Hoàn thiện đơn hàng"),
-                      ],
+                              },
+                              btnLabel: checkUpdate
+                                  ? "Đang gửi về hệ thống"
+                                  : "Hoàn thiện đơn hàng"),
+                        ],
+                      ),
                     ),
-                  ),
 
                   // Row(
                   //   children: [
@@ -1072,8 +1077,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 );
               }
 
-              // Otherwise, show an add button
-              {
+              if (widget.booking.status != 'COMPLETED' &&
+                  widget.booking.status != 'CANCELLED') {
                 return Padding(
                   padding: EdgeInsets.only(right: 16.0),
                   child: InkWell(

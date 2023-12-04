@@ -6,25 +6,29 @@ import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/models/customer.dart';
 import 'package:CarRescue/src/models/customerInfo.dart';
 import 'package:CarRescue/src/models/order.dart';
+import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:lottie/lottie.dart' as animated;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 
 class MapScreen extends StatefulWidget {
   final String techImg;
   final Order booking;
   final String techId;
+  final String phone;
   const MapScreen(
       {super.key,
       required this.techImg,
       required this.booking,
       required this.cus,
-      required this.techId});
+      required this.techId,
+      required this.phone});
   final Customer cus;
   @override
   _MapScreenState createState() => _MapScreenState();
@@ -67,6 +71,21 @@ class _MapScreenState extends State<MapScreen> {
     // Dispose of the timer in the dispose method
     myTimer?.cancel();
     super.dispose();
+  }
+
+  void launchDialPad(String phoneNumber) async {
+    String uri = 'tel:$phoneNumber';
+
+    try {
+      if (await canLaunch(uri)) {
+        await launch(uri);
+      } else {
+        throw 'Could not launch $uri';
+      }
+    } catch (e) {
+      print('Error launching dial pad: $e');
+      throw 'Could not launch $uri';
+    }
   }
 
   Future<void> _loadLocation() async {
@@ -149,16 +168,90 @@ class _MapScreenState extends State<MapScreen> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text("Thông báo"),
-              content: Text("Kĩ thuật viên đã đến địa điểm của bạn."),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Close the dialog
-                  },
-                  child: Text("OK"),
-                ),
-              ],
+              title: Text("Thông báo từ Kỹ thuật viên"),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  animated.Lottie.asset('assets/animations/technician.json',
+                      width: 250, height: 250, fit: BoxFit.fill),
+                  Column(
+                    children: [
+                      CustomText(
+                        text: 'Kĩ thuật viên đã đến điểm của bạn',
+                        fontSize: 18,
+                      ),
+                      CustomText(
+                        text: 'Bạn đã thấy kĩ thuật viên chưa?',
+                        fontSize: 18,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  // Add relevant images or icons here
+                  // For example, you can use Image.asset or Icon widgets
+
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor:
+                              MaterialStateProperty.resolveWith<Color>(
+                            (Set<MaterialState> states) {
+                              if (states.contains(MaterialState.pressed)) {
+                                // The button is in the pressed state
+                                return Colors.white.withOpacity(
+                                    0.5); // Change the color when pressed
+                              }
+                              // The default color when not pressed
+                              return FrontendConfigs.kActiveColor;
+                            },
+                          ),
+                        ),
+                        onPressed: () {
+                          // Implement your action for calling the technician
+                          launchDialPad(widget.phone); // Close the dialog
+                        },
+                        child: Row(
+                          children: [
+                            Icon(Icons.call),
+                            SizedBox(width: 8),
+                            Text("Gọi Kỹ thuật viên"),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor:
+                              MaterialStateProperty.resolveWith<Color>(
+                            (Set<MaterialState> states) {
+                              if (states.contains(MaterialState.pressed)) {
+                                // The button is in the pressed state
+                                return Colors.white.withOpacity(
+                                    0.5); // Change the color when pressed
+                              }
+                              // The default color when not pressed
+                              return FrontendConfigs.kActiveColor;
+                            },
+                          ),
+                        ),
+                        onPressed: () {
+                          // Implement your action for confirming the technician's arrival
+                          // Close the dialog
+                        },
+                        child: Row(
+                          children: [
+                            Icon(Icons.check),
+                            SizedBox(width: 8),
+                            Text("Đã xác nhận"),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             );
           },
         );
