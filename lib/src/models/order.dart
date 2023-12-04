@@ -55,10 +55,10 @@ class Order {
       staffNote: json['staffNote'] ?? "",
       cancellationReason: json['cancellationReason'] ?? "",
       startTime:
-          json['startTime'] != null ? DateTime.parse(json['startTime']).toUtc().add(Duration(hours: 14)) : null,
-      endTime: json['endTime'] != null ? DateTime.parse(json['endTime']).toUtc().add(Duration(hours: 14)) : null,
+          json['startTime'] != null ? DateTime.parse(json['startTime']) : null,
+      endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
       createdAt:
-          json['createdAt'] != null ? DateTime.parse(json['createdAt']).toUtc().add(Duration(hours: 14)) : null,
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       status: json['status'] ?? "",
       area: json['area'] ?? "",
     );

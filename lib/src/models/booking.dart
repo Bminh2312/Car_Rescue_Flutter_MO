@@ -21,7 +21,6 @@ class Booking {
   final String departure;
   final String? destination;
   final int? area;
-  final String? indicentId;
   double? rating;
   String? note;
   OrderDetail? orderDetail;
@@ -49,11 +48,10 @@ class Booking {
     required this.destination,
     required this.area,
     this.quantity,
-    this.total, required this.indicentId,
+    this.total,
   });
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
-      indicentId: json['indicentId'] != null ? json['indicentId'] : null,
       carId: json['carId'] as String?,
       id: json['id'],
       customerId: json['customerId'],

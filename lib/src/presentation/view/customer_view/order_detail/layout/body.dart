@@ -835,7 +835,8 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                               Text(
                                 DateFormat('dd-MM-yyyy | HH:mm').format(order
                                     .startTime!
-                                    ),
+                                    .toUtc()
+                                    .add(Duration(hours: 14))),
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),
@@ -846,7 +847,8 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                               Text(
                                 DateFormat('dd-MM-yyyy | HH:mm').format(order
                                     .endTime!
-                                    ),
+                                    .toUtc()
+                                    .add(Duration(hours: 14))),
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),
@@ -855,7 +857,8 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                             Text(
                               DateFormat('dd-MM-yyyy | HH:mm').format(order
                                   .createdAt!
-                                  ),
+                                  .toUtc()
+                                  .add(Duration(hours: 14))),
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -904,8 +907,6 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                           ],
                         ),
                       ),
-                    if(order.status == "ASSIGNED")
-                    _slider(),
                     if (order.status == "COMPLETED" &&
                         feedbackCustomer?.status == "WAITING")
                       Container(
@@ -923,16 +924,6 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                             techId: widget.techId!,
                                             orderId: widget.orderId,
                                             customerId: customer.id,
-                                          )),
-                                );
-                              }else if(vehicleInfo != null){
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => FeedbackScreen(
-                                            orderId: widget.orderId,
-                                            customerId: customer.id,
-                                            vehicleInfo: vehicleInfo,
                                           )),
                                 );
                               }

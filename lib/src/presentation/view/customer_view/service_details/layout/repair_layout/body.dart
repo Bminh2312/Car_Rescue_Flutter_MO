@@ -325,27 +325,25 @@ class _RepairBodyState extends State<RepairBody> {
                             ),
                           ],
                         ),
-                        // Column(
-                        //   children: [
-                        //     IconButton(
-                        //         onPressed: () {
-
-                        //         },
-                        //         icon: SvgPicture.asset(
-                        //             'assets/svg/edit_icon.svg')),
-                        //     Container(
-                        //       height: 10,
-                        //     ),
-                        //     // SizedBox(
-                        //     //   height: 20,
-                        //     //   child: CustomText(
-                        //     //     text: widget.amount,
-                        //     //     fontSize: 16,
-                        //     //     fontWeight: FontWeight.w600,
-                        //     //   ),
-                        //     // ),
-                        //   ],
-                        // ),
+                        Column(
+                          children: [
+                            IconButton(
+                                onPressed: () {},
+                                icon: SvgPicture.asset(
+                                    'assets/svg/edit_icon.svg')),
+                            Container(
+                              height: 10,
+                            ),
+                            // SizedBox(
+                            //   height: 20,
+                            //   child: CustomText(
+                            //     text: widget.amount,
+                            //     fontSize: 16,
+                            //     fontWeight: FontWeight.w600,
+                            //   ),
+                            // ),
+                          ],
+                        ),
                       ],
                     ),
                   ),

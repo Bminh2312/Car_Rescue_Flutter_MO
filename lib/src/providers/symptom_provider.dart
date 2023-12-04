@@ -4,19 +4,17 @@ import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 
-class SymptomProvider{
-  final String apiGetAllSymptom = Environment.API_URL + 'api/Symptom/GetAllSymptom';
-  String accessToken = GetStorage().read("accessToken");
+class SymptomProvider {
+  final String apiGetAllSymptom =
+      Environment.API_URL + 'api/Symptom/GetAllSymptom';
+  String? accessToken = GetStorage().read<String>("accessToken");
   Future<List<Symptom>> getAllSymptoms() async {
-  final String url = "${apiGetAllSymptom}";
+    final String url =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Symptom/GetAllSymptom';
 
-  try {
-    final response = await http.get(Uri.parse(url), headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $accessToken'
-        });
-
-
+    try {
+      final response = await http.get(Uri.parse(url),
+          headers: {'accept': '*/*', 'Authorization': 'Bearer $accessToken'});
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonBody =
