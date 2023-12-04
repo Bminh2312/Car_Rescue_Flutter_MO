@@ -8,24 +8,30 @@ import 'dart:convert' as convert;
 class IncidentProvider{
 
   final String apiCreateIncident = Environment.API_URL + "api/Incident/CreateIncident";
+
 String? accessToken = GetStorage().read<String>("accessToken");
+
   Future<int?> createIncident(Incident incident) async {
 
   try {
     final String incidentBody = convert.jsonEncode(incident.toJson());
     final response = await http.post(
       Uri.parse(apiCreateIncident),
+
       headers: {
         'accept': '*/*',
         'Content-Type': 'application/json-patch+json',
         'Authorization': 'Bearer $accessToken'
       },
+
       body: incidentBody,
     );
 
+    var responseData = convert.json.decode(response.body);
+
     if (response.statusCode == 200) {
-        print('Đơn hàng đã được tạo thành công');
-        return response.statusCode;
+        print('Đơn hàng đã được tạo thành công ${response.statusCode}');
+        return responseData['status'];
       } else if (response.statusCode == 500) {
         print('External Error');
         return response.statusCode;
