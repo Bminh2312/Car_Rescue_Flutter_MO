@@ -1532,6 +1532,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                           booking: widget.booking,
                                           techImg: technicianInfo?.avatar ?? '',
                                           techId: technicianInfo?.id ?? '',
+                                          phone: technicianInfo?.phone ?? '',
                                         ),
                                       ),
                                     );

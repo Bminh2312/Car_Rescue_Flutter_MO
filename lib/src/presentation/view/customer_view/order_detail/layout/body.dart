@@ -446,10 +446,16 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                       });
                                       // widget.updateTabCallback!(1);
 
-                                      Navigator.pop(context,
-                                          'reload'); // This pops the `BookingDetailsBody` screen.
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              BottomNavBarView(page: 0),
+                                        ),
+                                      ); // This pops the `BookingDetailsBody` screen.
                                     }
                                     // widget.updateTabCallback!(1);
+                                    
                                   },
                                   child: Text(
                                     "Đồng ý",
@@ -471,6 +477,13 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                     bool decision = false;
                                     await AuthService()
                                         .acceptOrder(order.id, decision);
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            BottomNavBarView(page: 0),
+                                      ),
+                                    );
                                   },
                                   child: Text(
                                     "Hủy",
@@ -843,9 +856,8 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                             _buildItemRow(
                               "Bắt đầu",
                               Text(
-                                DateFormat('dd-MM-yyyy | HH:mm').format(order
-                                    .startTime!
-                                    ),
+                                DateFormat('dd-MM-yyyy | HH:mm')
+                                    .format(order.startTime!),
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),
@@ -854,18 +866,16 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                             _buildItemRow(
                               "Kết thúc ",
                               Text(
-                                DateFormat('dd-MM-yyyy | HH:mm').format(order
-                                    .endTime!
-                                    ),
+                                DateFormat('dd-MM-yyyy | HH:mm')
+                                    .format(order.endTime!),
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),
                           _buildItemRow(
                             "Được tạo lúc",
                             Text(
-                              DateFormat('dd-MM-yyyy | HH:mm').format(order
-                                  .createdAt!
-                                  ),
+                              DateFormat('dd-MM-yyyy | HH:mm')
+                                  .format(order.createdAt!),
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -914,8 +924,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                           ],
                         ),
                       ),
-                    if(order.status == "ASSIGNED")
-                    _slider(),
+                    if (order.status == "ASSIGNED") _slider(),
                     if (order.status == "COMPLETED" &&
                         feedbackCustomer?.status == "WAITING")
                       Container(
@@ -935,7 +944,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                             customerId: customer.id,
                                           )),
                                 );
-                              }else if(vehicleInfo != null){
+                              } else if (vehicleInfo != null) {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(

@@ -1054,12 +1054,15 @@ class AuthService {
       },
       body: json.encode({'id': orderId, 'decision': decision}),
     );
-    if (response.statusCode == 201) {
+    var data = json.decode(response.body);
+    if (data['status'] == 200) {
       print('Successfully accept order ${response.body}');
       return true;
-    } else {
+    } else if(data['status'] == 201) {
+      print('Denied success: ${response.body}');
+      return true;
+    }else{
       print('Failed to accept order: ${response.body}');
-      // Failed to create the car
     }
     return false;
   }

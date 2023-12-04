@@ -6,25 +6,29 @@ import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/models/customer.dart';
 import 'package:CarRescue/src/models/customerInfo.dart';
 import 'package:CarRescue/src/models/order.dart';
+import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:lottie/lottie.dart' as animated;
 
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MapTechScreen extends StatefulWidget {
   final String techImg;
   final Booking booking;
   final String techId;
+  final String phone;
   const MapTechScreen(
       {super.key,
       required this.techImg,
       required this.booking,
       required this.cus,
-      required this.techId});
+      required this.techId, required this.phone});
   final CustomerInfo cus;
   @override
   _MapTechScreenState createState() => _MapTechScreenState();
@@ -97,6 +101,21 @@ class _MapTechScreenState extends State<MapTechScreen> {
       }
     } catch (e) {
       print('Error in _loadcreateLocation: $e');
+    }
+  }
+
+  void launchDialPad(String phoneNumber) async {
+    String uri = 'tel:$phoneNumber';
+
+    try {
+      if (await canLaunch(uri)) {
+        await launch(uri);
+      } else {
+        throw 'Could not launch $uri';
+      }
+    } catch (e) {
+      print('Error launching dial pad: $e');
+      throw 'Could not launch $uri';
     }
   }
 
@@ -199,18 +218,45 @@ class _MapTechScreenState extends State<MapTechScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text("Kỹ thuật viên đã đến điểm cứu hộ."),
+                  animated.Lottie.asset('assets/animations/technician.json',
+                      width: 250, height: 250, fit: BoxFit.fill),
+                  Column(
+                    children: [
+                      CustomText(
+                        text: 'Kĩ thuật viên đã đến điểm của bạn',
+                        fontSize: 18,
+                      ),
+                      CustomText(
+                        text: 'Bạn đã thấy kĩ thuật viên chưa?',
+                        fontSize: 18,
+                      ),
+                    ],
+                  ),
                   SizedBox(height: 10),
                   // Add relevant images or icons here
                   // For example, you can use Image.asset or Icon widgets
 
-                  Row(
+                  Column(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor:
+                              MaterialStateProperty.resolveWith<Color>(
+                            (Set<MaterialState> states) {
+                              if (states.contains(MaterialState.pressed)) {
+                                // The button is in the pressed state
+                                return Colors.white.withOpacity(
+                                    0.5); // Change the color when pressed
+                              }
+                              // The default color when not pressed
+                              return FrontendConfigs.kActiveColor;
+                            },
+                          ),
+                        ),
                         onPressed: () {
                           // Implement your action for calling the technician
-                          Navigator.pop(context); // Close the dialog
+                          launchDialPad(widget.phone); // Close the dialog
                         },
                         child: Row(
                           children: [
@@ -221,9 +267,23 @@ class _MapTechScreenState extends State<MapTechScreen> {
                         ),
                       ),
                       ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor:
+                              MaterialStateProperty.resolveWith<Color>(
+                            (Set<MaterialState> states) {
+                              if (states.contains(MaterialState.pressed)) {
+                                // The button is in the pressed state
+                                return Colors.white.withOpacity(
+                                    0.5); // Change the color when pressed
+                              }
+                              // The default color when not pressed
+                              return FrontendConfigs.kActiveColor;
+                            },
+                          ),
+                        ),
                         onPressed: () {
                           // Implement your action for confirming the technician's arrival
-                          Navigator.pop(context); // Close the dialog
+                          // Close the dialog
                         },
                         child: Row(
                           children: [
