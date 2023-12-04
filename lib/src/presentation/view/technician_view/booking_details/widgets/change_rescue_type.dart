@@ -1,14 +1,18 @@
 import 'dart:developer';
 
+import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
+import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/models/incident.dart';
 import 'package:CarRescue/src/models/location_info.dart';
 import 'package:CarRescue/src/models/service.dart';
 import 'package:CarRescue/src/models/symptom.dart';
 import 'package:CarRescue/src/presentation/elements/app_button.dart';
+import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/order_completed.dart';
+import 'package:CarRescue/src/presentation/view/technician_view/booking_list/widgets/selection_location_widget.dart';
 import 'package:CarRescue/src/providers/google_map_provider.dart';
 import 'package:CarRescue/src/providers/incident_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
@@ -20,18 +24,30 @@ import 'package:google_maps_webservice/places.dart';
 import 'symptom_selector.dart';
 
 class ChangeRescueScreen extends StatefulWidget {
-  final String departure;
-  final String incidentId;
+  final Booking booking;
+  final Map<String, String> addressesDepart;
+  final Map<String, String> subAddressesDepart;
+  final Map<String, String> addressesDesti;
+  final Map<String, String> subAddressesDesti;
+  final String userId;
+  final String accountId;
   final String paymentMethod;
-  final String rescueType;
-  final String orderId;
+
+  // final String departure;
+  // final String incidentId;
+  // final String paymentMethod;
+  // final String rescueType;
+  // final String orderId;
   const ChangeRescueScreen(
       {Key? key,
-      required this.departure,
-      required this.incidentId,
-      required this.paymentMethod,
-      required this.rescueType,
-      required this.orderId})
+      required this.booking,
+      required this.addressesDepart,
+      required this.subAddressesDepart,
+      required this.addressesDesti,
+      required this.subAddressesDesti,
+      required this.userId,
+      required this.accountId,
+      required this.paymentMethod})
       : super(key: key);
 
   @override
@@ -100,7 +116,7 @@ class _ChangeRescueScreenState extends State<ChangeRescueScreen> {
 
   void _updateLatLng() {
     // Chuỗi tọa độ
-    final String departure = widget.departure;
+    final String departure = widget.booking.departure;
 
     // Chuyển đổi chuỗi thành đối tượng LatLng
     LatLng parsedLatLng = parseLatLng(departure);
@@ -165,11 +181,11 @@ class _ChangeRescueScreenState extends State<ChangeRescueScreen> {
     // Call the createIncident method from IncidentProvider
 
     final result = await _orderProvider.changeRescueType(
-        widget.incidentId,
-        widget.orderId,
+        widget.booking.indicentId!,
+        widget.booking.id,
         symptom!.id,
         selectedService!.id,
-        widget.departure,
+        widget.booking.departure,
         "lat: ${_latLngDrop.latitude}, long: ${_latLngDrop.longitude}",
         widget.paymentMethod,
         "Towing",
@@ -213,40 +229,19 @@ class _ChangeRescueScreenState extends State<ChangeRescueScreen> {
   }
 
   Future<void> loadTowingServices() async {
-    // Render the list of towing services
-    // You can customize the appearance of each service as needed
-    // List<Widget> serviceWidgets = towingServices.map((service) {
-    //   bool isSelected =
-    //       selectedService?.id == service.id; // Move isSelected here
-
-    //   return GestureDetector(
-    //     onTap: () {
-    //       updateSelectedService(service);
-    //       setState(() {
-    //         isSelected = selectedService?.id == service.id;
-    //       });
-    //     },
-    //     child: Container(
-    //       margin: EdgeInsets.all(8.0),
-    //       padding: EdgeInsets.all(16.0),
-    //       decoration: BoxDecoration(
-    //         border: Border.all(
-    //           color: isSelected ? Colors.blue : Colors.grey,
-    //         ),
-    //       ),
-    //       child: Text(service.name),
-    //     ),
-    //   );
-    // }).toList();
-
-    // Display the list of services in a ListView.builder
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Chọn dịch vụ kéo xe'),
+              title: Text(
+                'Chọn dịch vụ kéo xe',
+                style: TextStyle(
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               content: Container(
                 width: double.maxFinite,
                 child: ListView(
@@ -257,15 +252,15 @@ class _ChangeRescueScreenState extends State<ChangeRescueScreen> {
                       builder: (context, servicesSnapshot) {
                         if (servicesSnapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return CircularProgressIndicator();
+                          return Center(child: CircularProgressIndicator());
                         } else if (servicesSnapshot.hasError) {
                           return Text('Error: ${servicesSnapshot.error}');
                         } else {
                           final services = servicesSnapshot.data ?? [];
                           return Column(
                             children: services.map((service) {
-                              bool isSelected = selectedService?.id ==
-                                  service.id; // Move isSelected here
+                              bool isSelected =
+                                  selectedService?.id == service.id;
                               return GestureDetector(
                                 onTap: () {
                                   updateSelectedService(service);
@@ -280,11 +275,24 @@ class _ChangeRescueScreenState extends State<ChangeRescueScreen> {
                                   decoration: BoxDecoration(
                                     border: Border.all(
                                       color: isSelected
-                                          ? Colors.blue
+                                          ? FrontendConfigs
+                                              .kPrimaryColorCustomer
                                           : Colors.grey,
                                     ),
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    color: isSelected
+                                        ? FrontendConfigs.kPrimaryColorCustomer
+                                        : Colors.white,
                                   ),
-                                  child: Text(service.name),
+                                  width: double.infinity,
+                                  child: Text(
+                                    service.name,
+                                    style: TextStyle(
+                                      fontSize: 16.0,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
                                 ),
                               );
                             }).toList(),
@@ -306,6 +314,9 @@ class _ChangeRescueScreenState extends State<ChangeRescueScreen> {
                       print('Selected Service: ${selectedService!.name}');
                     }
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: FrontendConfigs.kAuthColorCustomer
+                  ),
                   child: Text('Xác nhận'),
                 ),
               ],
@@ -322,6 +333,23 @@ class _ChangeRescueScreenState extends State<ChangeRescueScreen> {
     });
   }
 
+  Widget _buildInfoRow(String title, Widget value) {
+    return ListTile(
+      title: Text(title),
+      subtitle: value,
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: CustomText(
+          text: title,
+          fontWeight: FontWeight.bold,
+          fontSize: 24,
+        ));
+  }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -329,237 +357,307 @@ class _ChangeRescueScreenState extends State<ChangeRescueScreen> {
     _updateLatLng();
     predictionsPlaces = Future.value(
         PlacesAutocompleteResponse(predictions: [], status: 'INIT'));
-    print(widget.incidentId);
-    print(widget.orderId);
-    print(widget.departure);
+    print(widget.booking.indicentId!);
+    print(widget.booking.id);
+    print(widget.booking.departure);
     print(widget.paymentMethod);
   }
 
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar:
           customAppBar(context, text: 'Thông tin chuyển đơn', showText: true),
-      body: Form(
-        key: _formKey,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Container(
-            margin: EdgeInsets.symmetric(vertical: 4),
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: Colors.white,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  child: Center(
-                    child: Column(
-                      children: [
-                        CustomText(
-                          text: "Mã đơn hàng",
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        CustomText(
-                          text: " ${widget.orderId}",
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Divider(
-                  height: 10,
-                ),
-                SizedBox(
-                  height: 15,
-                ),
-                CustomText(
-                  text: "Nhập điểm đến",
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                TextFormField(
-                  onChanged: (text) {
-                    getListPredictions(text);
-                  },
-                  decoration: InputDecoration(
-                    labelText: 'Tìm kiếm',
-                    hintText: 'Tìm kiếm điểm đến...',
-                    prefixIcon: Icon(Icons.search),
-                  ),
-                  controller:
-                      _dropLocationController, // Assign the controller for validation
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Vui lòng nhập địa chỉ'; // Provide an error message for empty input
-                    }
-                    // Add more validation as needed
-                    return null; // Return null if the input is valid
-                  },
-                ),
-                FutureBuilder<PlacesAutocompleteResponse>(
-                  future: predictionsPlaces,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return CircularProgressIndicator();
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else {
-                      if (snapshot.hasData) {
-                        final predictions = snapshot.data!.predictions;
-                        if (predictions.isNotEmpty) {
-                          return Expanded(
-                            child: Card(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                child: Column(
-                                  children: [
-                                    predictions.isNotEmpty
-                                        ? Expanded(
-                                            child: ListView.builder(
-                                              itemCount: predictions.length,
-                                              itemBuilder: (context, index) {
-                                                final prediction =
-                                                    predictions[index];
-                                                return ListTile(
-                                                  title: Text(
-                                                      prediction.description!),
-                                                  onTap: () {
-                                                    _dropLocationController
-                                                            .text =
-                                                        prediction.description!;
-                                                    getLatLngByPlaceDetails(
-                                                        prediction.placeId!);
-                                                    // Di chuyển camera đến _latLngDrop
-                                                  },
-                                                  tileColor: Colors.transparent,
-                                                  contentPadding:
-                                                      EdgeInsets.zero,
-                                                  shape: UnderlineInputBorder(
-                                                    borderSide: BorderSide(
-                                                      color: Colors.black,
-                                                      width: .5,
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          )
-                                        : Container()
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        } else {
-                          return SizedBox(
-                            height: 10,
-                          );
-                        }
-                      } else {
-                        return Text('');
-                      }
-                    }
-                  },
-                ),
-                if (predictionsPlaces ==
-                    Future.value(PlacesAutocompleteResponse(
-                        predictions: [], status: 'CLEAR')))
-                  SizedBox(
-                    height: 10,
-                  ),
-                SizedBox(height: 16.0),
-                Text(
-                  'Vấn đề chuyển đơn:',
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8.0),
-                Expanded(
-                  child: SymptomSelector(
-                    onSymptomSelected: (selectedSymptom) {
-                      // Handle the selected symptom
-                      setState(() {
-                        symptom = selectedSymptom;
-                      });
-                      print('Selected Symptom: ${selectedSymptom?.symptom1}');
-                    },
-                  ),
-                ),
-                Row(
+      body: SingleChildScrollView(
+        child: Container(
+          height: screenHeight,
+          child: Form(
+            key: _formKey,
+            child: Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Container(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: selectedService != null
-                          ? Text(
-                              'Dịch vụ: ${selectedService!.name}',
-                              style: TextStyle(
-                                fontSize: 18.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : Container(),
-                    ),
-                    if (selectedService != null)
-                      IconButton(
-                        icon: Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            selectedService = null;
-                          });
-                        },
-                      ),
-                  ],
-                ),
-                GestureDetector(
-                  onTap: () async {
-                    await loadTowingServices();
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Container(
+                      child: Center(
+                        child: Column(
                           children: [
-                            SizedBox(),
+                            CustomText(
+                              text: "Mã đơn hàng",
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            CustomText(
+                              text: " ${widget.booking.id}",
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ],
                         ),
-                        buildServiceList(
-                            context, "Loại dịch vụ", Icon(Icons.add)),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-                AppButton(
-                  onPressed: () async {
-                    if (_formKey.currentState?.validate() ?? false) {
-                      // Form is valid, submit the form
-                      // Add your submission logic here
-                      if (symptom != null) {
-                        if (selectedService != null) {
-                          await _handleApiCall();
-                        } else {
-                          notifyMessage.showToast("Hãy chọn dịch vụ");
+                    Divider(
+                      height: 10,
+                    ),
+                    SizedBox(
+                      height: 15,
+                    ),
+                    CustomText(
+                      text: "Nhập điểm đến",
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    TextFormField(
+                      onChanged: (text) {
+                        getListPredictions(text);
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Tìm kiếm',
+                        hintText: 'Tìm kiếm điểm đến...',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      controller:
+                          _dropLocationController, // Assign the controller for validation
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Vui lòng nhập địa chỉ'; // Provide an error message for empty input
                         }
-                      } else {
-                        notifyMessage.showToast("Hãy chọn vấn đề.");
-                      }
-                    }
-                  },
-                  btnLabel: "Xác nhận",
+                        // Add more validation as needed
+                        return null; // Return null if the input is valid
+                      },
+                    ),
+                    FutureBuilder<PlacesAutocompleteResponse>(
+                      future: predictionsPlaces,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return CircularProgressIndicator();
+                        } else if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else {
+                          if (snapshot.hasData) {
+                            final predictions = snapshot.data!.predictions;
+                            if (predictions.isNotEmpty) {
+                              return Expanded(
+                                child: Card(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16),
+                                    child: Column(
+                                      children: [
+                                        predictions.isNotEmpty
+                                            ? Expanded(
+                                                child: ListView.builder(
+                                                  itemCount: predictions.length,
+                                                  itemBuilder:
+                                                      (context, index) {
+                                                    final prediction =
+                                                        predictions[index];
+                                                    return ListTile(
+                                                      title: Text(prediction
+                                                          .description!),
+                                                      onTap: () {
+                                                        _dropLocationController
+                                                                .text =
+                                                            prediction
+                                                                .description!;
+                                                        getLatLngByPlaceDetails(
+                                                            prediction
+                                                                .placeId!);
+                                                        // Di chuyển camera đến _latLngDrop
+                                                      },
+                                                      tileColor:
+                                                          Colors.transparent,
+                                                      contentPadding:
+                                                          EdgeInsets.zero,
+                                                      shape:
+                                                          UnderlineInputBorder(
+                                                        borderSide: BorderSide(
+                                                          color: Colors.black,
+                                                          width: .5,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              )
+                                            : Container()
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            } else {
+                              return SizedBox(
+                                height: 10,
+                              );
+                            }
+                          } else {
+                            return Text('');
+                          }
+                        }
+                      },
+                    ),
+                    if (predictionsPlaces ==
+                        Future.value(PlacesAutocompleteResponse(
+                            predictions: [], status: 'CLEAR')))
+                      SizedBox(
+                        height: 10,
+                      ),
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 4),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildSectionTitle('Đơn hàng'),
+                              Flexible(
+                                child: BookingStatus(
+                                  status: widget.booking.status,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 12.0),
+                            child: RideSelectionWidget(
+                              icon: 'assets/svg/pickup_icon.svg',
+                              title:
+                                  widget.addressesDepart[widget.booking.id] ??
+                                      '', // Use addresses parameter
+                              body: widget
+                                      .subAddressesDepart[widget.booking.id] ??
+                                  '',
+                              onPressed: () {},
+                            ),
+                          ),
+                          _buildInfoRow(
+                            "Loại dịch vụ",
+                            Text(
+                              "Sửa chữa tại chỗ",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: FrontendConfigs.kAuthColor,
+                              ),
+                            ),
+                          ),
+                          _buildInfoRow(
+                              "Ghi chú của khách hàng",
+                              Text(widget.booking.customerNote,
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: FrontendConfigs.kAuthColor,
+                                      fontSize: 15))),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 16.0),
+                    Text(
+                      'Vấn đề chuyển đơn:',
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8.0),
+                    Expanded(
+                      child: SymptomSelector(
+                        onSymptomSelected: (selectedSymptom) {
+                          // Handle the selected symptom
+                          setState(() {
+                            symptom = selectedSymptom;
+                          });
+                          print(
+                              'Selected Symptom: ${selectedSymptom?.symptom1}');
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
+      bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Expanded(
+              child: selectedService != null
+                  ? Text(
+                      'Dịch vụ: ${selectedService!.name}',
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : Container(),
+            ),
+            if (selectedService != null)
+              IconButton(
+                icon: Icon(Icons.clear),
+                onPressed: () {
+                  setState(() {
+                    selectedService = null;
+                  });
+                },
+              ),
+          ],
+        ),
+        GestureDetector(
+          onTap: () async {
+            await loadTowingServices();
+          },
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: Colors.white,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    SizedBox(),
+                  ],
+                ),
+                buildServiceList(context, "Loại dịch vụ", Icon(Icons.add)),
+              ],
+            ),
+          ),
+        ),
+        AppButton(
+          onPressed: () async {
+            if (_formKey.currentState?.validate() ?? false) {
+              // Form is valid, submit the form
+              // Add your submission logic here
+              if (symptom != null) {
+                if (selectedService != null) {
+                  await _handleApiCall();
+                } else {
+                  notifyMessage.showToast("Hãy chọn dịch vụ");
+                }
+              } else {
+                notifyMessage.showToast("Hãy chọn vấn đề.");
+              }
+            }
+          },
+          btnLabel: "Xác nhận",
+        ),
+      ]),
     );
   }
 

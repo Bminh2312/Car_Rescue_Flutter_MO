@@ -1826,11 +1826,14 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => ChangeRescueScreen(
-                            incidentId: widget.booking.indicentId ?? '',
-                            departure: widget.booking.departure,
                             paymentMethod: _payment?.method ?? '',
-                            rescueType: "Towing",
-                            orderId: widget.booking.id,
+                            accountId: widget.accountId,
+                            userId: widget.userId,
+                            addressesDepart: widget.addressesDepart,
+                            addressesDesti: widget.addressesDesti,
+                            booking: widget.booking,
+                            subAddressesDepart: widget.subAddressesDepart,
+                            subAddressesDesti: widget.subAddressesDesti,
                           ),
                         ));
                   },
