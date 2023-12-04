@@ -561,21 +561,29 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               _buildSectionTitle("Khách hàng"),
-                              InkWell(
-                                  onTap: () {
-                                    Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) => MapScreen(
-                                                cus: customer,
-                                                booking: order,
-                                                techImg:
-                                                    technicianInfo?.avatar ??
+                              order.status != 'COMPLETED' ||
+                                      order.status != 'CANCELLED'
+                                  ? InkWell(
+                                      onTap: () {
+                                        Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) => MapScreen(
+                                                    cus: customer,
+                                                    booking: order,
+                                                    phone:
+                                                        technicianInfo?.phone ??
+                                                            '',
+                                                    techImg: technicianInfo
+                                                            ?.avatar ??
                                                         '',
-                                                techId:
-                                                    technicianInfo?.id ?? '')));
-                                  },
-                                  child: _buildSectionTitle('Theo dõi vị trí')),
+                                                    techId:
+                                                        technicianInfo?.id ??
+                                                            '')));
+                                      },
+                                      child:
+                                          _buildSectionTitle('Theo dõi vị trí'))
+                                  : Container()
                             ],
                           ),
                           if (_car != null)
@@ -718,27 +726,15 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                     icon: 'assets/svg/pickup_icon.svg',
                                     title:
                                         departureAddress, // Use addresses parameter
-                                    body: departureAddress,
+                                    body: '',
                                     onPressed: () {},
                                   ),
                                 );
                               }
                             },
                           ),
-                          _buildInfoRow(
-                            "Loại dịch vụ",
-                            Text(
-                              order.rescueType! == "Towing"
-                                  ? "Keo xe cứu hộ"
-                                  : (order.rescueType! == "Fixing"
-                                      ? "Sửa chữa tại chỗ"
-                                      : order.rescueType!),
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color: FrontendConfigs.kAuthColor,
-                              ),
-                            ),
+                          SizedBox(
+                            height: 10,
                           ),
                           if (order.rescueType == "Towing")
                             FutureBuilder<String>(
@@ -755,21 +751,35 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                 } else {
                                   String destinationAddress =
                                       addressSnapshot.data ?? '';
-                                  return _buildInfoRow(
-                                    "Điểm đến",
-                                    Flexible(
-                                      child: Text(
-                                        destinationAddress,
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                        maxLines: 3,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12.0),
+                                    child: RideSelectionWidget(
+                                      icon: 'assets/svg/location_icon.svg',
+                                      title:
+                                          destinationAddress, // Use addresses parameter
+                                      body: '',
+                                      onPressed: () {},
                                     ),
                                   );
                                 }
                               },
                             ),
+                          _buildInfoRow(
+                            "Loại dịch vụ",
+                            Text(
+                              order.rescueType! == "Towing"
+                                  ? "Keo xe cứu hộ"
+                                  : (order.rescueType! == "Fixing"
+                                      ? "Sửa chữa tại chỗ"
+                                      : order.rescueType!),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: FrontendConfigs.kAuthColor,
+                              ),
+                            ),
+                          ),
                           _buildInfoRow(
                               "Ghi chú",
                               Text(order.customerNote ?? 'Không có',

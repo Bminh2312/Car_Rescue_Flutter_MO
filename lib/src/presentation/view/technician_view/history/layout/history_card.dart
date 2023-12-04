@@ -265,8 +265,9 @@ class _HistoryCardState extends State<HistoryCard>
                         children: [
                           // Text(booking.note ?? 'Không có'),
                           BookingStatus(
-                              status: booking
-                                  .status,fontSize: 14,), // Your existing BookingStatus widget
+                            status: booking.status,
+                            fontSize: 14,
+                          ), // Your existing BookingStatus widget
                           SizedBox(height: 8.0),
                           if (booking.status.toUpperCase() ==
                               'COMPLETED') // Spacing
@@ -396,6 +397,8 @@ class _HistoryCardState extends State<HistoryCard>
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => BookingDetailsView(
+                                        userId: widget.userId,
+                                        accountId: widget.accountId,
                                         booking: booking,
                                         addressesDepart: widget.addressesDepart,
                                         addressesDesti: widget.addressesDesti,
@@ -517,8 +520,9 @@ class _HistoryCardState extends State<HistoryCard>
                         children: [
                           // Text(booking.note ?? 'Không có'),
                           BookingStatus(
-                              status: booking
-                                  .status,fontSize: 14,), // Your existing BookingStatus widget
+                            status: booking.status,
+                            fontSize: 14,
+                          ), // Your existing BookingStatus widget
                           SizedBox(height: 8.0),
                           if (booking.status.toUpperCase() ==
                               'COMPLETED') // Spacing
@@ -648,6 +652,8 @@ class _HistoryCardState extends State<HistoryCard>
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => BookingDetailsView(
+                                        userId: widget.userId,
+                                        accountId: widget.accountId,
                                         booking: booking,
                                         addressesDepart: widget.addressesDepart,
                                         addressesDesti: widget.addressesDesti,

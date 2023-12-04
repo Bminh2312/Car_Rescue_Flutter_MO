@@ -32,16 +32,37 @@ class _CarListViewState extends State<CarListView> {
   bool isLoading = true;
   bool isAscending = true;
   final TextEditingController _controller = TextEditingController();
-String? accessToken = GetStorage().read<String>("accessToken");
+  String? accessToken = GetStorage().read<String>("accessToken");
   PopupMenuItem<String> buildItem(String value) {
+    String displayText = value;
+
+    // Check and customize the display text based on different values
+    switch (value) {
+      case "ACTIVE":
+        displayText = "Hoạt động";
+        break;
+      case "WAITING_APPROVAL":
+        displayText = "Chờ duyệt";
+        break;
+      case "ASSIGNED":
+        displayText = "Đã phân công";
+        break;
+      case "REJECTED":
+        displayText = "Từ chối";
+        break;
+      // Add more cases as needed
+
+      // Default case (if none of the specific cases match)
+      default:
+        break;
+    }
+
     return PopupMenuItem(
       value: value,
-      child: Text(value),
+      child: Text(displayText),
     );
   }
 
-  @override
-  @override
   @override
   void initState() {
     super.initState();
@@ -91,10 +112,11 @@ String? accessToken = GetStorage().read<String>("accessToken");
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Vehicle/GetAllOfUser?id=$userId';
 
-    final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $accessToken'
-        });
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       Map<String, dynamic> data = json.decode(response.body);

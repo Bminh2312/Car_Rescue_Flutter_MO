@@ -23,6 +23,7 @@ import 'package:http/http.dart' as http;
 class BookingListBody extends StatefulWidget {
   final List<Booking> bookings; // Define the list of bookings
   final String userId;
+  final String accountId;
   final Map<String, String> addressesDepart;
   final Map<String, String> subAddressesDepart;
   final Map<String, String> addressesDesti;
@@ -35,6 +36,7 @@ class BookingListBody extends StatefulWidget {
     required this.subAddressesDepart,
     required this.subAddressesDesti,
     required this.addressesDesti,
+    required this.accountId,
   }) : super(key: key);
 
   @override
@@ -510,6 +512,8 @@ class _BookingListBodyState extends State<BookingListBody> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => BookingDetailsView(
+                                      userId: widget.userId,
+                                      accountId: widget.accountId,
                                       booking: booking,
                                       addressesDepart: widget.addressesDepart,
                                       addressesDesti: widget.addressesDesti,

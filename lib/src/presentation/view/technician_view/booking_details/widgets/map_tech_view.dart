@@ -194,16 +194,49 @@ class _MapTechScreenState extends State<MapTechScreen> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text("Technician Alert"),
-              content: Text("Bạn đã tới điểm cứu hộ."),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Close the dialog
-                  },
-                  child: Text("OK"),
-                ),
-              ],
+              title: Text("Thông báo từ Kỹ thuật viên"),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Kỹ thuật viên đã đến điểm cứu hộ."),
+                  SizedBox(height: 10),
+                  // Add relevant images or icons here
+                  // For example, you can use Image.asset or Icon widgets
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          // Implement your action for calling the technician
+                          Navigator.pop(context); // Close the dialog
+                        },
+                        child: Row(
+                          children: [
+                            Icon(Icons.call),
+                            SizedBox(width: 8),
+                            Text("Gọi Kỹ thuật viên"),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          // Implement your action for confirming the technician's arrival
+                          Navigator.pop(context); // Close the dialog
+                        },
+                        child: Row(
+                          children: [
+                            Icon(Icons.check),
+                            SizedBox(width: 8),
+                            Text("Đã xác nhận"),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             );
           },
         );

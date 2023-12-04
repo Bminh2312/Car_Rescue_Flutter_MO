@@ -17,7 +17,8 @@ import 'package:CarRescue/src/presentation/elements/quick_access_buttons.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/notification/notification_view.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:lottie/lottie.dart';
+
 
 class TechncianHomePageBody extends StatefulWidget {
   final String userId;
@@ -65,6 +66,8 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
     });
     loadCurrentWeek();
   }
+
+  
 
   Future<void> loadNextWeek(DateTime startDate) async {
     try {
@@ -337,12 +340,13 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                 label: 'Thông báo',
                 icon: Icons.notifications,
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const NotificationView(),
-                    ),
-                  );
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder: (context) => const NotificationView(),
+                  //   ),
+                  // );
+                  
                 },
               ),
               // QuickAccessButton(
@@ -376,6 +380,15 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
           shiftDate == tomorrow ||
           shiftDate == tomorrow2;
     }).toList();
+    if (weeklyShifts.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Center(
+            child: CircularProgressIndicator(
+          color: FrontendConfigs.kActiveColor,
+        )),
+      );
+    }
     if (weeklyShifts.length < 2) {
       return Padding(
         padding: const EdgeInsets.all(8.0),
@@ -484,7 +497,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                                   alignment: Alignment.centerLeft,
                                   child: Chip(
                                     padding: EdgeInsets.zero,
-                                    label: Text("SCHEDULED"),
+                                    label: Text("Đã Lên Lịch"),
                                     backgroundColor: Colors.green,
                                     labelStyle: TextStyle(
                                         color: Colors.white,

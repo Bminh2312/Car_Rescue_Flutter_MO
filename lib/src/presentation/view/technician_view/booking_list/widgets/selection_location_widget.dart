@@ -52,10 +52,10 @@ class RideSelectionWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 200,
+                  width: 240,
                   child: CustomText(
                     text: title,
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -63,10 +63,10 @@ class RideSelectionWidget extends StatelessWidget {
                   height: 3,
                 ),
                 Container(
-                  width: 220,
+                  width: 240,
                   child: CustomText(
                     text: body,
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w400,
                   ),
                 )

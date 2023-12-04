@@ -44,8 +44,16 @@ class BookingDetailsBody extends StatefulWidget {
   final Map<String, String> subAddressesDepart;
   final Map<String, String> addressesDesti;
   final Map<String, String> subAddressesDesti;
-  BookingDetailsBody(this.booking, this.addressesDepart,
-      this.subAddressesDepart, this.addressesDesti, this.subAddressesDesti);
+  final String userId;
+  final String accountId;
+  BookingDetailsBody(
+      this.booking,
+      this.addressesDepart,
+      this.subAddressesDepart,
+      this.addressesDesti,
+      this.subAddressesDesti,
+      this.userId,
+      this.accountId);
 
   @override
   State<BookingDetailsBody> createState() => _BookingDetailsBodyState();
@@ -1378,32 +1386,33 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 child: Column(
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildSectionTitle("Khách hàng"),
-                        InkWell(
-                          onTap: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => MapTechScreen(
-                                  cus: customerInfo!,
-                                  booking: widget.booking,
-                                  techImg: technicianInfo?.avatar ?? '',
-                                  techId: technicianInfo?.id ?? '',
-                                ),
-                              ),
-                            );
-                          },
-                          child: Row(
-                            children: [
-                              // Add your section title
-                              Image.asset('assets/icons/location.png')
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildSectionTitle("Khách hàng"),
+                          widget.booking.status == 'INPROGRESS'
+                              ? InkWell(
+                                  onTap: () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => MapTechScreen(
+                                          cus: customerInfo!,
+                                          booking: widget.booking,
+                                          techImg: technicianInfo?.avatar ?? '',
+                                          techId: technicianInfo?.id ?? '',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Row(
+                                    children: [
+                                      // Add your section title
+                                      Image.asset('assets/icons/location.png')
+                                    ],
+                                  ),
+                                )
+                              : Container()
+                        ]),
                     CustomerInfoRow(
                       name: customerInfo?.fullname ?? '',
                       phone: customerInfo?.phone ?? '',
@@ -1649,6 +1658,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => ServiceSelectionScreen(
+                          userId: widget.userId,
+                          accountId: widget.accountId,
                           selectedServices: selectedServices,
                           booking: widget.booking,
                           addressesDepart: widget.addressesDepart,

@@ -23,7 +23,8 @@ extension IterableExtension<E> on Iterable<E> {
 class ServiceSelectionScreen extends StatefulWidget {
   final List<Service> selectedServices;
   final Booking booking;
-  // Add this line to store the booking
+  final String userId;
+  final String accountId;
   final Map<String, String> addressesDepart;
   final Map<String, String> subAddressesDepart;
   final Map<String, String> addressesDesti;
@@ -34,7 +35,7 @@ class ServiceSelectionScreen extends StatefulWidget {
       required this.addressesDepart,
       required this.subAddressesDepart,
       required this.addressesDesti,
-      required this.subAddressesDesti});
+      required this.subAddressesDesti, required this.userId, required this.accountId});
   @override
   _ServiceSelectionScreenState createState() => _ServiceSelectionScreenState();
 }
@@ -139,6 +140,8 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => BookingDetailsView(
+          userId: widget.userId,
+          accountId: widget.accountId,
           selectedServices: selectedServices,
           booking: widget.booking,
           addressesDepart: widget.addressesDepart,
