@@ -15,8 +15,6 @@ class FeedBackProvider {
   final String apiUrlGetFeedBackOfOrder =
       Environment.API_URL + 'api/Feedback/GetFeedbackOfOrder';
 
-  String accessToken = GetStorage().read("accessToken");
-
   Future<FeedbackCustomer> getFeedbackOfOrder(String orderId) async {
     final Uri url = Uri.parse('$apiUrlGetFeedBackOfOrder?id=${orderId}');
     final response = await http.get(

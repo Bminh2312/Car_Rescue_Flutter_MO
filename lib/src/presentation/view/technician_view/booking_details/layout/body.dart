@@ -210,12 +210,12 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         _isLoading = false;
       });
       if (_currentBooking != null) {
-      print('Booking ID: ${_currentBooking!.id}');
-      print('Booking Status: ${_currentBooking?.status ?? 'N/A'}');
-      // Access other properties in a similar way
-    } else {
-      print('The fetched booking is null.');
-    }
+        print('Booking ID: ${_currentBooking!.id}');
+        print('Booking Status: ${_currentBooking?.status ?? 'N/A'}');
+        // Access other properties in a similar way
+      } else {
+        print('The fetched booking is null.');
+      }
     } catch (e) {
       print('Error loading payment: $e');
     }
@@ -585,8 +585,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               ));
         });
   }
-
-  
 
   Future<void> updateOrder(
     String orderId,
@@ -1197,7 +1195,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           : SizedBox.shrink()
                     ],
                   ),
-
                 ),
                 if (localIsLoading)
                   Positioned.fill(
@@ -1661,196 +1658,144 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
               // Action Buttons
 
-                  SizedBox(height: 24.0), // Additional spacing at the bottom
-                ],
-              ),
-            ),
-            bottomNavigationBar: Container(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              SizedBox(height: 24.0), // Additional spacing at the bottom
+            ],
+          ),
+        ]),
+        bottomNavigationBar: Container(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              GestureDetector(
+                onTap: () {
+                  List<Service> selectedServices = selectedServiceCards
+                      .where(
+                          (service) => selectedServiceCards.contains(service))
+                      .toList();
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ServiceSelectionScreen(
+                          selectedServices: selectedServices,
+                          booking: widget.booking,
+                          addressesDepart: widget.addressesDepart,
+                          subAddressesDepart: widget.subAddressesDepart,
+                          addressesDesti: widget.addressesDesti,
+                          subAddressesDesti: widget.subAddressesDesti,
+                        ),
+                      ));
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      GestureDetector(
-                      onTap: () {
-                        List<Service> selectedServices = selectedServiceCards
-                            .where((service) =>
-                                selectedServiceCards.contains(service))
-                            .toList();
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ServiceSelectionScreen(
-                                selectedServices: selectedServices,
-                                booking: widget.booking,
-                                addressesDepart: widget.addressesDepart,
-                                subAddressesDepart: widget.subAddressesDepart,
-                                addressesDesti: widget.addressesDesti,
-                                subAddressesDesti: widget.subAddressesDesti,
-                              ),
-                            ));
-                      },
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        color: Colors.white,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [SizedBox()],
-                            ),
-                            buildServiceList(context,"Chọn dịch vụ",Icon(Icons.add_box)),
-                          ],
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [SizedBox()],
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        print("IncidentID: ${widget.booking.indicentId}");
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => 
-                              ChangeRescueScreen(
-                                incidentId: widget.booking.indicentId ?? '',departure: widget.booking.departure,paymentMethod:_payment?.method ?? '' ,rescueType: "Towing", orderId: widget.booking.id,),
-                            ));
-                      },
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        color: Colors.white,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [SizedBox()],
-                            ),
-                            buildServiceList(context, "Chuyển đơn", Icon(Icons.next_plan)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    ]
-                  ),
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: Colors.white,
-                child: Column(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildPaymentMethod(
-                          _payment?.method ?? '',
-                          currencyFormat.format(_payment?.amount ?? 0),
-                        )
-                      ],
-                    ),
-
-                  ),
-                  // if (widget.booking.status == "ASSIGNED") _slider(true),
-                  if (widget.booking.status == "INPROGRESS") _slider(false),
-
-                  if (widget.booking.status == "ASSIGNED")
-                    Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          SizedBox(width: 24.0),
-                          AppButton(
-                              onPressed: () async { 
-                                setState(() {
-                                  _isLoading = true;
-                                });
-
-                                await _loadBooking(widget.booking.id);
-                                if (_formKey.currentState!.validate() &&
-                                    pickedImages.isNotEmpty) {
-                                  await uploadImage();
-                                  await updateOrder(widget.booking.id,
-                                      techNoteController.text, _updateImage);
-                                  // await _loadImageOrders(widget.booking.id);
-                                  await _loadTechInfo(
-                                      widget.booking.technicianId);
-                                  await _loadBooking(widget.booking.id);
-
-                                  await _loadImageOrders(widget.booking.id);
-
-                                  setState(() {
-                                    techNoteController.clear();
-                                    _loadCustomerInfo(
-                                        widget.booking.customerId);
-                                    _calculateTotal(widget.booking.id);
-                                  });
-                                } else {
-                                  print("Note or pickedImages empty");
-                                  notifyMessage.showToast("Cần ghi chú");
-                                  setState(() {
-                                    _isLoading = false;
-                                  });
-                                }
-                              },
-                              btnLabel: checkUpdate
-                                  ? "Đang gửi về hệ thống"
-                                  : "Hoàn thiện đơn hàng"),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-              // if (widget.booking.status == "ASSIGNED") _slider(true),
-              if (widget.booking.status == "INPROGRESS") _slider(false),
-              if (widget.booking.status == "ASSIGNED")
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      SizedBox(width: 24.0),
-                      AppButton(
-                          onPressed: () async {
-                            setState(() {
-                              _isLoading = true;
-                            });
-
-                            await _loadBooking(widget.booking.id);
-                            if (_formKey.currentState!.validate() &&
-                                pickedImages.isNotEmpty) {
-                              await uploadImage();
-                              await updateOrder(widget.booking.id,
-                                  techNoteController.text, _updateImage);
-                              // await _loadImageOrders(widget.booking.id);
-                              await _loadTechInfo(widget.booking.technicianId);
-                              await _loadBooking(widget.booking.id);
-
-                              await _loadImageOrders(widget.booking.id);
-
-                              setState(() {
-                                techNoteController.clear();
-                                _loadCustomerInfo(widget.booking.customerId);
-                                _calculateTotal(widget.booking.id);
-                              });
-                            } else {
-                              print("Note or pickedImages empty");
-                              notifyMessage.showToast("Cần ghi chú");
-                              setState(() {
-                                _isLoading = false;
-                              });
-                            }
-                          },
-                          btnLabel: checkUpdate
-                              ? "Đang gửi về hệ thống"
-                              : "Hoàn thiện đơn hàng"),
+                      buildServiceList(
+                          context, "Chọn dịch vụ", Icon(Icons.add_box)),
                     ],
                   ),
                 ),
-            ],
-          ),
+              ),
+              if(widget.booking.status == "INPROGRESS")
+              GestureDetector(
+                onTap: () {
+                  print("IncidentID: ${widget.booking.indicentId}");
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChangeRescueScreen(
+                          incidentId: widget.booking.indicentId ?? '',
+                          departure: widget.booking.departure,
+                          paymentMethod: _payment?.method ?? '',
+                          rescueType: "Towing",
+                          orderId: widget.booking.id,
+                        ),
+                      ));
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [SizedBox()],
+                      ),
+                      buildServiceList(
+                          context, "Chuyển đơn", Icon(Icons.next_plan)),
+                    ],
+                  ),
+                ),
+              ),
+            ]),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: Colors.white,
+              child: Column(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPaymentMethod(
+                        _payment?.method ?? '',
+                        NumberFormat('#,##0₫', 'vi_VN')
+                            .format(_payment?.amount ?? ''),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (widget.booking.status == "INPROGRESS") _slider(false),
+            if (widget.booking.status == "ASSIGNED")
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    SizedBox(width: 24.0),
+                    AppButton(
+                        onPressed: () async {
+                          setState(() {
+                            _isLoading = true;
+                          });
+
+                          await _loadBooking(widget.booking.id);
+                          if (_formKey.currentState!.validate() &&
+                              pickedImages.isNotEmpty) {
+                            await uploadImage();
+                            await updateOrder(widget.booking.id,
+                                techNoteController.text, _updateImage);
+                            // await _loadImageOrders(widget.booking.id);
+                            await _loadTechInfo(widget.booking.technicianId);
+                            await _loadBooking(widget.booking.id);
+
+                            await _loadImageOrders(widget.booking.id);
+
+                            setState(() {
+                              techNoteController.clear();
+                              _loadCustomerInfo(widget.booking.customerId);
+                              _calculateTotal(widget.booking.id);
+                            });
+                          } else {
+                            print("Note or pickedImages empty");
+                            notifyMessage.showToast("Cần ghi chú");
+                            setState(() {
+                              _isLoading = false;
+                            });
+                          }
+                        },
+                        btnLabel: checkUpdate
+                            ? "Đang gửi về hệ thống"
+                            : "Hoàn thiện đơn hàng"),
+                  ],
+                ),
+              ),
+          ]),
         ),
 
         // Conditionally display the order item section
