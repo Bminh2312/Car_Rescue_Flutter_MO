@@ -25,7 +25,9 @@ class OrderProvider {
   final String apiUrlEndOrder = Environment.API_URL + 'api/Order/EndOrder';
   final String apiUrlUpdateOrderForTech =
       Environment.API_URL + 'api/Order/UpdateOrderForTeachnician';
-String? accessToken = GetStorage().read<String>("accessToken");
+  final String apiUrlUpdateOrderForCarOwner =
+      Environment.API_URL + 'api/Order/UpdateTowingOrderForRVO';
+  String? accessToken = GetStorage().read<String>("accessToken");
   Future<int?> createOrderFixing(OrderBookServiceFixing order) async {
     try {
       final String orderJson = convert.jsonEncode(order.toJson());
@@ -143,46 +145,47 @@ String? accessToken = GetStorage().read<String>("accessToken");
   // }
 
   Future<List<Order>> getAllOrders(String id) async {
-  try {
-    final response =
-        await http.get(Uri.parse("${apiUrlGetAllOfCustomer}?id=${id}"),headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $accessToken'
-        });
-    if (response.statusCode == 200) {
-      final dynamic data = convert.json.decode(response.body);
+    try {
+      final response = await http.get(
+          Uri.parse("${apiUrlGetAllOfCustomer}?id=${id}"),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer $accessToken'
+          });
+      if (response.statusCode == 200) {
+        final dynamic data = convert.json.decode(response.body);
 
-      if (data != null && data['data'] != null) {
-        final List<dynamic> orderData = data['data'];
-        List<Order> orders =
-            orderData.map((data) => Order.fromJson(data)).toList();
+        if (data != null && data['data'] != null) {
+          final List<dynamic> orderData = data['data'];
+          List<Order> orders =
+              orderData.map((data) => Order.fromJson(data)).toList();
 
-        // Sort orders by date in descending order (latest date first)
-        orders.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
+          // Sort orders by date in descending order (latest date first)
+          orders.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
 
-        return orders;
+          return orders;
+        } else {
+          // Handle empty or invalid response
+          throw Exception('Empty or invalid response data');
+        }
       } else {
-        // Handle empty or invalid response
-        throw Exception('Empty or invalid response data');
+        throw Exception('Failed to load orders');
       }
-    } else {
-      throw Exception('Failed to load orders');
+    } catch (e) {
+      // Handle other exceptions or errors
+      print('Error: $e');
+      throw e;
     }
-  } catch (e) {
-    // Handle other exceptions or errors
-    print('Error: $e');
-    throw e;
   }
-}
-
 
   Future<Order> getOrderDetail(String id) async {
     try {
-      final response =
-          await http.get(Uri.parse("${apiUrlGetOrderDetail}?id=${id}"),headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $accessToken'
-        });
+      final response = await http.get(
+          Uri.parse("${apiUrlGetOrderDetail}?id=${id}"),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer $accessToken'
+          });
       print(response.body); // Add this line for debugging
       if (response.statusCode == 200) {
         final dynamic data = convert.json.decode(response.body);
@@ -212,10 +215,7 @@ String? accessToken = GetStorage().read<String>("accessToken");
     try {
       final response = await http.get(
         Uri.parse('$apiUrlGetImage?id=$orderId'),
-        headers: {
-          'accept': '*/*',
-          'Authorization': 'Bearer $accessToken'
-        },
+        headers: {'accept': '*/*', 'Authorization': 'Bearer $accessToken'},
       );
 
       if (response.statusCode == 200) {
@@ -243,10 +243,11 @@ String? accessToken = GetStorage().read<String>("accessToken");
   Future<List<String>> getServiceIdInOrderDetails(String orderId) async {
     final String apiUrl = '${apiUrlGetOrderDetails}?id=$orderId';
     try {
-      final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $accessToken'
-        });
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData =
@@ -316,7 +317,7 @@ String? accessToken = GetStorage().read<String>("accessToken");
     try {
       final response = await http.post(
         Uri.parse('$apiUrl?id=$orderId'),
-        headers: {'accept': '*','Authorization': 'Bearer $accessToken'},
+        headers: {'accept': '*', 'Authorization': 'Bearer $accessToken'},
       );
 
       if (response.statusCode == 201) {
@@ -376,7 +377,44 @@ String? accessToken = GetStorage().read<String>("accessToken");
     };
     final response = await http.post(
       Uri.parse(apiUrl),
-      headers: {'Content-Type': 'application/json-patch+json','Authorization': 'Bearer $accessToken'},
+      headers: {
+        'Content-Type': 'application/json-patch+json',
+        'Authorization': 'Bearer $accessToken'
+      },
+      body: convert.json.encode(requestBody),
+    );
+
+    print('C: ${response.statusCode}');
+    if (response.statusCode == 201) {
+      // Xử lý thành công
+      print('Đã cập nhật đơn hàng cho kỹ thuật viên thành công.');
+      return true;
+    } else {
+      // Xử lý lỗi
+      print('Lỗi khi cập nhật đơn hàng: ${response.statusCode}');
+      print('Lỗi khi cập nhật đơn hàng: ${response.body}');
+      return false;
+    }
+  }
+
+  Future<bool> updateOrderForCarOwner(
+    String orderId,
+    String staffNote,
+    List<String> imageUrls,
+  ) async {
+    final apiUrl = '${apiUrlUpdateOrderForCarOwner}';
+
+    final Map<String, dynamic> requestBody = {
+      'orderId': orderId,
+      'staffNote': staffNote,
+      'url': imageUrls,
+    };
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {
+        'Content-Type': 'application/json-patch+json',
+        'Authorization': 'Bearer $accessToken'
+      },
       body: convert.json.encode(requestBody),
     );
 

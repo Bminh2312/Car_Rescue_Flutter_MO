@@ -437,6 +437,34 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     }
   }
 
+  Future<void> updateOrderForCarOwner(
+    String orderId,
+    String staffNote,
+    List<String> imageUrls,
+  ) async {
+    Future<bool> checkUpdateFuture = Future.value(false);
+    print("UpdateOrder img: ${imageUrls.length}");
+    try {
+      final update = OrderProvider();
+      checkUpdateFuture =
+          update.updateOrderForCarOwner(orderId, staffNote, imageUrls);
+      if (checkUpdateFuture == Future.value(true)) {
+        setState(() {
+          checkUpdate = true;
+        }); // Trả về true nếu cập nhật thành công
+      } else {
+        setState(() {
+          checkUpdate = false;
+        });
+      }
+    } catch (error) {
+      print('Lỗi khi cập nhật đơn hàng: $error');
+      setState(() {
+        checkUpdate = false;
+      }); // Trả về false nếu có lỗi
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Image URLs (replace with your actual image URLs)
@@ -845,6 +873,60 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                   await uploadImage();
                                   await updateOrder(widget.booking.id,
                                       techNoteController.text, _updateImage);
+                                  // await _loadImageOrders(widget.booking.id);
+                                  await _loadVehicleInfo(
+                                      widget.booking.vehicleId ?? '');
+                                  // await _loadBooking(widget.booking.id);
+
+                                  await _loadImageOrders(widget.booking.id);
+                                  Booking updatedBooking = await authService
+                                      .fetchBookingById(widget.booking.id);
+                                  setState(() {
+                                    _currentBooking = updatedBooking;
+                                    techNoteController.clear();
+                                    _loadCustomerInfo(
+                                        widget.booking.customerId);
+                                  });
+                                  if (_imageUrls.isNotEmpty) {
+                                  } else {
+                                    print("Image empty");
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                  }
+                                } else {
+                                  print("Note or pickedImages empty");
+                                  notifyMessage
+                                      .showToast("Cần có ảnh và ghi chú");
+                                  setState(() {
+                                    _isLoading = false;
+                                  });
+                                }
+                              },
+                              btnLabel: checkUpdate
+                                  ? "Đang gửi về hệ thống"
+                                  : "Hoàn thiện đơn hàng"),
+                        ],
+                      ),
+                    ),
+                  if (widget.booking.status == 'INPROGRESS')
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          SizedBox(width: 24.0),
+                          AppButton(
+                              onPressed: () async {
+                                setState(() {
+                                  _isLoading = true;
+                                });
+                                if (_formKey.currentState!.validate() &&
+                                    pickedImages.isNotEmpty) {
+                                  await uploadImage();
+                                  await updateOrderForCarOwner(
+                                      widget.booking.id,
+                                      techNoteController.text,
+                                      _updateImage);
                                   // await _loadImageOrders(widget.booking.id);
                                   await _loadVehicleInfo(
                                       widget.booking.vehicleId ?? '');

@@ -1018,9 +1018,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   Widget _buildOrderItemSection() {
     return Column(
       children: [
-        // Uncomment and modify this section if needed
-        // _buildFeeSection(),
-
         Expanded(
           child: ListView.builder(
             key: PageStorageKey<String>('page'),
@@ -1087,7 +1084,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         ),
                         isLoading: localIsLoading,
                       ),
-                      widget.booking.status.toUpperCase() != 'COMPLETED'
+                      widget.booking.status.toUpperCase() != 'COMPLETED' &&
+                              widget.booking.status.toUpperCase() != 'CANCELLED'
                           ? Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -1400,6 +1398,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                           booking: widget.booking,
                                           techImg: technicianInfo?.avatar ?? '',
                                           techId: technicianInfo?.id ?? '',
+                                          techPhone: technicianInfo?.phone ?? ''
                                         ),
                                       ),
                                     );
@@ -1648,43 +1647,44 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              GestureDetector(
-                onTap: () {
-                  List<Service> selectedServices = selectedServiceCards
-                      .where(
-                          (service) => selectedServiceCards.contains(service))
-                      .toList();
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ServiceSelectionScreen(
-                          userId: widget.userId,
-                          accountId: widget.accountId,
-                          selectedServices: selectedServices,
-                          booking: widget.booking,
-                          addressesDepart: widget.addressesDepart,
-                          subAddressesDepart: widget.subAddressesDepart,
-                          addressesDesti: widget.addressesDesti,
-                          subAddressesDesti: widget.subAddressesDesti,
+              if (widget.booking.status != 'COMPLETED' &&
+                  widget.booking.status != 'CANCELLED')
+                GestureDetector(
+                  onTap: () {
+                    List<Service> selectedServices = selectedServiceCards
+                        .where(
+                            (service) => selectedServiceCards.contains(service))
+                        .toList();
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ServiceSelectionScreen(
+                            userId: widget.userId,
+                            accountId: widget.accountId,
+                            selectedServices: selectedServices,
+                            booking: widget.booking,
+                            addressesDepart: widget.addressesDepart,
+                            subAddressesDepart: widget.subAddressesDepart,
+                            addressesDesti: widget.addressesDesti,
+                            subAddressesDesti: widget.subAddressesDesti,
+                          ),
+                        ));
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [SizedBox()],
                         ),
-                      ));
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.white,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [SizedBox()],
-                      ),
-                      if (widget.booking.status != 'COMPLETED')
                         buildServiceList(context),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 color: Colors.white,
