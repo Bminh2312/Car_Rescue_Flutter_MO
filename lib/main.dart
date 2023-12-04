@@ -15,7 +15,7 @@ import 'package:CarRescue/src/presentation/view/splash_screen/splash_view.dart';
 import 'package:get_storage/get_storage.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
-String? userRole ;
+String? userRole;
 String? userId;
 String? accountId;
 Future<void> main() async {
@@ -23,6 +23,7 @@ Future<void> main() async {
   await Firebase.initializeApp();
   await FirebaseMessaging.instance.requestPermission();
   await FireBaseMessageProvider().initLocalNotifications();
+  await GetStorage.init();
   // Read the 'role' value
   userRole = GetStorage().read('role');
   userId = GetStorage().read('userId');

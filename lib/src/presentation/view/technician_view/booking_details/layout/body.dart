@@ -1,8 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:CarRescue/src/models/symptom.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
+
+import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/change_rescue_type.dart';
+
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/map_tech_view.dart';
+
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/select_service.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/widgets/selection_location_widget.dart';
 import 'package:geolocator/geolocator.dart';
@@ -66,6 +71,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   Payment? _payment;
   CustomerCar? _car;
   CarModel? _carModel;
+  Symptom? selectedSymptom;
   List<String> _imageUrls = [];
   List<String> pickedImages = [];
   List<String> _updateImage = [];
@@ -80,9 +86,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   int _quantity = 1;
   int totalQuantity = 0;
   int totalAmount = 0;
+
+  bool _isExpanded = false;
+
   final ScrollController _scrollController = ScrollController();
   double _savedScrollPosition = 0.0;
   Timer? myTimer;
+
   @override
   void initState() {
     super.initState();
@@ -199,7 +209,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         _currentBooking = updatedBooking;
         _isLoading = false;
       });
-
       if (_currentBooking != null) {
         print('Booking ID: ${_currentBooking!.id}');
         print('Booking Status: ${_currentBooking?.status ?? 'N/A'}');
@@ -207,7 +216,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       } else {
         print('The fetched booking is null.');
       }
-
     } catch (e) {
       print('Error loading payment: $e');
     }
@@ -353,6 +361,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       } else {
         selectedServiceCards.remove(service);
         caculateTotal();
+      }
+    });
+  }
+
+  void onSymptomSelected(Symptom? symptom) {
+    setState(() {
+      selectedSymptom = symptom;
+      if (selectedSymptom != null) {
+        print('Selected Symptom ID: ${selectedSymptom!.id}');
       }
     });
   }
@@ -1078,6 +1095,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       child: Icon(Icons.delete, color: Colors.white),
                     ),
                   ),
+
                   child: Column(
                     children: [
                       _buildItemRow(
@@ -1647,7 +1665,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         bottomNavigationBar: Container(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-
               GestureDetector(
                 onTap: () {
                   List<Service> selectedServices = selectedServiceCards
@@ -1696,7 +1713,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           paymentMethod: _payment?.method ?? '',
                           rescueType: "Towing",
                           orderId: widget.booking.id,
-
                         ),
                       ));
                 },
@@ -1721,19 +1737,18 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               color: Colors.white,
               child: Column(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildPaymentMethod(
-                          _payment?.method ?? '',
-                          currencyFormat.format(_payment?.amount ?? 0),
-                        )
-                      ],
-                    ),
-                  ],
-                ),
-
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPaymentMethod(
+                        _payment?.method ?? '',
+                        NumberFormat('#,##0₫', 'vi_VN')
+                            .format(_payment?.amount ?? ''),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
             if (widget.booking.status == "INPROGRESS") _slider(false),
@@ -1797,7 +1812,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     ]);
   }
 
-  Widget buildServiceList(BuildContext context) {
+  Widget buildServiceList(BuildContext context, String content, Icon icon) {
     return Container(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1805,10 +1820,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.add_box), // Biểu tượng dấu '+'
+              icon, // Biểu tượng dấu '+'
               SizedBox(width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
               Text(
-                'Chọn dịch vụ', // Văn bản bên cạnh biểu tượng
+                content, // Văn bản bên cạnh biểu tượng
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16, // Kích thước văn bản
@@ -1847,7 +1862,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         onSelected: (isSelected) {
                           updateSelectedServices(service, isSelected);
                         },
-                        isSelected: isSelected, rescueType: '',
+                        isSelected: isSelected,
+                        rescueType: '',
                       );
                     },
                   );

@@ -616,7 +616,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
                             status: 'status',
                             departure: 'departure',
                             destination: 'destination',
-                            area: 1),
+                            area: 1,indicentId: null),
                       ),
                     ),
                   );
