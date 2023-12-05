@@ -283,7 +283,7 @@ class HomeViewState extends State<HomeView> {
     return Scaffold(
       appBar: customAppBar(
         context,
-        text: 'Map Location',
+        text: 'Bản đồ',
         showText: true,
       ),
       key: homeScaffoldKey,

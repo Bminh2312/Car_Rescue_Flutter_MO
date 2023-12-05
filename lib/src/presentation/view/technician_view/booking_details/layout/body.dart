@@ -2,8 +2,13 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:CarRescue/src/models/manager.dart';
+import 'package:CarRescue/src/models/symptom.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
+
+import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/change_rescue_type.dart';
+
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/map_tech_view.dart';
+
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/select_service.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/widgets/selection_location_widget.dart';
 import 'package:geolocator/geolocator.dart';
@@ -75,6 +80,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   Payment? _payment;
   CustomerCar? _car;
   CarModel? _carModel;
+  Symptom? selectedSymptom;
   List<String> _imageUrls = [];
   List<String> pickedImages = [];
   List<String> _updateImage = [];
@@ -89,6 +95,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   int _quantity = 1;
   int totalQuantity = 0;
   int totalAmount = 0;
+
+  bool _isExpanded = false;
+
   final ScrollController _scrollController = ScrollController();
   double _savedScrollPosition = 0.0;
   Timer? myTimer;
@@ -225,6 +234,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         _currentBooking = updatedBooking;
         _isLoading = false;
       });
+      if (_currentBooking != null) {
+        print('Booking ID: ${_currentBooking!.id}');
+        print('Booking Status: ${_currentBooking?.status ?? 'N/A'}');
+        // Access other properties in a similar way
+      } else {
+        print('The fetched booking is null.');
+      }
     } catch (e) {
       print('Error loading payment: $e');
     }
@@ -370,6 +386,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       } else {
         selectedServiceCards.remove(service);
         caculateTotal();
+      }
+    });
+  }
+
+  void onSymptomSelected(Symptom? symptom) {
+    setState(() {
+      selectedSymptom = symptom;
+      if (selectedSymptom != null) {
+        print('Selected Symptom ID: ${selectedSymptom!.id}');
       }
     });
   }
@@ -1082,125 +1107,235 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
             _orderId = orderId;
             return Stack(
               children: [
-                Dismissible(
-                  key: dismissibleKey, // Use a unique key
-                  direction: DismissDirection.endToStart,
-                  confirmDismiss: (direction) async {
-                    return await _showConfirmationDialog(context);
-                  },
-                  onDismissed: (direction) async {
-                    await _deleteOrderDetail(orderId);
-                    // Optionally, you can add a snackbar or handle UI updates after deletion
-                  },
-                  background: Container(
-                    alignment: AlignmentDirectional.centerEnd,
-                    color: Colors.red,
-                    child: Padding(
-                      padding: EdgeInsets.only(right: 16),
-                      child: Icon(Icons.delete, color: Colors.white),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildItemRow(
-                        '$name (Số lượng: $quantity) ',
-                        Text(
-                          '$formattedTotal',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                widget.booking.status != "COMPLETED" &&
+                        widget.booking.status != "CANCELLED"
+                    ? Dismissible(
+                        key: dismissibleKey, // Use a unique key
+                        direction: DismissDirection.endToStart,
+                        confirmDismiss: (direction) async {
+                          return await _showConfirmationDialog(context);
+                        },
+                        onDismissed: (direction) async {
+                          await _deleteOrderDetail(orderId);
+                          // Optionally, you can add a snackbar or handle UI updates after deletion
+                        },
+                        background: Container(
+                          alignment: AlignmentDirectional.centerEnd,
+                          color: Colors.red,
+                          child: Padding(
+                            padding: EdgeInsets.only(right: 16),
+                            child: Icon(Icons.delete, color: Colors.white),
+                          ),
                         ),
-                        isLoading: localIsLoading,
-                      ),
-                      widget.booking.status.toUpperCase() != 'COMPLETED' &&
-                              widget.booking.status.toUpperCase() != 'CANCELLED'
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(Icons.remove),
-                                      onPressed: () async {
-                                        if (quantity > 1) {
-                                          setState(() {
-                                            localIsLoading = true;
-                                          });
-                                          await _updateOrderDetails(
-                                            orderDetail,
-                                            quantity - 1,
-                                            price,
-                                            (loading) {
-                                              setState(() {
-                                                localIsLoading = loading;
-                                              });
+
+                        child: Column(
+                          children: [
+                            _buildItemRow(
+                              '$name (Số lượng: $quantity) ',
+                              Text(
+                                '$formattedTotal',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              isLoading: localIsLoading,
+                            ),
+                            widget.booking.status.toUpperCase() !=
+                                        'COMPLETED' &&
+                                    widget.booking.status.toUpperCase() !=
+                                        'CANCELLED'
+                                ? Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(Icons.remove),
+                                            onPressed: () async {
+                                              if (quantity > 1) {
+                                                setState(() {
+                                                  localIsLoading = true;
+                                                });
+                                                await _updateOrderDetails(
+                                                  orderDetail,
+                                                  quantity - 1,
+                                                  price,
+                                                  (loading) {
+                                                    setState(() {
+                                                      localIsLoading = loading;
+                                                    });
+                                                  },
+                                                );
+                                                await _delayedLoadPayment();
+                                              }
                                             },
-                                          );
-                                          await _delayedLoadPayment();
-                                        }
-                                      },
-                                    ),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    SizedBox(
-                                      width: 50,
-                                      height: 32,
-                                      child: TextFormField(
-                                        textAlign: TextAlign.center,
-                                        decoration: InputDecoration(
-                                          border: OutlineInputBorder(),
-                                        ),
-                                        controller: quantityController,
-                                        onChanged: (value) {
-                                          quantity = int.tryParse(value) ?? 0;
-                                        },
-                                        onEditingComplete: () async {
-                                          setState(() {
-                                            localIsLoading = true;
-                                          });
-                                          await _updateOrderDetails(
-                                            orderDetail,
-                                            quantity,
-                                            price,
-                                            (loading) {
+                                          ),
+                                          SizedBox(
+                                            width: 10,
+                                          ),
+                                          SizedBox(
+                                            width: 50,
+                                            height: 32,
+                                            child: TextFormField(
+                                              textAlign: TextAlign.center,
+                                              decoration: InputDecoration(
+                                                border: OutlineInputBorder(),
+                                              ),
+                                              controller: quantityController,
+                                              onChanged: (value) {
+                                                quantity =
+                                                    int.tryParse(value) ?? 0;
+                                              },
+                                              onEditingComplete: () async {
+                                                setState(() {
+                                                  localIsLoading = true;
+                                                });
+                                                await _updateOrderDetails(
+                                                  orderDetail,
+                                                  quantity,
+                                                  price,
+                                                  (loading) {
+                                                    setState(() {
+                                                      localIsLoading = loading;
+                                                    });
+                                                  },
+                                                );
+                                                await _delayedLoadPayment();
+                                              },
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            width: 10,
+                                          ),
+                                          IconButton(
+                                            icon: Icon(Icons.add),
+                                            onPressed: () async {
                                               setState(() {
-                                                localIsLoading = loading;
+                                                localIsLoading = true;
                                               });
+                                              await _updateOrderDetails(
+                                                orderDetail,
+                                                quantity + 1,
+                                                price,
+                                                (loading) {
+                                                  setState(() {
+                                                    localIsLoading = loading;
+                                                  });
+                                                },
+                                              );
+                                              await _delayedLoadPayment();
                                             },
-                                          );
-                                          await _delayedLoadPayment();
-                                        },
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    IconButton(
-                                      icon: Icon(Icons.add),
-                                      onPressed: () async {
-                                        setState(() {
-                                          localIsLoading = true;
-                                        });
-                                        await _updateOrderDetails(
-                                          orderDetail,
-                                          quantity + 1,
-                                          price,
-                                          (loading) {
-                                            setState(() {
-                                              localIsLoading = loading;
-                                            });
+                                    ],
+                                  )
+                                : SizedBox.shrink()
+                          ],
+                        ),
+                      )
+                    : Column(
+                        children: [
+                          _buildItemRow(
+                            '$name (Số lượng: $quantity) ',
+                            Text(
+                              '$formattedTotal',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            isLoading: localIsLoading,
+                          ),
+                          widget.booking.status.toUpperCase() != 'COMPLETED' &&
+                                  widget.booking.status.toUpperCase() !=
+                                      'CANCELLED'
+                              ? Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(Icons.remove),
+                                          onPressed: () async {
+                                            if (quantity > 1) {
+                                              setState(() {
+                                                localIsLoading = true;
+                                              });
+                                              await _updateOrderDetails(
+                                                orderDetail,
+                                                quantity - 1,
+                                                price,
+                                                (loading) {
+                                                  setState(() {
+                                                    localIsLoading = loading;
+                                                  });
+                                                },
+                                              );
+                                              await _delayedLoadPayment();
+                                            }
                                           },
-                                        );
-                                        await _delayedLoadPayment();
-                                      },
+                                        ),
+                                        SizedBox(
+                                          width: 10,
+                                        ),
+                                        SizedBox(
+                                          width: 50,
+                                          height: 32,
+                                          child: TextFormField(
+                                            textAlign: TextAlign.center,
+                                            decoration: InputDecoration(
+                                              border: OutlineInputBorder(),
+                                            ),
+                                            controller: quantityController,
+                                            onChanged: (value) {
+                                              quantity =
+                                                  int.tryParse(value) ?? 0;
+                                            },
+                                            onEditingComplete: () async {
+                                              setState(() {
+                                                localIsLoading = true;
+                                              });
+                                              await _updateOrderDetails(
+                                                orderDetail,
+                                                quantity,
+                                                price,
+                                                (loading) {
+                                                  setState(() {
+                                                    localIsLoading = loading;
+                                                  });
+                                                },
+                                              );
+                                              await _delayedLoadPayment();
+                                            },
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 10,
+                                        ),
+                                        IconButton(
+                                          icon: Icon(Icons.add),
+                                          onPressed: () async {
+                                            setState(() {
+                                              localIsLoading = true;
+                                            });
+                                            await _updateOrderDetails(
+                                              orderDetail,
+                                              quantity + 1,
+                                              price,
+                                              (loading) {
+                                                setState(() {
+                                                  localIsLoading = loading;
+                                                });
+                                              },
+                                            );
+                                            await _delayedLoadPayment();
+                                          },
+                                        ),
+                                      ],
                                     ),
                                   ],
-                                ),
-                              ],
-                            )
-                          : SizedBox.shrink()
-                    ],
-                  ),
-                ),
+                                )
+                              : SizedBox.shrink()
+                        ],
+                      ),
                 if (localIsLoading)
                   Positioned.fill(
                     child: Container(
@@ -1707,11 +1842,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           ),
         ]),
         bottomNavigationBar: Container(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.booking.status != 'COMPLETED' &&
-                  widget.booking.status != 'CANCELLED')
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              if (widget.booking.status != "COMPLETED" &&
+                  widget.booking.status != "CANCELLED")
                 GestureDetector(
                   onTap: () {
                     List<Service> selectedServices = selectedServiceCards
@@ -1743,75 +1877,110 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [SizedBox()],
                         ),
-                        buildServiceList(context),
+                        buildServiceList(
+                            context, "Chọn dịch vụ", Icon(Icons.add_box)),
                       ],
                     ),
                   ),
                 ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: Colors.white,
-                child: Column(
-                  children: [
-                    Column(
+              if (widget.booking.status == "INPROGRESS")
+                GestureDetector(
+                  onTap: () {
+                    print("IncidentID: ${widget.booking.indicentId}");
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChangeRescueScreen(
+                            paymentMethod: _payment?.method ?? '',
+                            accountId: widget.accountId,
+                            userId: widget.userId,
+                            addressesDepart: widget.addressesDepart,
+                            addressesDesti: widget.addressesDesti,
+                            booking: widget.booking,
+                            subAddressesDepart: widget.subAddressesDepart,
+                            subAddressesDesti: widget.subAddressesDesti,
+                          ),
+                        ));
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.white,
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildPaymentMethod(
-                          _payment?.method ?? '',
-                          currencyFormat.format(_payment?.amount ?? 0),
-                        )
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [SizedBox()],
+                        ),
+                        buildServiceList(
+                            context, "Chuyển đơn", Icon(Icons.next_plan)),
                       ],
                     ),
+                  ),
+                ),
+            ]),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: Colors.white,
+              child: Column(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPaymentMethod(
+                        _payment?.method ?? '',
+                        currencyFormat.format(_payment?.amount ?? 0),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (widget.booking.status == "INPROGRESS") _slider(false),
+            if (widget.booking.status == "ASSIGNED")
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    SizedBox(width: 24.0),
+                    AppButton(
+                        onPressed: () async {
+                          setState(() {
+                            _isLoading = true;
+                          });
+
+                          await _loadBooking(widget.booking.id);
+                          if (_formKey.currentState!.validate() &&
+                              pickedImages.isNotEmpty) {
+                            await uploadImage();
+                            await updateOrder(widget.booking.id,
+                                techNoteController.text, _updateImage);
+                            // await _loadImageOrders(widget.booking.id);
+                            await _loadTechInfo(widget.booking.technicianId);
+                            await _loadBooking(widget.booking.id);
+
+                            await _loadImageOrders(widget.booking.id);
+
+                            setState(() {
+                              techNoteController.clear();
+                              _loadCustomerInfo(widget.booking.customerId);
+                              _calculateTotal(widget.booking.id);
+                            });
+                          } else {
+                            print("Note or pickedImages empty");
+                            notifyMessage.showToast("Cần ghi chú");
+                            setState(() {
+                              _isLoading = false;
+                            });
+                          }
+                        },
+                        btnLabel: checkUpdate
+                            ? "Đang gửi về hệ thống"
+                            : "Hoàn thiện đơn hàng"),
                   ],
                 ),
               ),
-              // if (widget.booking.status == "ASSIGNED") _slider(true),
-              if (widget.booking.status == "INPROGRESS") _slider(false),
-              if (widget.booking.status == "ASSIGNED")
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      SizedBox(width: 24.0),
-                      AppButton(
-                          onPressed: () async {
-                            setState(() {
-                              _isLoading = true;
-                            });
-
-                            await _loadBooking(widget.booking.id);
-                            if (_formKey.currentState!.validate() &&
-                                pickedImages.isNotEmpty) {
-                              await uploadImage();
-                              await updateOrder(widget.booking.id,
-                                  techNoteController.text, _updateImage);
-                              // await _loadImageOrders(widget.booking.id);
-                              await _loadTechInfo(widget.booking.technicianId);
-                              await _loadBooking(widget.booking.id);
-
-                              await _loadImageOrders(widget.booking.id);
-
-                              setState(() {
-                                techNoteController.clear();
-                                _loadCustomerInfo(widget.booking.customerId);
-                                _calculateTotal(widget.booking.id);
-                              });
-                            } else {
-                              print("Note or pickedImages empty");
-                              notifyMessage.showToast("Cần ghi chú");
-                              setState(() {
-                                _isLoading = false;
-                              });
-                            }
-                          },
-                          btnLabel: checkUpdate
-                              ? "Đang gửi về hệ thống"
-                              : "Hoàn thiện đơn hàng"),
-                    ],
-                  ),
-                ),
-            ],
-          ),
+          ]),
         ),
 
         // Conditionally display the order item section
@@ -1828,7 +1997,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     ]);
   }
 
-  Widget buildServiceList(BuildContext context) {
+  Widget buildServiceList(BuildContext context, String content, Icon icon) {
     return Container(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1836,10 +2005,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.add_box), // Biểu tượng dấu '+'
+              icon, // Biểu tượng dấu '+'
               SizedBox(width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
               Text(
-                'Chọn dịch vụ', // Văn bản bên cạnh biểu tượng
+                content, // Văn bản bên cạnh biểu tượng
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16, // Kích thước văn bản
@@ -1879,6 +2048,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           updateSelectedServices(service, isSelected);
                         },
                         isSelected: isSelected,
+                        rescueType: '',
                       );
                     },
                   );

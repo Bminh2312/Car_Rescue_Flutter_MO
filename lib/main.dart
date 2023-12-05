@@ -64,7 +64,10 @@ Future<void> main() async {
     initialRoute: determineInitialRoute(),
     routes: {
       "/splash": (context) => SplashView(),
-      "/notify": (context) => NotifyView(),
+      "/notify": (context) {
+        print("Navigated to /notify");  // Thêm log để kiểm tra
+        return NotifyView();
+      },
       "/customer/home": (context) => BottomNavBarView(page: 0),
       "/technician/home": (context) =>
           BottomNavBarTechView(userId: userId!, accountId: accountId!),

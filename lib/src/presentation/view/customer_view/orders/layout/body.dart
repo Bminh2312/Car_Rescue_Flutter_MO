@@ -29,6 +29,10 @@ class OrderList extends StatefulWidget {
 
 class _OrderListState extends State<OrderList> {
   String selectedStatus = "ASSIGNING";
+  Map<String, String> selectedStatusMap = {
+    'Fixing': 'ASSIGNING', // Default status for Fixing tab
+    'Towing': 'NEW', // Default status for Towing tab
+  };
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
   FeedBackProvider feedBackProvider = FeedBackProvider();
   FeedbackCustomer? feedbackCustomer;
@@ -162,10 +166,10 @@ class _OrderListState extends State<OrderList> {
             background: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                if (type != 'Fixing') _buildFilterButton('NEW', Colors.yellow),
-                _buildFilterButton('ASSIGNING', Colors.blue),
-                _buildFilterButton('COMPLETED', Colors.green),
-                _buildFilterButton('CANCELLED', Colors.red),
+                if (type != 'Fixing') _buildFilterButton(type,'NEW', Colors.yellow),
+                _buildFilterButton(type,'ASSIGNING', Colors.blue),
+                _buildFilterButton(type,'COMPLETED', Colors.green),
+                _buildFilterButton(type,'CANCELLED', Colors.red),
               ],
             ),
           ),
@@ -174,7 +178,7 @@ class _OrderListState extends State<OrderList> {
           delegate: SliverChildBuilderDelegate(
             (BuildContext context, int index) {
               return FutureBuilder<List<Order>>(
-                future: getAllOrders(selectedStatus, type),
+                future: getAllOrders(type),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(child: CircularProgressIndicator());
@@ -309,6 +313,7 @@ class _OrderListState extends State<OrderList> {
                                           fontSize: 16,
                                           status: order.status,
                                         ),
+                                         if(order.status == "COMPLETED")
                                         Expanded(
                                           child:
                                               FutureBuilder<FeedbackCustomer?>(
@@ -516,35 +521,37 @@ class _OrderListState extends State<OrderList> {
     );
   }
 
-  Widget _buildFilterButton(String type, Color textColor) {
-    String translatedText = type;
+  Widget _buildFilterButton(String type,String status, Color textColor) {
+  String translatedText = status;
 
-    if (type == 'ASSIGNING') {
-      translatedText = 'Đang duyệt';
-    } else if (type == 'COMPLETED') {
-      translatedText = 'Hoàn Thành';
-    } else if (type == 'CANCELLED') {
-      translatedText = 'Đã hủy';
-    } else if (type == 'NEW') {
-      translatedText = 'Mới';
-    }
-    return ElevatedButton(
-      style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.all(textColor),
-      ),
-      onPressed: () {
-        setState(() {
-          selectedStatus = type;
-        });
-      },
-      child: Text(
-        translatedText,
-      ),
-    );
+  if (status == 'ASSIGNING') {
+    translatedText = 'Đang duyệt';
+  } else if (status == 'COMPLETED') {
+    translatedText = 'Hoàn Thành';
+  } else if (status == 'CANCELLED') {
+    translatedText = 'Đã hủy';
+  } else if (status == 'NEW') {
+    translatedText = 'Mới';
   }
+  return ElevatedButton(
+    style: ButtonStyle(
+      backgroundColor: MaterialStateProperty.all(textColor),
+    ),
+    onPressed: () {
+      setState(() {
+        selectedStatusMap[type] = status;
+      });
+    },
+    child: Text(
+      translatedText,
+    ),
+  );
+}
 
-  Future<List<Order>> getAllOrders(String status, String type) async {
+
+  Future<List<Order>> getAllOrders(String type) async {
     final orderProvider = OrderProvider();
+    final status = selectedStatusMap[type];
     print("Status: $status");
     try {
       final orders = await orderProvider.getAllOrders(customer.id);

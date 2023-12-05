@@ -138,6 +138,8 @@ class _MapTechScreenState extends State<MapTechScreen> {
     }
   }
 
+ 
+
   void loadUpdateLocation() async {
     try {
       if (currentLocation != null) {

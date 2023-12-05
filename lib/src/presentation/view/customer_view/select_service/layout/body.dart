@@ -6,6 +6,7 @@ import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/empty_state.dart';
 import 'package:CarRescue/src/presentation/elements/quick_access_buttons.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/car_view/car_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/order_detail/order_detail_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_car/select_car_view.dart';
@@ -61,8 +62,9 @@ class _ServiceBodyState extends State<ServiceBody>
   @override
   void initState() {
     super.initState();
+    checkInfo(context);
     getAllOrders("NEW");
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _pageController = PageController(initialPage: 0, viewportFraction: 0.8);
 
     // Set the timer to change the advertisement every 3 seconds
@@ -123,6 +125,70 @@ class _ServiceBodyState extends State<ServiceBody>
           });
     });
   }
+
+  void checkInfo(BuildContext context) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+
+    // Define a list to store missing information messages
+    List<String> missingInfoMessages = [];
+
+    // Check each required field
+    if (customer.fullname == "" || customer.fullname.isEmpty) {
+      missingInfoMessages.add('Họ và tên');
+    }
+
+    if (customer.sex == "" || customer.sex.isEmpty) {
+      missingInfoMessages.add('Giới tính');
+    }
+
+    if (customer.phone == "" || customer.phone.isEmpty) {
+      missingInfoMessages.add('Số điện thoại');
+    }
+
+    if (customer.address == "" || customer.address.isEmpty) {
+      missingInfoMessages.add('Địa chỉ');
+    }
+
+    if (customer.birthdate == "" || customer.birthdate.isEmpty) {
+      missingInfoMessages.add('Ngày sinh');
+    }
+
+    // If there are missing fields, show the dialog
+    if (missingInfoMessages.isNotEmpty) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Thông báo'),
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Thông tin sau đây chưa đầy đủ:'),
+                for (String missingInfo in missingInfoMessages)
+                  Text('- $missingInfo'),
+              ],
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  // Navigate to the profile screen for updating information
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => BottomNavBarView(page: 2),
+                    ),
+                  );
+                },
+                child: Text('Cập nhật'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  });
+}
 
   void launchDialPad(String phoneNumber) async {
     String uri = 'tel:$phoneNumber';
@@ -351,6 +417,7 @@ class _ServiceBodyState extends State<ServiceBody>
         controller: _tabController,
         children: [
           buildOrders("ASSIGNED"),
+          buildOrders("WAITING"),
           buildOrders("INPROGRESS"),
         ],
       ),
@@ -384,6 +451,7 @@ class _ServiceBodyState extends State<ServiceBody>
                     Card(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           ListTile(
                             leading: CircleAvatar(
@@ -537,97 +605,7 @@ class _ServiceBodyState extends State<ServiceBody>
     );
   }
 
-  // Widget buildQuickBooking() {
-  //   return Container(
-  //     child: Card(
-  //       child: Padding(
-  //         padding: const EdgeInsets.symmetric(vertical: 16),
-  //         child: Row(
-  //           mainAxisAlignment: MainAxisAlignment.spaceAround,
-  //           children: [
-  //             // Loại dịch vụ 1
-  //             GestureDetector(
-  //               onTap: () {
-  //                 Navigator.of(context).push(
-  //                   MaterialPageRoute(
-  //                       builder: (context) => HomeView(
-  //                             services: "Towing",
-  //                           )),
-  //                 );
-  //               },
-  //               child: Container(
-  //                 // Độ cao của loại dịch vụ
-
-  //                 child: Row(
-  //                   mainAxisAlignment: MainAxisAlignment.start,
-  //                   children: [
-  //                     Icon(
-  //                       Icons.directions_car,
-  //                       size: 24,
-  //                       color: Colors.white, // Màu biểu tượng
-  //                     ),
-  //                     SizedBox(
-  //                       width: 10,
-  //                     ),
-  //                     CustomText(
-  //                       text: 'Kéo xe',
-  //                       color: Colors.black,
-  //                       fontWeight: FontWeight.bold,
-  //                       fontSize: 18, // Màu văn bản
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ),
-  //             // Loại dịch vụ 2
-
-  //             GestureDetector(
-  //               onTap: () {
-  //                 //  Navigator.of(context).pushReplacement(
-  //                 //   MaterialPageRoute(
-  //                 //       builder: (context) => HomeView(services: "repair",)),
-  //                 // );
-  //                 Navigator.of(context).push(
-  //                   MaterialPageRoute(
-  //                       builder: (context) => HomeView(
-  //                             services: "Fixing",
-  //                           )),
-  //                 );
-  //               },
-  //               child: Container(
-  //                 // Độ cao của loại dịch vụ
-  //                 decoration: BoxDecoration(
-  //                   // Màu nền trắng
-  //                   borderRadius: BorderRadius.circular(15),
-  //                 ),
-  //                 child: Row(
-  //                   mainAxisAlignment: MainAxisAlignment.center,
-  //                   children: [
-  //                     Icon(
-  //                       Icons.build,
-  //                       size: 24,
-  //                       color: FrontendConfigs.kIconColor, // Màu biểu tượng
-  //                     ),
-  //                     SizedBox(
-  //                       width: 10,
-  //                     ),
-  //                     CustomText(
-  //                       text: 'Sửa chữa',
-  //                       color: Colors.black,
-  //                       fontWeight: FontWeight.bold,
-  //                       fontSize: 18, // Màu văn bản
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             )
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
+  
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Container(
@@ -692,7 +670,7 @@ class _ServiceBodyState extends State<ServiceBody>
                               Row(
                                 children: [
                                   CustomText(
-                                    text: 'Các đơn duyệt và hoạt động',
+                                    text: 'Các đơn chờ duyệt và hoạt động',
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -707,17 +685,24 @@ class _ServiceBodyState extends State<ServiceBody>
                               ),
                               TabBar(
                                 controller: _tabController,
+                                labelPadding: EdgeInsets.symmetric(horizontal: 0),
                                 tabs: [
                                   Tab(
                                     child: BookingStatus(
                                       status: "ASSIGNED",
-                                      fontSize: 16,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  Tab(
+                                    child: BookingStatus(
+                                      status: "WAITING",
+                                      fontSize: 15,
                                     ),
                                   ),
                                   Tab(
                                     child: BookingStatus(
                                       status: "INPROGRESS",
-                                      fontSize: 16,
+                                      fontSize: 15,
                                     ),
                                   ),
                                 ],
@@ -839,99 +824,3 @@ class _ServiceBodyState extends State<ServiceBody>
     );
   }
 }
-
-
-  
-//   void showCancelOrderDialog(BuildContext context, String id) {
-//     showDialog(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return AlertDialog(
-//           title: Text("Hủy đơn"),
-//           content: Form(
-//             key: _formKey,
-//             child: Column(
-//               mainAxisSize: MainAxisSize.min,
-//               children: <Widget>[
-//                 Text("Bạn có chắc muốn hủy đơn không?"),
-//                 TextFormField(
-//                   controller: _reasonCacelController,
-//                   decoration: InputDecoration(labelText: "Lý do hủy đơn"),
-//                   validator: (value) {
-//                     if (value!.isEmpty) {
-//                       return 'Lý do hủy đơn không được để trống';
-//                     }
-//                     return null;
-//                   },
-//                 ),
-//               ],
-//             ),
-//           ),
-//           actions: <Widget>[
-//             TextButton(
-//               child: Text("Hủy"),
-//               onPressed: () {
-//                 setState(() {
-//                   _reasonCacelController.clear();
-//                   getAllOrders("NEW");
-//                 });
-//                 Navigator.of(context).pop(); // Đóng hộp thoại
-//               },
-//             ),
-//             TextButton(
-//               child: Text("Xác nhận"),
-//               onPressed: () {
-//                 // Kiểm tra hợp lệ của form
-//                 if (_formKey.currentState!.validate()) {
-//                   // Ở đây bạn có thể xử lý hành động hủy đơn
-//                   cancelOrder(id, _reasonCacelController.text).then((success) {
-//                     if (success) {
-//                       notifyMessage.showToast("Đã hủy đơn");
-//                       // Sau khi hủy đơn, cập nhật lại danh sách đơn
-//                       setState(() {
-//                         getAllOrders("NEW");
-//                       });
-//                     } else {
-//                       notifyMessage.showToast("Hủy đơn lỗi");
-//                     }
-//                   });
-//                   _reasonCacelController.clear();
-//                   Navigator.of(context).pop(); // Đóng hộp thoại
-//                 }
-//               },
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-
-//   Future<bool> cancelOrder(String orderID, String cancellationReason) async {
-//     try {
-//       final orderProvider =
-//           await OrderProvider().cancelOrder(orderID, cancellationReason);
-//       if (orderProvider) {
-//         return true;
-//       } else {
-//         return false;
-//       }
-//     } catch (e) {
-//       notifyMessage.showToast("Huỷ đơn lỗi.");
-//       return false;
-//     }
-//   }
-
-//   Future<List<Order>> getAllOrders(String status) async {
-//     final orderProvider = OrderProvider();
-//     print("Status: $status");
-//     try {
-//       final orders = await orderProvider.getAllOrders(customer.id);
-//       final filteredOrders =
-//           orders.where((order) => order.status == status).toList();
-//       return filteredOrders;
-//     } catch (e) {
-//       print('Error: $e');
-//       return [];
-//     }
-//   }
-// }

@@ -55,7 +55,7 @@ class _SelectCarViewState extends State<SelectCarView> {
                 }
                 
               },
-              btnLabel: 'Continue',
+              btnLabel: 'Tiếp tục',
             ),
             const SizedBox(
               height: 10,

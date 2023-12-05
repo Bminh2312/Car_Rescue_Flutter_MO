@@ -28,6 +28,13 @@ class OrderProvider {
   final String apiUrlUpdateOrderForCarOwner =
       Environment.API_URL + 'api/Order/UpdateTowingOrderForRVO';
   String? accessToken = GetStorage().read<String>("accessToken");
+
+  final String apiUrlChangeOrder =
+      Environment.API_URL + 'api/Order/ChangeRescueType';
+
+ 
+
+
   Future<int?> createOrderFixing(OrderBookServiceFixing order) async {
     try {
       final String orderJson = convert.jsonEncode(order.toJson());
@@ -36,22 +43,25 @@ class OrderProvider {
       final response = await http.post(
         Uri.parse(apiUrlCreateFixing),
         headers: <String, String>{
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=UTF-8',
+
           'Authorization': 'Bearer $accessToken'
         },
         body: orderJson,
       );
 
+      var responseData = convert.json.decode(response.body);
+
       if (response.statusCode == 200) {
         print('Đơn hàng đã được tạo thành công');
-        return response.statusCode;
+        return responseData["status"];
       } else if (response.statusCode == 500) {
         print('External Error');
-        return response.statusCode;
+        return responseData["status"];
       } else {
         print('Đã xảy ra lỗi khi tạo đơn hàng. Mã lỗi: ${response.statusCode}');
         print('Đã xảy ra lỗi khi tạo đơn hàng. Body: ${response.body}');
-        return response.statusCode;
+        return responseData["status"];
       }
     } catch (e) {
       throw Exception('Error: $e');
@@ -67,8 +77,9 @@ class OrderProvider {
     try {
       final response = await http.post(
         Uri.parse(apiUrlCancelOrder),
-        headers: {
-          'Content-Type': 'application/json',
+
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $accessToken'
         },
         body: convert.jsonEncode(requestBody),
@@ -96,15 +107,16 @@ class OrderProvider {
       final response = await http.post(
         Uri.parse(apiUrlCreateTowing),
         headers: <String, String>{
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=UTF-8',
+
           'Authorization': 'Bearer $accessToken'
         },
         body: orderJson,
       );
-
+      var responseData = convert.json.decode(response.body);
       if (response.statusCode == 200) {
         print('Đơn hàng đã được tạo thành công');
-        return response.statusCode;
+        return responseData["status"];
       } else if (response.statusCode == 500) {
         print('External Error');
         return response.statusCode;
@@ -215,7 +227,11 @@ class OrderProvider {
     try {
       final response = await http.get(
         Uri.parse('$apiUrlGetImage?id=$orderId'),
-        headers: {'accept': '*/*', 'Authorization': 'Bearer $accessToken'},
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+
+          'Authorization': 'Bearer $accessToken'
+        },
       );
 
       if (response.statusCode == 200) {
@@ -340,10 +356,11 @@ class OrderProvider {
 
     final response = await http.post(
       Uri.parse(apiUrl),
-      headers: {
-        "Content-Type": "application/json",
+
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $accessToken'
-        // Add other headers if needed, like authorization headers
+
       },
       body: json.encode({'id': orderId}),
     );
@@ -415,6 +432,8 @@ class OrderProvider {
         'Content-Type': 'application/json-patch+json',
         'Authorization': 'Bearer $accessToken'
       },
+     
+
       body: convert.json.encode(requestBody),
     );
 
@@ -428,6 +447,63 @@ class OrderProvider {
       print('Lỗi khi cập nhật đơn hàng: ${response.statusCode}');
       print('Lỗi khi cập nhật đơn hàng: ${response.body}');
       return false;
+    }
+  }
+
+  Future<int?> changeRescueType(
+    String incidentID,
+    String orderID,
+    String symptomID,
+    String serviceID,
+    String departure,
+    String destination,
+    String paymentMethod,
+    String rescueType,
+    int distance,
+  ) async {
+    // Tạo một Map chứa dữ liệu của request
+    final Map<String, dynamic> requestData = {
+      "incidentID": incidentID,
+      "orderID": orderID,
+      "symptomID": symptomID,
+      "serviceID": serviceID,
+      "departure": departure,
+      "destination": destination,
+      "paymentMethod": paymentMethod,
+      "rescueType": rescueType,
+      "distance": distance,
+    };
+
+    // Chuyển Map thành chuỗi JSON
+    final String requestBody = convert.json.encode(requestData);
+
+    try {
+      // Gửi yêu cầu POST
+      final response = await http.post(
+        Uri.parse(apiUrlChangeOrder),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
+        body: requestBody,
+      );
+        var responseData = convert.json.decode(response.body);
+      // Kiểm tra mã trạng thái của phản hồi
+      if (response.statusCode == 200) {
+        // Xử lý dữ liệu phản hồi nếu cần
+        print('Request successful');
+        print('Response data: ${response.body}');
+        return responseData["status"];
+      } else {
+        // Xử lý lỗi nếu có
+        print('Error: ${response.statusCode}');
+        print('Error message: ${response.body}');
+        return responseData["status"];
+      }
+    } catch (error) {
+      // Xử lý lỗi nếu có lỗi trong quá trình gửi yêu cầu
+      print('Error: $error');
+      throw Exception('Error: $error');
     }
   }
 }
