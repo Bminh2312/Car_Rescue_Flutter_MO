@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/customer.dart';
@@ -18,7 +20,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 
 class TowBody extends StatefulWidget {
   final LatLng latLng;
@@ -49,6 +54,7 @@ class _TowBodyState extends State<TowBody> {
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
   CarCustomerProvider carCustomerProvider = CarCustomerProvider();
   CustomerCar? _car;
+  List<String> pickedImages = [];
   final List<Map<String, dynamic>> dropdownItems = [
     {"name": "Quận 1", "value": 1},
     {"name": "Quận 2", "value": 2},
@@ -58,7 +64,7 @@ class _TowBodyState extends State<TowBody> {
   bool isImageLoading = false;
   // Future<List<Service>>? availableServices;
   List<String>? selectedServices;
-  List<String>? urlImages;
+  List<String> urlImages = [];
   Future<List<Service>>? availableServices;
   List<Service> selectedServiceCards = [];
   late String urlImage;
@@ -73,12 +79,37 @@ class _TowBodyState extends State<TowBody> {
   @override
   void initState() {
     selectedDropdownItem = dropdownItems[0];
-    urlImages = [];
     selectedServices = [];
     availableServices = loadService();
     selectedPaymentMethod = 'Cash';
     getCustomerCar();
     super.initState();
+  }
+
+  Future<void> uploadImage() async {
+    final upload = FirBaseStorageProvider();
+
+    if (pickedImages != []) {
+      for (int index = 0; index < pickedImages.length; index++) {
+        print(pickedImages.length);
+        String? imageUrl =
+            await upload.uploadImageToFirebaseStorage(pickedImages[index]);
+        print(imageUrl);
+        if (imageUrl != null) {
+          setState(() {
+            urlImages.add(imageUrl);
+          });
+          print('Image uploaded successfully. URL: $imageUrl');
+        } else {
+          print('Failed to upload image.');
+        }
+      }
+      setState(() {
+        pickedImages.clear();
+      });
+    } else {
+      print('No image selected.');
+    }
   }
 
   void captureImage() async {
@@ -154,9 +185,10 @@ class _TowBodyState extends State<TowBody> {
       setState(() {
         isLoading = true; // Bắt đầu hiển thị vòng quay khi bắt đầu gửi yêu cầu
       });
-
+      await uploadImage();
+      print("Hình lên : ${urlImages.length}");
       // Bước 1: Xác định thông tin cho đơn hàng
-      String paymentMethod = paymentMethodController.text;
+      String paymentMethod = selectedPaymentMethod!;
       String customerNote = customerNoteController.text;
       String departure =
           "lat: ${widget.latLng.latitude}, long: ${widget.latLng.longitude}";
@@ -174,7 +206,7 @@ class _TowBodyState extends State<TowBody> {
       // Bước 2: Tạo đối tượng Order
       OrderBookServiceTowing order = OrderBookServiceTowing(
         carID: widget.carId,
-        paymentMethod: selectedPaymentMethod!,
+        paymentMethod: paymentMethod,
         customerNote: customerNote,
         departure: departure,
         destination: destination,
@@ -409,67 +441,68 @@ class _TowBodyState extends State<TowBody> {
                 const SizedBox(
                   height: 10,
                 ),
-                CustomText(
-                    text: 'Hình ảnh hiện trường (nếu có)',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (!isImageLoading) {
-                      setState(() {
-                        isImageLoading = true;
-                      });
-                    }
-                    // Xử lý khi người dùng nhấp vào biểu tượng '+'
-                    // Chuyển qua camera ở đây
-                    captureImage();
-                  },
-                  style: ButtonStyle(
-                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    ),
-                    backgroundColor: MaterialStateProperty.all<Color>(
-                      FrontendConfigs.kIconColor, // Màu nền của nút
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.add_box), // Biểu tượng dấu '+'
-                      SizedBox(
-                          width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
-                      Text(
-                        'Thêm', // Văn bản bên cạnh biểu tượng
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16, // Kích thước văn bản
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (urlImages!.isNotEmpty)
-                  Container(
-                    height: 100, // Điều chỉnh chiều cao tùy ý
-                    child: ListView.builder(
-                      scrollDirection:
-                          Axis.horizontal, // Đặt hướng cuộn là ngang
-                      itemCount: urlImages!.length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          margin: EdgeInsets.all(
-                              8.0), // Thêm khoảng cách giữa các hình ảnh
-                          child: Image.network(
-                            urlImages![index],
-                            width:
-                                100, // Điều chỉnh kích thước của hình ảnh tùy ý
-                            height: 100,
-                            fit: BoxFit.cover,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                _buildImageSection(pickedImages),
+                // CustomText(
+                //     text: 'Hình ảnh hiện trường (nếu có)',
+                //     fontWeight: FontWeight.bold,
+                //     fontSize: 18),
+                // ElevatedButton(
+                //   onPressed: () async {
+                //     if (!isImageLoading) {
+                //       setState(() {
+                //         isImageLoading = true;
+                //       });
+                //     }
+                //     // Xử lý khi người dùng nhấp vào biểu tượng '+'
+                //     // Chuyển qua camera ở đây
+                //     captureImage();
+                //   },
+                //   style: ButtonStyle(
+                //     padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                //       EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                //     ),
+                //     backgroundColor: MaterialStateProperty.all<Color>(
+                //       FrontendConfigs.kIconColor, // Màu nền của nút
+                //     ),
+                //   ),
+                //   child: Row(
+                //     mainAxisSize: MainAxisSize.min,
+                //     children: [
+                //       Icon(Icons.add_box), // Biểu tượng dấu '+'
+                //       SizedBox(
+                //           width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
+                //       Text(
+                //         'Thêm', // Văn bản bên cạnh biểu tượng
+                //         style: TextStyle(
+                //           fontWeight: FontWeight.bold,
+                //           fontSize: 16, // Kích thước văn bản
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
+                // if (urlImages!.isNotEmpty)
+                //   Container(
+                //     height: 100, // Điều chỉnh chiều cao tùy ý
+                //     child: ListView.builder(
+                //       scrollDirection:
+                //           Axis.horizontal, // Đặt hướng cuộn là ngang
+                //       itemCount: urlImages!.length,
+                //       itemBuilder: (context, index) {
+                //         return Container(
+                //           margin: EdgeInsets.all(
+                //               8.0), // Thêm khoảng cách giữa các hình ảnh
+                //           child: Image.network(
+                //             urlImages![index],
+                //             width:
+                //                 100, // Điều chỉnh kích thước của hình ảnh tùy ý
+                //             height: 100,
+                //             fit: BoxFit.cover,
+                //           ),
+                //         );
+                //       },
+                //     ),
+                //   ),
                 const SizedBox(
                   height: 10,
                 ),
@@ -805,4 +838,180 @@ class _TowBodyState extends State<TowBody> {
       ),
     );
   }
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: CustomText(
+          text: title,
+          fontWeight: FontWeight.bold,
+          fontSize: 24,
+        ));
+  }
+
+  Widget _buildImageSection(List<String> imageUrls) {
+    final allImages = [...urlImages,...pickedImages];
+    print("Tong so anh:  ${allImages.length}");
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Hình ảnh hiện trường'),
+        Container(
+          height: 200.0,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: 5, // fixed to 5 slots for images
+            itemBuilder: (context, index) {
+              // If there's an image at this index, show it
+              if (index < allImages.length) {
+                ImageProvider imageProvider;
+
+                // Check if the image is an asset or a picked image
+
+                if (allImages[index].startsWith('http')) {
+                  imageProvider = NetworkImage(allImages[index]);
+                } else if (allImages[index].startsWith('assets/')) {
+                  imageProvider = AssetImage(allImages[index]);
+                } else {
+                  imageProvider = FileImage(File(allImages[index]));
+                }
+
+                // imageProvider = FileImage(File(allImages[index]));
+
+                return Padding(
+                  padding: EdgeInsets.only(right: 16.0),
+                  child: InkWell(
+                    onTap: () {
+                      _openImageDialog(context, index, allImages);
+                    },
+                    child: Container(
+                      width: 200.0,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: imageProvider,
+                          fit: BoxFit.cover,
+                        ),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              // Otherwise, show an add button
+              else {
+                return Padding(
+                  padding: EdgeInsets.only(right: 16.0),
+                  child: InkWell(
+                    onTap: () {
+                      showCancelOrderDialog(context);
+                    },
+                    child: Container(
+                      width: 200.0,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: Center(
+                        child: Icon(Icons.add,
+                            size: 60.0, color: Colors.grey[400]),
+                      ),
+                    ),
+                  ),
+                );
+              }
+              
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openImageDialog(
+      BuildContext context, int index, List<String> allImages) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: PhotoViewGallery.builder(
+          itemCount: allImages.length,
+          builder: (context, index) {
+            return PhotoViewGalleryPageOptions(
+              imageProvider: allImages[index].startsWith('http')
+                  ? Image.network(allImages[index]).image
+                  : allImages[index].startsWith('assets/')
+                      ? Image.asset(allImages[index]).image
+                      : Image.file(File(allImages[index])).image,
+              minScale: PhotoViewComputedScale.contained * 0.1,
+              maxScale: PhotoViewComputedScale.covered * 2,
+            );
+          },
+          scrollPhysics: const BouncingScrollPhysics(),
+          backgroundDecoration: BoxDecoration(
+            color: const Color.fromARGB(0, 0, 0, 0),
+          ),
+          pageController: PageController(initialPage: index),
+          onPageChanged: (int index) {
+            // You can track page changes if you need to.
+          },
+        ),
+      ),
+    );
+  }
+
+  void showCancelOrderDialog(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              title: Text("Chọn ảnh"),
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.photo_library),
+                    onPressed: () {
+                      // Đặt hành động khi chọn ảnh từ thư viện ở đây
+                      _addImageFromGallery();
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.camera_alt),
+                    onPressed: () {
+                      // Đặt hành động khi chọn ảnh từ máy ảnh ở đây
+                      _addImageFromCamera();
+                    },
+                  ),
+                ],
+              ));
+        });
+  }
+
+void _addImageFromGallery() async {
+    final picker = ImagePicker();
+    final XFile? pickedFile =
+        await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      // Add the file path to your imageUrls list
+      setState(() {
+        pickedImages.add(pickedFile.path);
+      });
+    } else {
+      print('No image selected.');
+    }
+  }
+
+  void _addImageFromCamera() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      // Add the file path to your imageUrls list
+      setState(() {
+        pickedImages.add(pickedFile.path);
+      });
+    } else {
+      print('No image selected.');
+    }
+  }
+
 }

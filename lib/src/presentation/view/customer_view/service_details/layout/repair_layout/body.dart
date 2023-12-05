@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/customer.dart';
@@ -23,7 +25,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 
 class RepairBody extends StatefulWidget {
   final LatLng latLng;
@@ -51,6 +56,8 @@ class _RepairBodyState extends State<RepairBody> {
   CarCustomerProvider carCustomerProvider = CarCustomerProvider();
   CustomerCar? _car;
   Symptom? selectedSymptom;
+  List<String> pickedImages = [];
+  List<String> _updateImage = [];
   final List<Map<String, dynamic>> dropdownItems = [
     {"name": "Quận 1", "value": 1},
     {"name": "Quận 2", "value": 2},
@@ -83,6 +90,33 @@ class _RepairBodyState extends State<RepairBody> {
   @override
   void dispose() {
     super.dispose();
+    _updateImage.clear();
+  }
+
+  Future<void> uploadImage() async {
+    final upload = FirBaseStorageProvider();
+
+    if (pickedImages != []) {
+      for (int index = 0; index < pickedImages.length; index++) {
+        print(pickedImages.length);
+        String? imageUrl =
+            await upload.uploadImageToFirebaseStorage(pickedImages[index]);
+        print(imageUrl);
+        if (imageUrl != null) {
+          setState(() {
+            _updateImage.add(imageUrl);
+          });
+          print('Image uploaded successfully. URL: $imageUrl');
+        } else {
+          print('Failed to upload image.');
+        }
+      }
+      setState(() {
+        pickedImages.clear();
+      });
+    } else {
+      print('No image selected.');
+    }
   }
 
   Future<List<Symptom>> loadSymptom() async {
@@ -161,14 +195,15 @@ class _RepairBodyState extends State<RepairBody> {
     });
   }
 
-  void createOrder() async {
+  Future<void> createOrder() async {
     if (selectedSymptom == null) {
       notify.showToast("Hãy chọn ít nhất 1 trường hợp trên.");
     } else {
       setState(() {
         isLoading = true; // Bắt đầu hiển thị vòng quay khi bắt đầu gửi yêu cầu
       });
-
+      await uploadImage();
+      print("Hình lên : ${_updateImage.length}");
       // Bước 1: Xác định thông tin cho đơn hàng
       String departure =
           "lat: ${widget.latLng.latitude}, long: ${widget.latLng.longitude}";
@@ -186,7 +221,7 @@ class _RepairBodyState extends State<RepairBody> {
         destination: destination,
         rescueType: rescueType,
         customerId: customer.id,
-        url: urlImages,
+        url: _updateImage,
         area: selectedDropdownItem['value'],
         symptomId: selectedSymptom!.id,
         distance: null,
@@ -213,14 +248,20 @@ class _RepairBodyState extends State<RepairBody> {
           notify.showToast("Tạo đơn thành công");
         } else if (status == 500) {
           notify.showToast("External error");
+          
         } else if (status == 201) {
           notify.showToast("Hết kĩ thuật viên");
+          
         } else {
           notify.showToast("Lỗi đơn hàng");
+          
         }
       } catch (e) {
         // Xử lý khi có lỗi khi gửi đơn hàng
         print('Lỗi khi tạo đơn hàng: $e');
+        setState(() {
+            _updateImage.clear();
+          });
         // Ví dụ: Hiển thị thông báo lỗi cho người dùng
       } finally {
         // Kết thúc quá trình gửi đơn hàng (thành công hoặc thất bại), tắt vòng quay
@@ -325,27 +366,6 @@ class _RepairBodyState extends State<RepairBody> {
                             ),
                           ],
                         ),
-                        // Column(
-                        //   children: [
-                        //     IconButton(
-                        //         onPressed: () {
-
-                        //         },
-                        //         icon: SvgPicture.asset(
-                        //             'assets/svg/edit_icon.svg')),
-                        //     Container(
-                        //       height: 10,
-                        //     ),
-                        //     // SizedBox(
-                        //     //   height: 20,
-                        //     //   child: CustomText(
-                        //     //     text: widget.amount,
-                        //     //     fontSize: 16,
-                        //     //     fontWeight: FontWeight.w600,
-                        //     //   ),
-                        //     // ),
-                        //   ],
-                        // ),
                       ],
                     ),
                   ),
@@ -353,10 +373,7 @@ class _RepairBodyState extends State<RepairBody> {
               Container(
                 height: 10,
               ),
-              CustomText(
-                  text: 'Khu vực hỗ trợ gần bạn',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18),
+              _buildSectionTitle('Khu vực hỗ trợ gần bạn'),
               Column(
                 children: [
                   Wrap(
@@ -396,46 +413,16 @@ class _RepairBodyState extends State<RepairBody> {
               const SizedBox(
                 height: 10,
               ),
-              CustomText(
-                text: 'Hình ảnh hiện trường',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  if (!isImageLoading) {
-                    setState(() {
-                      isImageLoading = true;
-                    });
-                  }
-                  // Xử lý khi người dùng nhấp vào biểu tượng '+'
-                  // Chuyển qua camera ở đây
-                  captureImage();
-                },
-                style: ButtonStyle(
-                  padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                    EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  ),
-                  backgroundColor: MaterialStateProperty.all<Color>(
-                    FrontendConfigs.kIconColor, // Màu nền của nút
+              Container(
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.white,
+                  child: Column(
+                    children: [
+                      _buildImageSection(pickedImages),
+                    ],
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add_box), // Biểu tượng dấu '+'
-                    SizedBox(
-                        width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
-                    Text(
-                      'Thêm', // Văn bản bên cạnh biểu tượng
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16, // Kích thước văn bản
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               if (urlImages.isNotEmpty)
                 Container(
                   height: 100, // Điều chỉnh chiều cao tùy ý
@@ -460,16 +447,12 @@ class _RepairBodyState extends State<RepairBody> {
               const SizedBox(
                 height: 10,
               ),
-              CustomText(
-                text: 'Vấn đề đang gặp',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              _buildSectionTitle('Vấn đề đang gặp'),
               const SizedBox(
                 height: 10,
               ),
               Container(
-                  height: MediaQuery.of(context).size.height * 0.15,
+                  height: MediaQuery.of(context).size.height * 0.1,
                   child: SymptomSelector(onSymptomSelected: onSymptomSelected)),
               SizedBox(height: 10),
               if (selectedServiceCards.isNotEmpty)
@@ -506,11 +489,7 @@ class _RepairBodyState extends State<RepairBody> {
               const SizedBox(
                 height: 10,
               ),
-              CustomText(
-                text: 'Phương thức thanh toán',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              _buildSectionTitle('Phương thức thanh toán'),
               const SizedBox(
                 height: 10,
               ),
@@ -580,8 +559,9 @@ class _RepairBodyState extends State<RepairBody> {
                                 BorderRadius.circular(8), // Góc bo tròn cho nút
                           ),
                         ),
-                        onPressed: () {
-                          createOrder();
+                        onPressed: () async{
+                          
+                          await createOrder();
                         },
                       ),
                     ),
@@ -595,118 +575,180 @@ class _RepairBodyState extends State<RepairBody> {
     );
   }
 
-  // Widget buildServiceList(BuildContext context) {
-  //   return Container(
-  //     color: FrontendConfigs.kBackgrColor,
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Padding(
-  //           padding: EdgeInsets.symmetric(vertical: 10),
-  //           child: Text(
-  //             "Dịch vụ ", // Title
-  //             style: TextStyle(
-  //               fontSize: 18,
-  //               fontWeight: FontWeight.bold,
-  //             ),
-  //           ),
-  //         ),
-  //         InkWell(
-  //           onTap: () {
-  //             showModalBottomSheet(
-  //               context: context,
-  //               builder: (context) => buildServiceSelection(context),
-  //             );
-  //           },
-  //           child: Row(
-  //             mainAxisSize: MainAxisSize.min,
-  //             children: [
-  //               Icon(Icons.add_box), // Biểu tượng dấu '+'
-  //               SizedBox(width: 8.0), // Khoảng cách giữa biểu tượng và văn bản
-  //               Text(
-  //                 'Chọn', // Văn bản bên cạnh biểu tượng
-  //                 style: TextStyle(
-  //                   fontWeight: FontWeight.bold,
-  //                   fontSize: 16, // Kích thước văn bản
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         )
-  //       ],
-  //     ),
-  //   );
-  // }
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: CustomText(
+          text: title,
+          fontWeight: FontWeight.bold,
+          fontSize: 24,
+        ));
+  }
 
-  // Widget buildServiceSelection(BuildContext context) {
-  //   return Container(
-  //     height: double.infinity,
-  //     child: Column(
-  //       children: [
-  //         Expanded(
-  //           child: FutureBuilder<List<Service>>(
-  //             future: availableServices,
-  //             builder: (context, snapshot) {
-  //               if (snapshot.connectionState == ConnectionState.waiting) {
-  //                 return Center(child: CircularProgressIndicator());
-  //               } else if (snapshot.hasError) {
-  //                 return Center(child: Text('Error: ${snapshot.error}'));
-  //               } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-  //                 return Center(child: Text('Không có dữ liệu.'));
-  //               } else {
-  //                 return ListView.builder(
-  //                   itemCount: snapshot.data!.length,
-  //                   itemBuilder: (context, index) {
-  //                     final service = snapshot.data![index];
-  //                     final isSelected = selectedServiceCards.contains(service);
-  //                     return ServiceCard(
-  //                         service: service,
-  //                         onSelected: (isSelected) {
-  //                           updateSelectedServices(service, isSelected);
-  //                         },
-  //                         isSelected: isSelected, rescueType: '',);
-  //                   },
-  //                 );
-  //               }
-  //             },
-  //           ),
-  //         ),
-  //         Container(
-  //           color: Colors.white,
-  //           padding: EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 10),
-  //           width: double.infinity,
-  //           child: Column(
-  //             mainAxisSize: MainAxisSize
-  //                 .min, // Đặt cột để không chiếm quá nhiều không gian
-  //             children: [
-  //               SizedBox(height: 20), // Khoảng cách giữa tổng cộng tiền và nút
-  //               SizedBox(
-  //                 width: double.infinity, // Đặt chiều rộng bằng với Container
-  //                 height: 50, // Đặt chiều cao cố định cho nút
-  //                 child: ElevatedButton(
-  //                   child: Text(
-  //                     'Tiếp tục',
-  //                     style: TextStyle(fontSize: 18),
-  //                   ),
-  //                   style: ElevatedButton.styleFrom(
-  //                     backgroundColor: FrontendConfigs
-  //                         .kIconColor, // Đảm bảo rằng màu này được định nghĩa trong FrontendConfigs
-  //                     shape: RoundedRectangleBorder(
-  //                       borderRadius:
-  //                           BorderRadius.circular(8), // Góc bo tròn cho nút
-  //                     ),
-  //                   ),
-  //                   onPressed: () {
-  //                     print(selectedServiceCards.length);
-  //                     Navigator.pop(context);
-  //                   },
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
+  Widget _buildImageSection(List<String> imageUrls) {
+    final allImages = [..._updateImage,...pickedImages];
+    print("Tong so anh:  ${allImages.length}");
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Hình ảnh hiện trường'),
+        Container(
+          height: 200.0,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: 5, // fixed to 5 slots for images
+            itemBuilder: (context, index) {
+              // If there's an image at this index, show it
+              if (index < allImages.length) {
+                ImageProvider imageProvider;
+
+                // Check if the image is an asset or a picked image
+
+                if (allImages[index].startsWith('http')) {
+                  imageProvider = NetworkImage(allImages[index]);
+                } else if (allImages[index].startsWith('assets/')) {
+                  imageProvider = AssetImage(allImages[index]);
+                } else {
+                  imageProvider = FileImage(File(allImages[index]));
+                }
+
+                // imageProvider = FileImage(File(allImages[index]));
+
+                return Padding(
+                  padding: EdgeInsets.only(right: 16.0),
+                  child: InkWell(
+                    onTap: () {
+                      _openImageDialog(context, index, allImages);
+                    },
+                    child: Container(
+                      width: 200.0,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: imageProvider,
+                          fit: BoxFit.cover,
+                        ),
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              // Otherwise, show an add button
+              else {
+                return Padding(
+                  padding: EdgeInsets.only(right: 16.0),
+                  child: InkWell(
+                    onTap: () {
+                      showCancelOrderDialog(context);
+                    },
+                    child: Container(
+                      width: 200.0,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: Center(
+                        child: Icon(Icons.add,
+                            size: 60.0, color: Colors.grey[400]),
+                      ),
+                    ),
+                  ),
+                );
+              }
+              
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openImageDialog(
+      BuildContext context, int index, List<String> allImages) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: PhotoViewGallery.builder(
+          itemCount: allImages.length,
+          builder: (context, index) {
+            return PhotoViewGalleryPageOptions(
+              imageProvider: allImages[index].startsWith('http')
+                  ? Image.network(allImages[index]).image
+                  : allImages[index].startsWith('assets/')
+                      ? Image.asset(allImages[index]).image
+                      : Image.file(File(allImages[index])).image,
+              minScale: PhotoViewComputedScale.contained * 0.1,
+              maxScale: PhotoViewComputedScale.covered * 2,
+            );
+          },
+          scrollPhysics: const BouncingScrollPhysics(),
+          backgroundDecoration: BoxDecoration(
+            color: const Color.fromARGB(0, 0, 0, 0),
+          ),
+          pageController: PageController(initialPage: index),
+          onPageChanged: (int index) {
+            // You can track page changes if you need to.
+          },
+        ),
+      ),
+    );
+  }
+
+  void showCancelOrderDialog(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              title: Text("Chọn ảnh"),
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.photo_library),
+                    onPressed: () {
+                      // Đặt hành động khi chọn ảnh từ thư viện ở đây
+                      _addImageFromGallery();
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.camera_alt),
+                    onPressed: () {
+                      // Đặt hành động khi chọn ảnh từ máy ảnh ở đây
+                      _addImageFromCamera();
+                    },
+                  ),
+                ],
+              ));
+        });
+  }
+
+void _addImageFromGallery() async {
+    final picker = ImagePicker();
+    final XFile? pickedFile =
+        await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      // Add the file path to your imageUrls list
+      setState(() {
+        pickedImages.add(pickedFile.path);
+      });
+    } else {
+      print('No image selected.');
+    }
+  }
+
+  void _addImageFromCamera() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      // Add the file path to your imageUrls list
+      setState(() {
+        pickedImages.add(pickedFile.path);
+      });
+    } else {
+      print('No image selected.');
+    }
+  }
+
 }
