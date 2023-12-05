@@ -105,72 +105,19 @@ class _LogInBodyState extends State<LogInBody> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Đăng nhập \ntài khoản",
+                "Đăng nhập \ntài khoản bằng gmail",
                 style: FrontendConfigs.kHeadingStyle,
               ),
               const SizedBox(
                 height: 30,
               ),
-              CustomTextField(
-                  isSecure: false,
-                  controller: _emailController,
-                  icon: "assets/svg/email_icon.svg",
-                  text: 'Email',
-                  onTap: () {},
-                  keyBoardType: TextInputType.emailAddress),
-              const SizedBox(
-                height: 18,
-              ),
-              CustomTextField(
-                controller: _passwordController,
-                icon: "assets/svg/lock_icon.svg",
-                text: 'Mật khẩu',
-                onTap: () {},
-                keyBoardType: TextInputType.text,
-                isPassword: true,
-              ),
-              const SizedBox(
-                height: 12,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  CustomText(
-                    text: 'Quên mật khẩu?',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  )
-                ],
-              ),
-              const SizedBox(
-                height: 24,
-              ),
-              AppButton(
-                  onPressed: () async {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const BottomNavBarView(
-                                  page: 2,
-                                )));
-                  },
-                  btnLabel: "Đăng nhập"),
-              const SizedBox(
-                height: 30,
-              ),
               Row(
                 children: [
                   Expanded(
                       child: Divider(
                     color: FrontendConfigs.kIconColor,
+                    height: 5,
                   )),
-                  const SizedBox(
-                    width: 12,
-                  ),
-                  CustomText(
-                    text: "hoặc",
-                    fontSize: 16,
-                  ),
                   const SizedBox(
                     width: 12,
                   ),
@@ -181,7 +128,7 @@ class _LogInBodyState extends State<LogInBody> {
                 ],
               ),
               const SizedBox(
-                height: 24,
+                height: 50,
               ),
               InkWell(
                 onTap: () {
@@ -191,11 +138,15 @@ class _LogInBodyState extends State<LogInBody> {
                 },
                 child: Container(
                   padding: EdgeInsets.all(16),
-                  color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: FrontendConfigs.kActiveColor,
+                    borderRadius: BorderRadius.circular(
+                        20), // Adjust the value to change the roundness
+                  ),
                   child: isLoading
                       ? Center(
                           child: CircularProgressIndicator(
-                            color: FrontendConfigs.kActiveColor,
+                            color: FrontendConfigs.kHintColorCustomer,
                           ),
                         )
                       : Row(
@@ -221,30 +172,6 @@ class _LogInBodyState extends State<LogInBody> {
                         ),
                 ),
               ),
-              // Padding(
-              //   padding: const EdgeInsets.all(4.0),
-              //   child: Row(
-              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //     children: [
-              //       SizedBox(
-              //         width: 12,
-              //       ),
-              //       LogInWidget(
-              //         logo: "assets/images/google.png",
-              //         onPressed: () {
-              //           if (!isLoading) {
-              //             _handleSignInWithGmail();
-              //           }
-              //         },
-              //         isLoading:
-              //             isLoading, // Pass the loading state to the widget
-              //       ),
-              //       SizedBox(
-              //         width: 12,
-              //       ),
-              //     ],
-              //   ),
-              // )
             ],
           ),
         ),

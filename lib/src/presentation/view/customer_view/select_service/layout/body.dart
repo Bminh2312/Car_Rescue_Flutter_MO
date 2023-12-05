@@ -341,6 +341,7 @@ class _ServiceBodyState extends State<ServiceBody>
                     Card(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           ListTile(
                             leading: CircleAvatar(
