@@ -166,10 +166,10 @@ class _OrderListState extends State<OrderList> {
             background: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                if (type != 'Fixing') _buildFilterButton('NEW', Colors.yellow),
-                _buildFilterButton('ASSIGNING', Colors.blue),
-                _buildFilterButton('COMPLETED', Colors.green),
-                _buildFilterButton('CANCELLED', Colors.red),
+                if (type != 'Fixing') _buildFilterButton(type,'NEW', Colors.yellow),
+                _buildFilterButton(type,'ASSIGNING', Colors.blue),
+                _buildFilterButton(type,'COMPLETED', Colors.green),
+                _buildFilterButton(type,'CANCELLED', Colors.red),
               ],
             ),
           ),
@@ -521,32 +521,33 @@ class _OrderListState extends State<OrderList> {
     );
   }
 
-  Widget _buildFilterButton(String status, Color textColor) {
-    String translatedText = status;
+  Widget _buildFilterButton(String type,String status, Color textColor) {
+  String translatedText = status;
 
-    if (status == 'ASSIGNING') {
-      translatedText = 'Đang duyệt';
-    } else if (status == 'COMPLETED') {
-      translatedText = 'Hoàn Thành';
-    } else if (status == 'CANCELLED') {
-      translatedText = 'Đã hủy';
-    } else if (status == 'NEW') {
-      translatedText = 'Mới';
-    }
-    return ElevatedButton(
-      style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.all(textColor),
-      ),
-      onPressed: () {
-        setState(() {
-          selectedStatusMap[status] = status;
-        });
-      },
-      child: Text(
-        translatedText,
-      ),
-    );
+  if (status == 'ASSIGNING') {
+    translatedText = 'Đang duyệt';
+  } else if (status == 'COMPLETED') {
+    translatedText = 'Hoàn Thành';
+  } else if (status == 'CANCELLED') {
+    translatedText = 'Đã hủy';
+  } else if (status == 'NEW') {
+    translatedText = 'Mới';
   }
+  return ElevatedButton(
+    style: ButtonStyle(
+      backgroundColor: MaterialStateProperty.all(textColor),
+    ),
+    onPressed: () {
+      setState(() {
+        selectedStatusMap[type] = status;
+      });
+    },
+    child: Text(
+      translatedText,
+    ),
+  );
+}
+
 
   Future<List<Order>> getAllOrders(String type) async {
     final orderProvider = OrderProvider();
