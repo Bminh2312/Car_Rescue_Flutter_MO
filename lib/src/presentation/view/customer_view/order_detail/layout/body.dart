@@ -433,13 +433,13 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                     bool decision = true;
                                     bool isSuccess = await AuthService()
                                         .acceptOrder(order.id, decision);
-                                    AuthService().sendNotification(
-                                        deviceId:
-                                            'eW2_hO5k8iFCpdzKBwt6b0:APA91bGNee9KwsiJVzMCxuPvsKlq2sd41O3rBjP8rpoeCnFk3WgS20ewmDujrOmEkg09TFu7wjmVAen4e5YEkJyYA7C9AB7dlAl_t-c_blbKsNs5n1xuzpTT0-5J2Ur1NtL-ouMc3s2C',
-                                        isAndroidDevice: true,
-                                        title: 'Khách hàng',
-                                        body:
-                                            'Khách hàng đã chấp nhận đơn hàng. Hãy điều phối nhân sự');
+                                    // AuthService().sendNotification(
+                                    //     deviceId:
+                                    //         'eW2_hO5k8iFCpdzKBwt6b0:APA91bGNee9KwsiJVzMCxuPvsKlq2sd41O3rBjP8rpoeCnFk3WgS20ewmDujrOmEkg09TFu7wjmVAen4e5YEkJyYA7C9AB7dlAl_t-c_blbKsNs5n1xuzpTT0-5J2Ur1NtL-ouMc3s2C',
+                                    //     isAndroidDevice: true,
+                                    //     title: 'Khách hàng',
+                                    //     body:
+                                    //         'Khách hàng đã chấp nhận đơn hàng. Hãy điều phối nhân sự');
                                     if (isSuccess) {
                                       setState(() {
                                         // _isLoading = false;
@@ -566,23 +566,29 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                   ? InkWell(
                                       onTap: () {
                                         Navigator.pushReplacement(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) => MapScreen(
-                                                    cus: customer,
-                                                    booking: order,
-                                                    phone:
-                                                        technicianInfo?.phone ??
-                                                            '',
-                                                    techImg: technicianInfo
-                                                            ?.avatar ??
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => MapScreen(
+                                                cus: customer,
+                                                booking: order,
+                                                techImg:
+                                                    technicianInfo?.avatar ??
                                                         '',
-                                                    techId:
-                                                        technicianInfo?.id ??
-                                                            '')));
+                                                techId:
+                                                    technicianInfo?.id ?? '',
+                                                phone: technicianInfo?.phone ??
+                                                    ''),
+                                          ),
+                                        );
                                       },
-                                      child:
-                                          _buildSectionTitle('Theo dõi vị trí'))
+                                      child: Row(
+                                        children: [
+                                          // Add your section title
+                                          Image.asset(
+                                              'assets/icons/location.png')
+                                        ],
+                                      ),
+                                    )
                                   : Container()
                             ],
                           ),
@@ -913,7 +919,8 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         color: FrontendConfigs.kAuthColor))),
-                            SizedBox(height: 24.0),
+                            _buildPaymentMethod(
+                                "${_payment?.method ?? ''}", ''),
                           ],
                         ),
                       ),
@@ -1214,6 +1221,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
         children: [
           Row(
             children: [
+              SizedBox(width: 13.0),
               CustomText(
                 text: displayTitle,
                 fontWeight: FontWeight.bold,

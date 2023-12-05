@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:CarRescue/main.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/presentation/elements/booking_status.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
@@ -12,7 +13,9 @@ import 'package:CarRescue/src/presentation/view/customer_view/select_service/wid
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/selection_location_widget%20copy.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/slider_banner.dart';
 import 'package:dotted_line/dotted_line.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/customer.dart';
@@ -77,6 +80,47 @@ class _ServiceBodyState extends State<ServiceBody>
           curve: Curves.easeIn,
         );
       }
+    });
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      RemoteNotification notification = message.notification!;
+      AndroidNotification android = message.notification!.android!;
+      if (notification != null && android != null) {
+        flutterLocalNotificationsPlugin.show(
+            notification.hashCode,
+            notification.title,
+            notification.body,
+            NotificationDetails(
+                android: AndroidNotificationDetails(channel.id, channel.name,
+                    channelDescription: channel.description,
+                    color: Colors.blue,
+                    playSound: true,
+                    icon: '@drawable/ic_launcher',
+                    largeIcon:
+                        DrawableResourceAndroidBitmap('@drawable/download'))));
+      }
+
+      print('Received message: ${message.notification?.body}');
+      // Handle the incoming message
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('a new onMessageOpenedApp ok');
+      RemoteNotification notification = message.notification!;
+      AndroidNotification android = message.notification!.android!;
+      showDialog(
+          context: context,
+          builder: (_) {
+            return AlertDialog(
+              title: Text(notification.title ?? 'Unknown'),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [Text(notification.body ?? 'Unknown1')],
+                ),
+              ),
+            );
+          });
     });
   }
 

@@ -53,6 +53,15 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
         bank: radioGroupValue == 'Momo' ? 'Momo' : _selectedBanking!,
         amount: numericValue,
       );
+
+      AuthService().sendNotification(
+          deviceId:
+              'eGwrKYghm6vuhnwlMicYsE:APA91bFR9eNQAPggKuJ1S7fweiTyIWHY8WNhnyFB2ZinOHG0euRkJsLghyCLuRTTEs0qER3ss8OkFlNqoIRArs0XqpCtow9q5PFY2-1HeRc8vCmhlZJqmBHhLA1aErqX2kOGKCg2f8AV',
+          isAndroidDevice: true,
+          title: 'Thông báo từ chủ xe cứu hộ',
+          body: 'Có một đơn rút tiền cần được kiểm duyệt',
+          target: '4a30e2d2-149a-4442-817c-9e73ee4e4477',
+          orderId: '');
     }
   }
 
@@ -141,7 +150,8 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
     print("Amount: $amount");
     try {
       final response = await http.post(
-        Uri.parse('$apiUrl'),headers: <String, String>{
+        Uri.parse('$apiUrl'),
+        headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $accessToken'
         },

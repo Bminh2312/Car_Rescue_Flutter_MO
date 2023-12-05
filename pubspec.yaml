@@ -1,63 +1,61 @@
 name: CarRescue
 description: A new Flutter project.
 
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=2.18.2 <3.2.0'
+  sdk: ">=2.18.2 <3.2.0"
 
 dependencies:
-  flutter:
-    sdk: flutter
-
-  cupertino_icons: ^1.0.2
-  flutter_svg: ^2.0.5
-  dots_indicator: ^3.0.0
-  country_calling_code_picker: ^2.0.1
-  pinput: ^2.2.16
-  google_maps_flutter: ^2.2.1
-  geolocator: ^10.0.1
-  geocoding: ^2.0.2
-  flutter_google_places: ^0.3.0
-  sliding_up_panel: ^2.0.0+1
-  dotted_line: ^3.1.0
-  slider_button: ^2.0.0
-  flutter_rating_bar: ^4.0.1
+  badges: ^3.1.2
   change_app_package_name: ^1.1.0
-  permission_handler: ^10.2.0
-  http: ^0.13.1
-  google_sign_in: ^6.1.4
-  firebase_core: ^2.15.0
+  country_calling_code_picker: ^2.0.1
+  cupertino_icons: ^1.0.2
+  diacritic: ^0.1.4
+  dots_indicator: ^3.0.0
+  dotted_line: ^3.1.0
   firebase_auth: ^4.7.2
-  google_place: ^0.4.7
-  google_maps_webservice: ^0.0.20-nullsafety.5
-  image_picker: ^1.0.4
-  get_storage: ^2.0.3
-  fluttertoast: ^8.0.8
-  table_calendar: ^3.0.9
+  firebase_core: ^2.15.0
+  firebase_in_app_messaging: ^0.7.4+3
   firebase_messaging: ^14.7.6
   firebase_storage: ^11.3.0
-  flutter_local_notifications: ^9.8.0+1 
-  path_provider: ^2.1.1
-  shared_preferences: ^2.2.2
-  diacritic: ^0.1.4
-  firebase_in_app_messaging: ^0.7.4+3
+  flutter:
+    sdk: flutter
+  flutter_arc_speed_dial: ^2.0.1
   flutter_date_pickers: ^0.4.2
-  time_range_picker: ^2.2.0
-  syncfusion_flutter_datepicker: ^23.1.42
-  flutter_slidable: ^3.0.0
-  photo_view: ^0.14.0
-  lottie: ^2.7.0
-  url_launcher: ^6.2.1
-  flutter_polyline_points: ^1.0.0
+  flutter_google_places: ^0.3.0
   flutter_keyboard_visibility: ^5.4.1
+  flutter_local_notifications: ^9.8.0+1
+  flutter_polyline_points: ^1.0.0
+  flutter_rating_bar: ^4.0.1
+  flutter_slidable: ^3.0.0
+  flutter_svg: ^2.0.5
+  fluttertoast: ^8.0.8
+  geocoding: ^2.0.2
+  geolocator: ^10.0.1
+  get_storage: ^2.0.3
+  google_maps_flutter: ^2.2.1
+  google_maps_webservice: ^0.0.20-nullsafety.5
+  google_place: ^0.4.7
+  google_sign_in: ^6.1.4
+  http: ^0.13.1
+  image_picker: ^1.0.4
+  lottie: ^2.7.0
   mask_text_input_formatter: ^2.6.0
-  
-
-  # flutter_osm_plugin: ^0.60.4
-
+  path_provider: ^2.1.1
+  permission_handler: ^10.2.0
+  photo_view: ^0.14.0
+  pinput: ^2.2.16
+  shake_animation_widget: ^3.0.4
+  shared_preferences: ^2.2.2
+  slider_button: ^2.0.0
+  sliding_up_panel: ^2.0.0+1
+  syncfusion_flutter_datepicker: ^23.1.42
+  table_calendar: ^3.0.9
+  time_range_picker: ^2.2.0
+  url_launcher: ^6.2.1
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
@@ -70,7 +68,6 @@ flutter_icons:
   flutter_lints: ^2.0.0
 
 flutter:
-
   uses-material-design: true
 
   assets:
@@ -83,5 +80,3 @@ flutter:
       fonts:
         - asset: assets/fonts/Inter-Regular.ttf
         - asset: assets/fonts/Inter-Bold.ttf
-
-

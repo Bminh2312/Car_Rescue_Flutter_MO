@@ -14,6 +14,7 @@ import 'package:CarRescue/src/providers/car_customer_profile_provider.dart';
 import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
 import 'package:CarRescue/src/providers/order_provider.dart';
 import 'package:CarRescue/src/providers/service_provider.dart';
+import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get_storage/get_storage.dart';
@@ -50,9 +51,9 @@ class _TowBodyState extends State<TowBody> {
   CarCustomerProvider carCustomerProvider = CarCustomerProvider();
   CustomerCar? _car;
   final List<Map<String, dynamic>> dropdownItems = [
-    {"name": "Quận 1", "value": 1},
-    {"name": "Quận 2", "value": 2},
-    {"name": "Quận 3", "value": 3},
+    {"name": "Khu vực 1", "value": 1},
+    {"name": "Khu vực 2", "value": 2},
+    {"name": "Khu vực 3", "value": 3},
     // Thêm các quận khác nếu cần
   ];
   bool isImageLoading = false;
@@ -199,6 +200,15 @@ class _TowBodyState extends State<TowBody> {
             ),
             (route) => false, // Loại bỏ tất cả các màn hình khỏi ngăn xếp
           );
+
+          AuthService().sendNotification(
+              deviceId:
+                  'eGwrKYghm6vuhnwlMicYsE:APA91bFR9eNQAPggKuJ1S7fweiTyIWHY8WNhnyFB2ZinOHG0euRkJsLghyCLuRTTEs0qER3ss8OkFlNqoIRArs0XqpCtow9q5PFY2-1HeRc8vCmhlZJqmBHhLA1aErqX2kOGKCg2f8AV',
+              isAndroidDevice: true,
+              title: 'Thông báo từ khách hàng',
+              body: 'Có một đơn hàng kéo xe đã được gởi đến hệ thống',
+              target: '4a30e2d2-149a-4442-817c-9e73ee4e4477',
+              orderId: '');
         } else if (status == 500) {
           notifier.showToast("External error");
         } else if (status == 201) {

@@ -170,6 +170,7 @@ class _ProfileBodyState extends State<ProfileBody> {
                 box.remove("role");
                 box.remove("userId");
                 box.remove("accountId");
+                box.remove("accessToken");
                 // Navigate to the login screen and replace the current screen
                 Navigator.pushReplacement(
                   context,
