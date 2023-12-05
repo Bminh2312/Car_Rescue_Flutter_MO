@@ -29,6 +29,10 @@ class OrderList extends StatefulWidget {
 
 class _OrderListState extends State<OrderList> {
   String selectedStatus = "ASSIGNING";
+  Map<String, String> selectedStatusMap = {
+    'Fixing': 'ASSIGNING', // Default status for Fixing tab
+    'Towing': 'NEW', // Default status for Towing tab
+  };
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
   FeedBackProvider feedBackProvider = FeedBackProvider();
   FeedbackCustomer? feedbackCustomer;
@@ -174,7 +178,7 @@ class _OrderListState extends State<OrderList> {
           delegate: SliverChildBuilderDelegate(
             (BuildContext context, int index) {
               return FutureBuilder<List<Order>>(
-                future: getAllOrders(selectedStatus, type),
+                future: getAllOrders(type),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(child: CircularProgressIndicator());
@@ -517,16 +521,16 @@ class _OrderListState extends State<OrderList> {
     );
   }
 
-  Widget _buildFilterButton(String type, Color textColor) {
-    String translatedText = type;
+  Widget _buildFilterButton(String status, Color textColor) {
+    String translatedText = status;
 
-    if (type == 'ASSIGNING') {
+    if (status == 'ASSIGNING') {
       translatedText = 'Đang duyệt';
-    } else if (type == 'COMPLETED') {
+    } else if (status == 'COMPLETED') {
       translatedText = 'Hoàn Thành';
-    } else if (type == 'CANCELLED') {
+    } else if (status == 'CANCELLED') {
       translatedText = 'Đã hủy';
-    } else if (type == 'NEW') {
+    } else if (status == 'NEW') {
       translatedText = 'Mới';
     }
     return ElevatedButton(
@@ -535,7 +539,7 @@ class _OrderListState extends State<OrderList> {
       ),
       onPressed: () {
         setState(() {
-          selectedStatus = type;
+          selectedStatusMap[status] = status;
         });
       },
       child: Text(
@@ -544,8 +548,9 @@ class _OrderListState extends State<OrderList> {
     );
   }
 
-  Future<List<Order>> getAllOrders(String status, String type) async {
+  Future<List<Order>> getAllOrders(String type) async {
     final orderProvider = OrderProvider();
+    final status = selectedStatusMap[type];
     print("Status: $status");
     try {
       final orders = await orderProvider.getAllOrders(customer.id);
