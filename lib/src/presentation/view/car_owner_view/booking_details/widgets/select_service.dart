@@ -1,14 +1,15 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
-import 'package:CarRescue/src/presentation/view/technician_view/booking_details/booking_details_view.dart';
-import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/select_service_card.dart';
+import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/widgets/service_card.dart';
+import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/booking_details_view.dart';
 import 'package:CarRescue/src/providers/service_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:CarRescue/src/models/service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/intl.dart';
 
 extension IterableExtension<E> on Iterable<E> {
   E? firstWhereOrNull(bool Function(E element) test) {
@@ -29,14 +30,19 @@ class ServiceSelectionScreen extends StatefulWidget {
   final Map<String, String> subAddressesDepart;
   final Map<String, String> addressesDesti;
   final Map<String, String> subAddressesDesti;
-  
+  final String orderId;
+  final int quantity;
   ServiceSelectionScreen(
       {required this.selectedServices,
       required this.booking,
       required this.addressesDepart,
       required this.subAddressesDepart,
       required this.addressesDesti,
-      required this.subAddressesDesti, required this.userId, required this.accountId});
+      required this.subAddressesDesti,
+      required this.userId,
+      required this.accountId,
+      required this.orderId,
+      required this.quantity});
   @override
   _ServiceSelectionScreenState createState() => _ServiceSelectionScreenState();
 }
@@ -49,14 +55,14 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     fetchServiceData(widget.booking.id);
   }
 
-  List<Service> selectedServices = [];
+  String? selectedServices;
   List<Map<String, dynamic>> orderDetails = [];
   bool _isLoading = true;
   Future<List<Service>>? availableServices; // Replace with your actual method
   Future<List<Service>> loadService() async {
     final serviceProvider = ServiceProvider();
     try {
-      return serviceProvider.getAllServicesFixing();
+      return serviceProvider.getAllServicesTowing();
     } catch (e) {
       // Xử lý lỗi khi tải dịch vụ
       print('Lỗi khi tải danh sách dịch vụ: $e');
@@ -64,76 +70,139 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     }
   }
 
-  void updateSelectedServices(Service service, bool isSelected) {
-    setState(() {
-      if (isSelected) {
-        selectedServices.add(service);
-      } else {
-        selectedServices.remove(service);
-      }
+  // void updateSelectedServices(Service service, bool isSelected) {
+  //   setState(() {
+  //     if (isSelected) {
+  //       selectedServices.add(service);
+  //     } else {
+  //       selectedServices.remove(service);
+  //     }
+  //   });
+  // }
+  Future<void> deleteServiceInOrder(String id) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Order/DeleteOrderDetail?id=$id';
+
+    final response =
+        await http.put(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      // 'Authorization': 'Bearer $accessToken'
     });
+    print(response.statusCode);
+    try {
+      if (response.statusCode == 201) {
+        print('Change status successfuly');
+      } else {
+        throw Exception('Failed to load data from API');
+      }
+    } catch (e) {
+      print('Delete not ok: $e');
+      // Handle the error appropriately
+    }
   }
 
-  Future<void> _addServices(String orderId, List<Service> services) async {
+  Future<void> _updateService(
+      String orderDetailId, int quantity, String service) async {
+    setState(() {
+      _isLoading = true;
+    });
+    final String apiUrl =
+        "https://rescuecapstoneapi.azurewebsites.net/api/Order/ManagerUpdateService"; // Replace with your endpoint URL
+
+    final response = await http.post(Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          // 'Authorization': 'Bearer $accessToken'
+        },
+        body: json.encode({
+          'orderDetailId': orderDetailId,
+          'quantity': quantity,
+          'service': service
+        }));
+    final Map<String, dynamic> requestBody = {
+      'orderDetailId': orderDetailId,
+      'quantity': quantity,
+      'service': service
+    };
+    print('bzzb: $requestBody');
+    if (response.statusCode == 200) {
+      print('Successfully update the service ${response.body}');
+      setState(() {
+        _isLoading = false;
+      });
+      // onLoadingComplete();
+    } else {
+      print('Failed to update the service: ${response.body}');
+    }
+  }
+
+  Future<void> addServices(String orderId, String service, int quantity) async {
     final String apiUrl =
         "https://rescuecapstoneapi.azurewebsites.net/api/Order/ManagerAddService";
 
-    final List<Map<String, dynamic>> serviceData = services
-        .map((service) => {
-              'orderId': orderId,
-              'quantity': service.quantity,
-              'service': service.name,
-            })
-        .toList();
-    print('abbb: $serviceData');
+    // final List<Map<String, dynamic>> serviceData = services
+    //     .map((service) => {
+    //           'orderId': orderId,
+    //           'quantity': service.quantity,
+    //           'service': service.name,
+    //         })
+    //     .toList();
+    // print('abbb: $serviceData');
 
-    bool anyServiceAlreadyExists = false;
+    // bool anyServiceAlreadyExists = false;
 
-    for (var service in serviceData) {
-      // Fetch details for each service ID
-      for (Map<String, dynamic> orderDetail in orderDetails) {
-        Map<String, dynamic> serviceDetails =
-            await fetchServiceNameAndQuantity(orderDetail['serviceId']);
+    // for (var service in serviceData) {
+    //   // Fetch details for each service ID
+    //   for (Map<String, dynamic> orderDetail in orderDetails) {
+    //     Map<String, dynamic> serviceDetails =
+    //         await fetchServiceNameAndQuantity(orderDetail['serviceId']);
 
-        // Compare the fetched service details with the current service
-        bool alreadyExists = serviceDetails['name'] == service['service'];
+    //     // Compare the fetched service details with the current service
+    //     bool alreadyExists = serviceDetails['name'] == service['service'];
 
-        if (alreadyExists) {
-          print('Service ${service['service']} already exists. Skipping...');
-          print('Details of existing service: $serviceDetails');
-          showToast(
-              'Service ${service['service']} already exists. Skipping...');
-          anyServiceAlreadyExists = true;
-          break; // Exit the inner loop when a duplicate is found
-        }
-      }
+    //     if (alreadyExists) {
+    //       print('Service ${service['service']} already exists. Skipping...');
+    //       print('Details of existing service: $serviceDetails');
+    //       showToast(
+    //           'Service ${service['service']} already exists. Skipping...');
+    //       anyServiceAlreadyExists = true;
+    //       break; // Exit the inner loop when a duplicate is found
+    //     }
+    //   }
 
-      if (anyServiceAlreadyExists) {
-        // If at least one service is already present, skip adding all services
-        print(
-            'Skipping the entire process. At least one service already exists.');
-        return;
-      }
-    }
+    //   if (anyServiceAlreadyExists) {
+    //     // If at least one service is already present, skip adding all services
+    //     print(
+    //         'Skipping the entire process. At least one service already exists.');
+    //     return;
+    //   }
+    // }
 
     // If we reach here, it means none of the services in orderDetails is a duplicate
     // Add all services as usual
-    for (var service in serviceData) {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: json.encode(service),
-      );
+    // for (var service in serviceData) {
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: json.encode(
+          {'orderId': orderId, 'quantity': quantity, 'service': service}),
+    );
+    final Map<String, dynamic> requestBody = {
+      'orderId': orderId,
+      'quantity': quantity,
+      'service': service
+    };
 
-      if (response.statusCode == 201) {
-        print('Successfully add the service: ${response.body}');
-      } else {
-        print('Failed to add the service: ${response.body}');
-        showToast('Failed to add the service. Please try again.');
-        return; // Stop the process on error
-      }
+    print(json.encode(
+        {'orderId': orderId, 'quantity': quantity, 'service': service}));
+    if (response.statusCode == 201) {
+      print('Successfully add the service: ${response.body}');
+    } else {
+      print('Failed to add the service: ${response.body}');
+      showToast('Failed to add the service. Please try again.');
+      return; // Stop the process on error
     }
 
     // Only navigate to the new screen when all services are successfully added
@@ -265,18 +334,14 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                     itemCount: snapshot.data!.length,
                     itemBuilder: (context, index) {
                       final service = snapshot.data![index];
-                      final isSelected = selectedServices.contains(service);
                       return ServiceCard(
                         service: service,
-                        onSelected: (isSelected) {
-                          updateSelectedServices(service, isSelected);
-                          if (isSelected) {
-                            print('Selected service: ${service.name}');
-                          } else {
-                            print('Deselected service: ${service.name}');
-                          }
+                        onSelected: () {
+                          setState(() {
+                            selectedServices = service.name;
+                          });
                         },
-                        isSelected: isSelected,
+                        isSelected: selectedServices == service.name,
                       );
                     },
                   );
@@ -308,7 +373,28 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                       ),
                     ),
                     onPressed: () {
-                      _addServices(widget.booking.id, selectedServices);
+                      _updateService(
+                        widget.orderId,
+                        widget.quantity,
+                        selectedServices!,
+                      );
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BookingDetailsView(
+                            userId: widget.userId,
+                            accountId: widget.accountId,
+                            selectedServices: selectedServices,
+                            booking: widget.booking,
+                            addressesDepart: widget.addressesDepart,
+                            subAddressesDepart: widget.subAddressesDepart,
+                            addressesDesti: widget.addressesDesti,
+                            subAddressesDesti: widget.subAddressesDesti,
+                          ),
+                        ),
+                      );
+                      // _updateService(widget.orderId, widget.quantity,
+                      //     selectedServices!.name);
                       // Navigator.pushReplacement(
                       //   context,
                       //   MaterialPageRoute(
@@ -329,6 +415,75 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+// class ServiceCard extends StatelessWidget {
+//   final Service service;
+//   final bool isSelected;
+//   final ValueChanged<bool> onSelected;
+
+//   ServiceCard({required this.service, required this.isSelected, required this.onSelected});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return ListTile(
+//       title: Text(service.name),
+//       // Add other widget details as needed
+//       onTap: () {
+//         onSelected(!isSelected); // Invert the selection status
+//       },
+//     );
+//   }
+// }
+class ServiceCard extends StatelessWidget {
+  final Service service;
+  final bool isSelected;
+  final VoidCallback onSelected;
+
+  const ServiceCard({
+    Key? key,
+    required this.service,
+    required this.isSelected,
+    required this.onSelected,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final currencyFormat = NumberFormat('#,##0₫', 'vi_VN');
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color:
+            isSelected ? FrontendConfigs.kPrimaryColorCustomer : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: const Color.fromARGB(64, 158, 158, 158).withOpacity(0.5),
+            spreadRadius: 1,
+            blurRadius: 1,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ListTile(
+        title: Text(
+          service.name,
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          currencyFormat.format(service.price),
+          style: TextStyle(
+            color: FrontendConfigs.kAuthColor,
+            fontWeight: FontWeight.w600,
+            fontSize: 17,
+          ),
+        ),
+        tileColor:
+            isSelected ? FrontendConfigs.kActiveColor : Colors.transparent,
+        selectedTileColor: FrontendConfigs.kActiveColor,
+        onTap: onSelected,
       ),
     );
   }

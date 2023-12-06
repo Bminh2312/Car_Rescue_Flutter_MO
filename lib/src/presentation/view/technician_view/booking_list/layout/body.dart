@@ -245,16 +245,16 @@ class _BookingListBodyState extends State<BookingListBody> {
       final List<Booking> data =
           await AuthService().fetchBookings(widget.userId);
 
-      // data.sort((a, b) {
-      //   if (a.createdAt == null && b.createdAt == null)
-      //     return 0; // Both are null, so they're considered equal
-      //   if (a.createdAt == null)
-      //     return 1; // a is null, so it should come after b
-      //   if (b.createdAt == null)
-      //     return -1; // b is null, so it should come after a
-      //   return b.createdAt!.compareTo(
-      //       a.createdAt!); // Both are non-null, proceed with the comparison
-      // });
+      data.sort((a, b) {
+        if (a.createdAt == null && b.createdAt == null)
+          return 0; // Both are null, so they're considered equal
+        if (a.createdAt == null)
+          return 1; // a is null, so it should come after b
+        if (b.createdAt == null)
+          return -1; // b is null, so it should come after a
+        return b.createdAt!.compareTo(
+            a.createdAt!); // Both are non-null, proceed with the comparison
+      });
       // Sort by startTime
       setState(() {
         waitingBookings = data.where((booking) {

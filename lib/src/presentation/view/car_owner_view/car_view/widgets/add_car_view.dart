@@ -45,14 +45,31 @@ class _AddCarScreenState extends State<AddCarScreen> {
     var uuid = Uuid();
     String randomId = uuid.v4();
     if (_formKey.currentState!.validate()) {
-      _showAlertDialog(context);
-      _formKey.currentState!.save();
-      setState(() {
-        _isLoading = true;
-      });
+      bool? confirm = await _showAlertDialog(context);
 
-      try {
-        bool isSuccess = await authService.createCarApproval(randomId,
+      if (confirm != null && confirm) {
+        // User confirmed, execute your createCarApproval logic
+        _submitForm();
+      } else {
+        // User canceled or dismissed the dialog, handle as needed
+      }
+
+      if (confirm!) {
+        _formKey.currentState!.save();
+        setState(() {
+          _isLoading = true;
+        });
+        AuthService().sendNotification(
+            deviceId:
+                'eGwrKYghm6vuhnwlMicYsE:APA91bFR9eNQAPggKuJ1S7fweiTyIWHY8WNhnyFB2ZinOHG0euRkJsLghyCLuRTTEs0qER3ss8OkFlNqoIRArs0XqpCtow9q5PFY2-1HeRc8vCmhlZJqmBHhLA1aErqX2kOGKCg2f8AV',
+            isAndroidDevice: true,
+            title: 'Thông báo từ chủ xe cứu hộ',
+            body: 'Có một phương tiện cần được kiểm duyệt',
+            target: '4a30e2d2-149a-4442-817c-9e73ee4e4477',
+            orderId: '');
+        try {
+          bool isSuccess = await authService.createCarApproval(
+            randomId,
             rvoid: widget.userId,
             licensePlate: _licensePlate,
             manufacturer: _manufacturer,
@@ -63,58 +80,64 @@ class _AddCarScreenState extends State<AddCarScreen> {
             manufacturingYear: _manufacturingYear,
             carRegistrationFontImage: _carRegistrationFontImage!,
             carRegistrationBackImage: _carRegistrationBackImage!,
-            vehicleImage: vehicleImage!);
+            vehicleImage: vehicleImage!,
+          );
 
-        if (isSuccess) {
-          setState(() {
-            _isLoading = false;
-            Navigator.pushReplacement(
+          if (isSuccess) {
+            setState(() {
+              _isLoading = false;
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                   builder: (context) => CarListView(
                     userId: widget.userId,
                     accountId: widget.userId,
                   ),
-                ));
-          });
-
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text('Thành công',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                content: Text(
-                  'Đã lưu thông tin thành công.Vui lòng chờ quản lí xác nhận',
-                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: Text('Đóng'),
-                  ),
-                ],
               );
-            },
-          );
-        } else {
-          // Handle unsuccessful API response, e.g., show a snackbar with an error message.
+
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text('Thành công',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    content: Text(
+                      'Đã lưu thông tin thành công. Vui lòng chờ quản lí xác nhận',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: Text('Đóng'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            });
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Failed to create car approval. Please try again.',
+                ),
+              ),
+            );
+          }
+        } catch (error) {
+          Navigator.pop(context, false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content:
-                    Text('Failed to create car approval. Please try again.')),
+              content: Text('An error occurred. Please try again.'),
+            ),
           );
+          setState(() {
+            _isLoading = false;
+          });
         }
-      } catch (error) {
-        Navigator.pop(context, false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An error occurred. Please try again.')),
-        );
-        setState(() {
-          _isLoading = false;
-        });
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -404,8 +427,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
     ]);
   }
 
-  _showAlertDialog(BuildContext context) {
-    showDialog(
+  Future<bool?> _showAlertDialog(BuildContext context) async {
+    return showDialog<bool?>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -420,7 +443,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                 ),
               ),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the AlertDialog
+                Navigator.of(context).pop(false); // Close the AlertDialog
               },
             ),
             TextButton(
@@ -429,9 +452,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                 style: TextStyle(color: FrontendConfigs.kActiveColor),
               ),
               onPressed: () {
-                _submitForm();
-                Navigator.of(context)
-                    .pop(); // Close the AlertDialog after submitting
+                Navigator.of(context).pop(true); // Close the AlertDialog
               },
             ),
           ],

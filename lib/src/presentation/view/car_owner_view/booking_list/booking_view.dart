@@ -3,6 +3,7 @@ import 'package:CarRescue/src/models/vehicle_item.dart';
 
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:CarRescue/src/presentation/view/car_owner_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/history/history_view.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/cupertino.dart';
@@ -72,7 +73,12 @@ class _BookingListViewState extends State<BookingListView> {
             size: 20,
           ),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BottomNavBarCarView(
+                      userId: widget.userId, accountId: widget.accountId),
+                ));
           },
         ),
         title: CustomText(
