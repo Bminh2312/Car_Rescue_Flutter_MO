@@ -111,7 +111,7 @@ class _CarOwnerLogInBodyState extends State<CarOwnerLogInBody> {
                     // Handle login failure or show an error message
                     setState(() {
                       errorMessage =
-                          'Login failed. Please check your credentials.';
+                          'Đăng nhập thất bại. Tài khoản hoặc mật khẩu sai.';
                     });
                   }
                 },
@@ -131,65 +131,6 @@ class _CarOwnerLogInBodyState extends State<CarOwnerLogInBody> {
                 ),
               const SizedBox(
                 height: 22,
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: Divider(
-                      color: FrontendConfigs.kIconColor,
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 12,
-                  ),
-                  CustomText(
-                    text: "Hoặc tiếp tục với",
-                    fontSize: 16,
-                    color: FrontendConfigs.kAuthColor,
-                  ),
-                  const SizedBox(
-                    width: 12,
-                  ),
-                  Expanded(
-                    child: Divider(
-                      color: FrontendConfigs.kIconColor,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(
-                height: 24,
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                ),
-                onPressed: () {},
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Image(
-                        image: AssetImage("assets/images/google.png"),
-                        height: 18.0,
-                        width: 36,
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(left: 24, right: 8),
-                        child: Text(
-                          'Đăng nhập với Google',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black54,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ],
           ),

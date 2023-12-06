@@ -41,38 +41,6 @@ class CarOwnerLogInView extends StatelessWidget {
         elevation: 0,
       ),
       body: CarOwnerLogInBody(),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.only(bottom: 10.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextButton(
-              onPressed: () {
-                // Navigator.push(
-                //     context,
-                //     MaterialPageRoute(
-                //         builder: (context) => const SignUpView()));
-              },
-              child: RichText(
-                  text: TextSpan(
-                      text: "Don’t have an account? ",
-                      style: TextStyle(
-                          color: FrontendConfigs.kAuthColor,
-                          fontWeight: FontWeight.w400,
-                          fontSize: 16),
-                      children: [
-                    TextSpan(
-                      text: " Sign up.",
-                      style: TextStyle(
-                          color: FrontendConfigs.kAuthColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16),
-                    )
-                  ])),
-            )
-          ],
-        ),
-      ),
     );
   }
 }
