@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:CarRescue/src/models/manager.dart';
 import 'package:CarRescue/src/models/symptom.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
 
@@ -100,7 +101,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   final ScrollController _scrollController = ScrollController();
   double _savedScrollPosition = 0.0;
   Timer? myTimer;
-
+  String? _orderId;
+  String? _managerToken;
+  String? _managerAccountId;
   @override
   void initState() {
     super.initState();
@@ -118,7 +121,21 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     _loadCreateLocation();
     // _loadLocation();
     print(widget.booking.status);
-    // _imageUrls.clear();
+    _loadManagerId(widget.booking.managerId ?? '');
+  }
+
+  Future<void> _loadManagerId(String managerId) async {
+    try {
+      Manager? manager = await AuthService().fetchManagerProfile(managerId);
+      print(manager!.deviceToken);
+      setState(() {
+        _managerToken = manager.deviceToken;
+        _managerAccountId = manager.accountId;
+      });
+    } catch (e) {
+      print('Error loading manager: $e');
+      // Handle the error appropriately
+    }
   }
 
   Future<void> _loadCreateLocation() async {
@@ -652,6 +669,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
             final orderProvider = OrderProvider();
             print("Id: ${widget.booking.id}");
             dynamic data = await orderProvider.endOrder(widget.booking.id);
+            AuthService().sendNotification(
+                deviceId: _managerToken ?? '',
+                isAndroidDevice: true,
+                title: 'Thông báo từ kĩ thuật viên',
+                body: 'Đơn hàng ${widget.booking.id} đã kết thúc',
+                target: _managerAccountId ?? '',
+                orderId: widget.booking.id);
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -1044,9 +1068,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   Widget _buildOrderItemSection() {
     return Column(
       children: [
-        // Uncomment and modify this section if needed
-        // _buildFeeSection(),
-
         Expanded(
           child: ListView.builder(
             key: PageStorageKey<String>('page'),
@@ -1079,10 +1100,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
             final price = snapshot.data?['price'] ?? 0;
             int total = orderDetail['tOtal'] ?? 1;
             final orderId = orderDetail['id'];
+
             final formatter =
                 NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
             final formattedTotal = formatter.format(total);
-
+            _orderId = orderId;
             return Stack(
               children: [
                 widget.booking.status != "COMPLETED" &&
@@ -1116,7 +1138,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                               ),
                               isLoading: localIsLoading,
                             ),
-                            widget.booking.status.toUpperCase() != 'COMPLETED' && widget.booking.status.toUpperCase() != 'CANCELLED'
+                            widget.booking.status.toUpperCase() !=
+                                        'COMPLETED' &&
+                                    widget.booking.status.toUpperCase() !=
+                                        'CANCELLED'
                                 ? Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -1218,7 +1243,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                             ),
                             isLoading: localIsLoading,
                           ),
-                          widget.booking.status.toUpperCase() != 'COMPLETED' && widget.booking.status.toUpperCase() != 'CANCELLED'
+                          widget.booking.status.toUpperCase() != 'COMPLETED' &&
+                                  widget.booking.status.toUpperCase() !=
+                                      'CANCELLED'
                               ? Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
@@ -1528,12 +1555,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => MapTechScreen(
-                                          cus: customerInfo!,
-                                          booking: widget.booking,
-                                          techImg: technicianInfo?.avatar ?? '',
-                                          techId: technicianInfo?.id ?? '',
-                                          phone: technicianInfo?.phone ?? '',
-                                        ),
+                                            cus: customerInfo!,
+                                            booking: widget.booking,
+                                            techImg:
+                                                technicianInfo?.avatar ?? '',
+                                            techId: technicianInfo?.id ?? '',
+                                            techPhone:
+                                                technicianInfo?.phone ?? ''),
                                       ),
                                     );
                                   },
@@ -1739,6 +1767,42 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       children: [
                         _buildSectionTitle("Đơn giá"),
                         _buildSectionTitle(""),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                CustomText(
+                                  text: 'Phí dịch vụ',
+                                  fontSize: 16,
+                                ),
+                                SizedBox(
+                                  width: 7,
+                                ),
+                                Tooltip(
+                                  triggerMode: TooltipTriggerMode.tap,
+                                  message:
+                                      'Phí dịch vụ mặc định được tính 300.000đ mỗi đơn hàng\n\nTổng cộng = Phí dịch vụ + (Đơn giá x Khoảng cách) ',
+                                  textStyle: TextStyle(color: Colors.white),
+                                  padding: EdgeInsets.all(8),
+                                  margin: EdgeInsets.all(5),
+                                  waitDuration: Duration(seconds: 1),
+                                  showDuration: Duration(seconds: 7),
+                                  child: Icon(Icons.info),
+                                ),
+                              ],
+                            ),
+                            CustomText(
+                              text: '300.000đ',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                     Container(height: 350, child: _buildOrderItemSection()),

@@ -1,3 +1,4 @@
+import 'package:CarRescue/main.dart';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/current_week.dart';
 import 'package:CarRescue/src/models/feedback.dart';
@@ -15,10 +16,11 @@ import 'package:CarRescue/src/presentation/view/technician_view/home/layout/widg
 
 import 'package:CarRescue/src/presentation/elements/quick_access_buttons.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/notification/notification_view.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
-
 
 class TechncianHomePageBody extends StatefulWidget {
   final String userId;
@@ -65,9 +67,48 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
       }
     });
     loadCurrentWeek();
-  }
 
-  
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      RemoteNotification notification = message.notification!;
+      AndroidNotification android = message.notification!.android!;
+      if (notification != null && android != null) {
+        flutterLocalNotificationsPlugin.show(
+            notification.hashCode,
+            notification.title,
+            notification.body,
+            NotificationDetails(
+                android: AndroidNotificationDetails(channel.id, channel.name,
+                    channelDescription: channel.description,
+                    color: Colors.blue,
+                    playSound: true,
+                    icon: '@drawable/ic_launcher',
+                    largeIcon:
+                        DrawableResourceAndroidBitmap('@drawable/download'))));
+      }
+
+      print('Received message: ${message.notification?.body}');
+      // Handle the incoming message
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('a new onMessageOpenedApp ok');
+      RemoteNotification notification = message.notification!;
+      AndroidNotification android = message.notification!.android!;
+      showDialog(
+          context: context,
+          builder: (_) {
+            return AlertDialog(
+              title: Text(notification.title ?? 'Unknown'),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [Text(notification.body ?? 'Unknown1')],
+                ),
+              ),
+            );
+          });
+    });
+  }
 
   Future<void> loadNextWeek(DateTime startDate) async {
     try {
@@ -340,13 +381,13 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                 label: 'Thông báo',
                 icon: Icons.notifications,
                 onPressed: () {
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //     builder: (context) => const NotificationView(),
-                  //   ),
-                  // );
-                  
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          NotificationView(accountId: _tech?.accountId ?? ''),
+                    ),
+                  );
                 },
               ),
               // QuickAccessButton(

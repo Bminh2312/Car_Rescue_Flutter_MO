@@ -8,6 +8,8 @@ import 'package:CarRescue/src/models/wallet_transaction.dart';
 import 'package:CarRescue/src/models/work_shift.dart';
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/models/wallet.dart';
+import 'package:CarRescue/src/models/manager.dart';
+import 'package:CarRescue/src/models/notification.dart';
 import 'package:CarRescue/src/models/banking_info.dart';
 import 'package:get_storage/get_storage.dart';
 
@@ -126,6 +128,36 @@ class AuthService {
     } catch (e) {
       print('Error fetching user profile1: $e');
       return null;
+    }
+  }
+
+  Future<Manager?> fetchManagerProfile(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'https://rescuecapstoneapi.azurewebsites.net/api/Manager/Get?id=$userId'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Parse the JSON response into a Manager object
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        final Manager manager = Manager.fromJson(
+            jsonData); // Adjust this based on your Manager class
+
+        print('Get manager successfully!');
+        return manager;
+      } else {
+        print('Error: ${response.statusCode}');
+        // Handle non-200 status code when fetching the user profile
+        throw Exception('Failed to fetch manager profile');
+      }
+    } catch (e) {
+      print('Error fetching manager profile: $e');
+      throw Exception('Failed to fetch manager profile');
     }
   }
 
@@ -1595,11 +1627,50 @@ class AuthService {
     return {};
   }
 
+  Future<List<Notify>> getAllNotiList(String accountId) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Notification/Getall?id=$accountId';
+    try {
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken',
+        },
+      );
+
+      print("${response.statusCode}");
+      if (response.statusCode == 200) {
+        // Parse the JSON response and handle the data
+        final List<dynamic> jsonData = json.decode(response.body);
+        // Assuming you have a Notification class to represent the data
+        List<Notify> notifications = List.from(
+          jsonData.map((notification) => Notify.fromJson(notification)),
+        );
+
+        print(notifications);
+        // Process the list of notifications as needed
+
+        return notifications;
+      } else {
+        print('Error: ${response.statusCode}');
+        // Handle non-200 status code when fetching notifications
+        throw Exception('Failed to fetch notifications');
+      }
+    } catch (e) {
+      print('Error fetching notifications: $e');
+      // Handle other errors that may occur during the HTTP request
+      throw Exception('Failed to fetch notifications');
+    }
+  }
+
   Future<void> sendNotification({
     required String deviceId,
     required bool isAndroidDevice,
     required String title,
     required String body,
+    required String target,
+    required String orderId,
   }) async {
     final url = Uri.parse(
         'https://rescuecapstoneapi.azurewebsites.net/api/Notification/send');

@@ -14,21 +14,23 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart' as animated;
-
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_arc_speed_dial/flutter_speed_dial_menu_button.dart';
+import 'package:flutter_arc_speed_dial/main_menu_floating_action_button.dart';
 
 class MapTechScreen extends StatefulWidget {
   final String techImg;
   final Booking booking;
   final String techId;
-  final String phone;
+  final String techPhone;
   const MapTechScreen(
       {super.key,
       required this.techImg,
       required this.booking,
       required this.cus,
-      required this.techId, required this.phone});
+      required this.techId,
+      required this.techPhone});
   final CustomerInfo cus;
   @override
   _MapTechScreenState createState() => _MapTechScreenState();
@@ -76,6 +78,38 @@ class _MapTechScreenState extends State<MapTechScreen> {
     super.dispose();
   }
 
+  var itemsActionBar = [
+    FloatingActionButton(
+      backgroundColor: Colors.greenAccent,
+      onPressed: () {},
+      child: Icon(Icons.add),
+    ),
+    FloatingActionButton(
+      backgroundColor: Colors.indigoAccent,
+      onPressed: () {},
+      child: Icon(Icons.camera),
+    ),
+    FloatingActionButton(
+      backgroundColor: Colors.orangeAccent,
+      onPressed: () {},
+      child: Icon(Icons.card_giftcard),
+    ),
+  ];
+  void launchDialPad(String phoneNumber) async {
+    String uri = 'tel:$phoneNumber';
+
+    try {
+      if (await canLaunch(uri)) {
+        await launch(uri);
+      } else {
+        throw 'Could not launch $uri';
+      }
+    } catch (e) {
+      print('Error launching dial pad: $e');
+      throw 'Could not launch $uri';
+    }
+  }
+
   Future<void> _getCurrentLocation() async {
     try {
       Position position = await Geolocator.getCurrentPosition(
@@ -104,20 +138,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
     }
   }
 
-  void launchDialPad(String phoneNumber) async {
-    String uri = 'tel:$phoneNumber';
-
-    try {
-      if (await canLaunch(uri)) {
-        await launch(uri);
-      } else {
-        throw 'Could not launch $uri';
-      }
-    } catch (e) {
-      print('Error launching dial pad: $e');
-      throw 'Could not launch $uri';
-    }
-  }
+ 
 
   void loadUpdateLocation() async {
     try {
@@ -256,7 +277,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
                         ),
                         onPressed: () {
                           // Implement your action for calling the technician
-                          launchDialPad(widget.phone); // Close the dialog
+                          launchDialPad(widget.techPhone); // Close the dialog
                         },
                         child: Row(
                           children: [
@@ -425,6 +446,91 @@ class _MapTechScreenState extends State<MapTechScreen> {
           : Center(
               child: CircularProgressIndicator(),
             ),
+      floatingActionButton: _getFloatingActionButton(),
+      // floatingActionButton: Column(
+      //   mainAxisAlignment: MainAxisAlignment.end,
+      //   children: [
+      //     FloatingActionButton(
+      //       onPressed: () {
+      //         if (mapController != null && currentLocation != null) {
+      //           mapController!.animateCamera(
+      //             CameraUpdate.newLatLng(currentLocation!),
+      //           );
+      //         }
+      //       },
+      //       tooltip: 'Go to current location',
+      //       child: Icon(Icons.my_location),
+      //     ),
+      //     SizedBox(height: 16),
+          // FloatingActionButton(
+          //     onPressed: () {
+          //       if (mapController != null && technicianLocation != null) {
+          //         mapController!.animateCamera(
+          //           CameraUpdate.newLatLng(technicianLocation!),
+          //         );
+          //       }
+          //     },
+          //     tooltip: 'Show technician location',
+          //     child: Image.asset(
+          //       'assets/icons/mechanic.png',
+          //       height: 30,
+          //       width: 30,
+          //     )),
+      //   ],
+      // ),
+    );
+  }
+
+  Widget _getFloatingActionButton() {
+    return SpeedDialMenuButton(
+      //if needed to close the menu after clicking sub-FAB
+
+      //manually open or close menu
+      updateSpeedDialStatus: (isShow) {
+        //return any open or close change within the widget
+      },
+      //general init
+      isMainFABMini: false,
+      mainMenuFloatingActionButton: MainMenuFloatingActionButton(
+          mini: false,
+          child: Icon(Icons.menu),
+          onPressed: () {},
+          closeMenuChild: Icon(Icons.close),
+          closeMenuForegroundColor: Colors.white,
+          closeMenuBackgroundColor: Colors.red),
+      floatingActionButtonWidgetChildren: <FloatingActionButton>[
+        FloatingActionButton(
+          onPressed: () {
+            if (mapController != null && currentLocation != null) {
+              mapController!.animateCamera(
+                CameraUpdate.newLatLng(currentLocation!),
+              );
+            }
+          },
+          tooltip: 'Go to current location',
+          child: Icon(Icons.my_location),
+        ),
+        FloatingActionButton(
+          mini: true,
+          child: Icon(Icons.volume_down),
+          onPressed: () {
+            //if need to toggle menu after click
+
+            setState(() {});
+          },
+          backgroundColor: Colors.orange,
+        ),
+        FloatingActionButton(
+          mini: true,
+          child: Icon(Icons.volume_up),
+          onPressed: () {
+            //if no need to change the menu status
+          },
+          backgroundColor: Colors.deepPurple,
+        ),
+      ],
+      isSpeedDialFABsMini: true,
+      paddingBtwSpeedDialButton: 30.0,
     );
   }
 }

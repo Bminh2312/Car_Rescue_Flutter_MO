@@ -16,6 +16,8 @@ import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart' as animated;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:flutter_arc_speed_dial/flutter_speed_dial_menu_button.dart';
+import 'package:flutter_arc_speed_dial/main_menu_floating_action_button.dart';
 
 class MapScreen extends StatefulWidget {
   final String techImg;
@@ -58,6 +60,7 @@ class _MapScreenState extends State<MapScreen> {
       _loadLocation();
       _getCurrentLocation();
       _getOrderLocation();
+      _updateCameraToTechnicianLocation();
       // Stop the timer after a certain condition (e.g., after 10 ticks)
       // if (timer.tick == 10) {
       //   print("Stopping the timer.");
@@ -112,6 +115,14 @@ class _MapScreenState extends State<MapScreen> {
       point2.latitude,
       point2.longitude,
     );
+  }
+
+  void _updateCameraToTechnicianLocation() {
+    if (mapController != null && technicianLocation != null) {
+      mapController!.animateCamera(
+        CameraUpdate.newLatLng(technicianLocation!),
+      );
+    }
   }
 
   void _getOrderLocation() async {
@@ -237,8 +248,7 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         ),
                         onPressed: () {
-                          // Implement your action for confirming the technician's arrival
-                          // Close the dialog
+                          Navigator.pop(context);
                         },
                         child: Row(
                           children: [
@@ -337,63 +347,118 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 1,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
         ),
-      ),
-      body: (currentLocation != null && _targetLocation != null)
-          ? GoogleMap(
-              onMapCreated: (controller) {
-                setState(() {
-                  mapController = controller;
-                });
-              },
-              initialCameraPosition: CameraPosition(
-                target: _targetLocation!,
-                zoom: 15.0,
-              ),
-              markers: {
-                Marker(
-                  markerId: MarkerId("currentLocation"),
-                  position: currentLocation!,
-                  icon: departureIcon ?? BitmapDescriptor.defaultMarker,
-                  infoWindow: InfoWindow(title: "Vị trí của tôi"),
+        body: (currentLocation != null && _targetLocation != null)
+            ? GoogleMap(
+                onMapCreated: (controller) {
+                  setState(() {
+                    mapController = controller;
+                  });
+                },
+                initialCameraPosition: CameraPosition(
+                  target: _targetLocation!,
+                  zoom: 15.0,
                 ),
-                Marker(
-                  markerId: MarkerId("targetLocation"),
-                  position: _targetLocation!,
-                  icon: destinationIcon ?? BitmapDescriptor.defaultMarker,
-                  infoWindow: InfoWindow(
-                    title: "Địa điểm cứu hộ",
+                markers: {
+                  Marker(
+                    markerId: MarkerId("currentLocation"),
+                    position: currentLocation!,
+                    icon: departureIcon ?? BitmapDescriptor.defaultMarker,
+                    infoWindow: InfoWindow(title: "Vị trí của tôi"),
                   ),
-                ),
-                Marker(
-                  markerId: MarkerId("technicianLocation"),
-                  position: technicianLocation!,
-                  icon: techIcon ?? BitmapDescriptor.defaultMarker,
-                  infoWindow: InfoWindow(title: "Vị trí của nhân viên"),
-                ),
-              },
-              polylines: {
-                Polyline(
-                  polylineId: PolylineId("route"),
-                  color: FrontendConfigs.kAuthColor,
-                  width: 3,
-                  points:
-                      routeCoordinates, // Use routeCoordinates instead of [technicianLocation!, _targetLocation!]
-                ),
-              },
-            )
-          : Center(
-              child: CircularProgressIndicator(),
-            ),
+                  Marker(
+                    markerId: MarkerId("targetLocation"),
+                    position: _targetLocation!,
+                    icon: destinationIcon ?? BitmapDescriptor.defaultMarker,
+                    infoWindow: InfoWindow(
+                      title: "Địa điểm cứu hộ",
+                    ),
+                  ),
+                  Marker(
+                    markerId: MarkerId("technicianLocation"),
+                    position: technicianLocation!,
+                    icon: techIcon ?? BitmapDescriptor.defaultMarker,
+                    infoWindow: InfoWindow(title: "Vị trí của nhân viên"),
+                  ),
+                },
+                polylines: {
+                  Polyline(
+                    polylineId: PolylineId("route"),
+                    color: FrontendConfigs.kAuthColor,
+                    width: 3,
+                    points:
+                        routeCoordinates, // Use routeCoordinates instead of [technicianLocation!, _targetLocation!]
+                  ),
+                },
+              )
+            : Center(
+                child: CircularProgressIndicator(),
+              ),
+        floatingActionButton: _getFloatingActionButton());
+  }
+
+  Widget _getFloatingActionButton() {
+    return SpeedDialMenuButton(
+      //if needed to close the menu after clicking sub-FAB
+
+      //manually open or close menu
+      updateSpeedDialStatus: (isShow) {
+        //return any open or close change within the widget
+      },
+      //general init
+      isMainFABMini: false,
+      mainMenuFloatingActionButton: MainMenuFloatingActionButton(
+          mini: false,
+          child: Icon(Icons.menu),
+          onPressed: () {},
+          closeMenuChild: Icon(Icons.close),
+          closeMenuForegroundColor: Colors.white,
+          closeMenuBackgroundColor: Colors.red),
+      floatingActionButtonWidgetChildren: <FloatingActionButton>[
+        FloatingActionButton(
+          onPressed: () {
+            if (mapController != null && currentLocation != null) {
+              mapController!.animateCamera(
+                CameraUpdate.newLatLng(currentLocation!),
+              );
+            }
+          },
+          tooltip: 'Go to current location',
+          child: Icon(Icons.my_location),
+        ),
+        FloatingActionButton(
+          onPressed: () {
+            launchDialPad(widget.phone);
+          },
+          child: Icon(Icons.phone),
+        ),
+        FloatingActionButton(
+            onPressed: () {
+              if (mapController != null && technicianLocation != null) {
+                mapController!.animateCamera(
+                  CameraUpdate.newLatLng(technicianLocation!),
+                );
+              }
+            },
+            tooltip: 'Show technician location',
+            child: Image.asset(
+              'assets/icons/mechanic.png',
+              height: 30,
+              width: 30,
+            )),
+      ],
+      isSpeedDialFABsMini: true,
+      paddingBtwSpeedDialButton: 30.0,
     );
   }
 }

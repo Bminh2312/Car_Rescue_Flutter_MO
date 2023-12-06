@@ -1,3 +1,4 @@
+import 'package:CarRescue/main.dart';
 import 'package:CarRescue/src/models/current_week.dart';
 import 'package:CarRescue/src/models/feedback.dart';
 import 'package:CarRescue/src/models/payment.dart';
@@ -15,8 +16,11 @@ import 'package:CarRescue/src/presentation/view/car_owner_view/notification/noti
 import 'package:CarRescue/src/presentation/view/car_owner_view/profile/profile_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/wallet/layout/wallet_transation.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/wallet/layout/widgets/withdraw_form.dart';
-
+import 'package:CarRescue/src/presentation/view/customer_view/notify/notify_view.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:CarRescue/src/providers/firebase_message_provider.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
@@ -26,6 +30,8 @@ import 'package:CarRescue/src/presentation/view/car_owner_view/booking_list/book
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
+import 'package:shake_animation_widget/shake_animation_widget.dart';
+import 'package:badges/badges.dart' as badges;
 
 class CarOwnerHomePageBody extends StatefulWidget {
   final String userId;
@@ -40,7 +46,8 @@ class CarOwnerHomePageBody extends StatefulWidget {
   _CarOwnerHomePageBodyState createState() => _CarOwnerHomePageBodyState();
 }
 
-class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
+class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
+    with SingleTickerProviderStateMixin {
   final AuthService authService = AuthService();
   List<Booking> bookings = [];
   List<String> weeklyTasks = [
@@ -61,6 +68,12 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
   List<WalletTransaction> walletTransactions = [];
   List<WorkShift> weeklyShifts = [];
   CurrentWeek? _currentWeek;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  String? deviceToken;
+  int unreadNotificationCount = 0;
+
+  final ShakeAnimationController _shakeAnimationController =
+      ShakeAnimationController();
   @override
   void initState() {
     super.initState();
@@ -74,6 +87,49 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
           _owner = value;
         });
       }
+    });
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      RemoteNotification notification = message.notification!;
+      AndroidNotification android = message.notification!.android!;
+      if (notification != null && android != null) {
+        flutterLocalNotificationsPlugin.show(
+            notification.hashCode,
+            notification.title,
+            notification.body,
+            NotificationDetails(
+                android: AndroidNotificationDetails(channel.id, channel.name,
+                    channelDescription: channel.description,
+                    color: Colors.blue,
+                    playSound: true,
+                    icon: '@drawable/ic_launcher',
+                    largeIcon:
+                        DrawableResourceAndroidBitmap('@drawable/download'))));
+      }
+
+      print('Received message: ${message.notification?.body}');
+      // Handle the incoming message
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('a new onMessageOpenedApp ok');
+      RemoteNotification notification = message.notification!;
+      AndroidNotification android = message.notification!.android!;
+      showDialog(
+          context: context,
+          builder: (_) {
+            return AlertDialog(
+              title: Text(notification.title ?? 'Unknown'),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [Text(notification.body ?? 'Unknown1')],
+                ),
+              ),
+            );
+          });
+      handleIncomingNotification(message);
+      handleNotificationOpenedApp(message);
     });
   }
 
@@ -582,51 +638,85 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody> {
                   );
                 },
               ),
-              QuickAccessButton(
-                label: 'Thông báo',
-                icon: Icons.notifications,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => WaitingForPaymentScreen(
-                        addressesDepart: {},
-                        addressesDesti: {},
-                        subAddressesDepart: {},
-                        subAddressesDesti: {},
-                        accountId: '',
-                        data: '',
-                        payment: payments,
-                        userId: '',
-                        booking: Booking(
-                            carId: 'carId',
-                            id: 'id',
-                            customerId: 'customerId',
-                            technicianId: 'technicianId',
-                            managerId: 'managerId',
-                            vehicleId: 'vehicleId',
-                            paymentId: 'paymentId',
-                            rescueType: 'rescueType',
-                            staffNote: 'staffNote',
-                            customerNote: 'customerNote',
-                            cancellationReason: 'cancellationReason',
-                            startTime: DateTime.now(),
-                            endTime: DateTime.now(),
-                            createdAt: DateTime.now(),
-                            status: 'status',
-                            departure: 'departure',
-                            destination: 'destination',
-                            area: 1,indicentId: null),
-                      ),
+              ShakeAnimationWidget(
+                shakeAnimationController: _shakeAnimationController,
+                shakeAnimationType: ShakeAnimationType.SkewShake,
+                isForward: false,
+                shakeCount: 0,
+                shakeRange: 0.2,
+                child: IconButton(
+                  icon: badges.Badge(
+                    badgeContent: Text(
+                      unreadNotificationCount > 0
+                          ? '$unreadNotificationCount'
+                          : '',
+                      style: TextStyle(color: Colors.white),
                     ),
-                  );
-                },
+                    child: Icon(Icons.notifications),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            NotificationView(accountId: widget.accountId),
+                      ),
+                    ).then((value) => {reloadData()});
+                  },
+                ),
               ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  void handleIncomingNotification(RemoteMessage message) {
+    setState(() {
+      unreadNotificationCount++;
+    });
+
+    // Show local notification
+    RemoteNotification notification = message.notification!;
+    AndroidNotification android = message.notification!.android!;
+    flutterLocalNotificationsPlugin.show(
+      notification.hashCode,
+      notification.title,
+      notification.body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          channel.id,
+          channel.name,
+          channelDescription: channel.description,
+          color: Colors.blue,
+          playSound: true,
+          icon: '@drawable/ic_launcher',
+          largeIcon: DrawableResourceAndroidBitmap('@drawable/download'),
+        ),
+      ),
+    );
+  }
+
+  void handleNotificationOpenedApp(RemoteMessage message) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: Text(message.notification?.title ?? 'Unknown'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [Text(message.notification?.body ?? 'Unknown1')],
+            ),
+          ),
+        );
+      },
+    );
+
+    setState(() {
+      unreadNotificationCount = 0;
+    });
   }
 
   Widget buildQuickRegister() {
