@@ -29,7 +29,7 @@ import 'layout/widget/home_field.dart';
 class HomeView extends StatefulWidget {
   final String rescueType;
   final String carId;
-   HomeView({required this.carId, required this.rescueType});
+  HomeView({required this.carId, required this.rescueType});
 
   @override
   State<HomeView> createState() => HomeViewState();
@@ -135,17 +135,17 @@ class HomeViewState extends State<HomeView> {
   }
 
   List<LatLng> decodePolyline(String encoded) {
-  var polylinePoints = PolylinePoints();
-  List<PointLatLng> result = polylinePoints.decodePolyline(encoded);
-  return result.map((PointLatLng point) {
-    return LatLng(point.latitude, point.longitude);
-  }).toList();
-}
+    var polylinePoints = PolylinePoints();
+    List<PointLatLng> result = polylinePoints.decodePolyline(encoded);
+    return result.map((PointLatLng point) {
+      return LatLng(point.latitude, point.longitude);
+    }).toList();
+  }
 
-   void updatePolyline() async {
+  void updatePolyline() async {
     polylines.clear();
     await fetchPolyline();
-    if (_latLng != LatLng(0,0) && _latLngDrop != LatLng(0,0)) {
+    if (_latLng != LatLng(0, 0) && _latLngDrop != LatLng(0, 0)) {
       Polyline polyline = Polyline(
         polylineId: PolylineId("route"),
         color: Colors.blue,
@@ -505,25 +505,45 @@ class HomeViewState extends State<HomeView> {
                     SizedBox(
                       height: 10,
                     ),
-                  AppButton(
-                    onPressed: () {
-                      // _handlePressButton();
-                      // stopListeningToLocationUpdates();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => OrderView(
-                                  latLngPick: _latLng,
-                                  addressPick: _pickUpController.text,
-                                  serviceType: widget.rescueType,
-                                  latLngDrop: _latLngDrop,
-                                  addressDrop: _dropLocationController.text,
-                                  distance: formattedDistance,
-                                  carId: widget.carId,
-                                )),
-                      );
-                    },
-                    btnLabel: "Xác nhận địa điểm",
-                  ),
+                  if (widget.rescueType == "Fixing" &&
+                      _pickUpController.text.isNotEmpty)
+                    AppButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (context) => OrderView(
+                                    latLngPick: _latLng,
+                                    addressPick: _pickUpController.text,
+                                    serviceType: widget.rescueType,
+                                    latLngDrop: _latLngDrop,
+                                    addressDrop: _dropLocationController.text,
+                                    distance: formattedDistance,
+                                    carId: widget.carId,
+                                  )),
+                        );
+                      },
+                      btnLabel: "Xác nhận địa điểm",
+                    ),
+                  if (widget.rescueType == "Towing" &&
+                      _pickUpController.text.isNotEmpty &&
+                      _dropLocationController.text.isNotEmpty)
+                    AppButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (context) => OrderView(
+                                    latLngPick: _latLng,
+                                    addressPick: _pickUpController.text,
+                                    serviceType: widget.rescueType,
+                                    latLngDrop: _latLngDrop,
+                                    addressDrop: _dropLocationController.text,
+                                    distance: formattedDistance,
+                                    carId: widget.carId,
+                                  )),
+                        );
+                      },
+                      btnLabel: "Xác nhận địa điểm",
+                    ),
                 ],
               ),
             ),
@@ -568,7 +588,7 @@ class HomeViewState extends State<HomeView> {
           _latLngDrop = newLatLng;
         }
         _updateCameraPosition(newLatLng, type);
-        if(_latLng != LatLng(0,0) && _latLngDrop != LatLng(0,0)){
+        if (_latLng != LatLng(0, 0) && _latLngDrop != LatLng(0, 0)) {
           updatePolyline();
         }
         clearPredictions();
@@ -602,15 +622,15 @@ class HomeViewState extends State<HomeView> {
 
   Future<void> fetchPolyline() async {
     final locationProvider = LocationProvider();
-    try{
-    final routes = await locationProvider.fetchRoutes(_latLng, _latLngDrop);
-    String encodedPolyline = routes.routes[0].polyline.encodedPolyline;
-    int distance = routes.routes[0].distanceMeters;
-    setState(() {
-      routesLatLng = decodePolyline(encodedPolyline);
-      _distance = distance;
-    });
-    }catch(e){
+    try {
+      final routes = await locationProvider.fetchRoutes(_latLng, _latLngDrop);
+      String encodedPolyline = routes.routes[0].polyline.encodedPolyline;
+      int distance = routes.routes[0].distanceMeters;
+      setState(() {
+        routesLatLng = decodePolyline(encodedPolyline);
+        _distance = distance;
+      });
+    } catch (e) {
       print(e);
     }
   }

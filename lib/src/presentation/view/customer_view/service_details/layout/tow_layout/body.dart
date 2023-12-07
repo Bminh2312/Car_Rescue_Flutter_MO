@@ -182,7 +182,10 @@ class _TowBodyState extends State<TowBody> {
   }
 
   void createOrder() async {
-    if (_formKey.currentState!.validate()) {
+    if(selectedServiceCards.isEmpty){
+        notifier.showToast("Hãy chọn ít nhất một dịch vụ");
+      }
+    if (_formKey.currentState!.validate() && selectedServiceCards.isNotEmpty) {
       setState(() {
         isLoading = true; // Bắt đầu hiển thị vòng quay khi bắt đầu gửi yêu cầu
       });
