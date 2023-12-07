@@ -74,6 +74,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   List<Map<String, dynamic>> orderDetails = [];
   num totalQuantity = 0;
   num totalAmount = 0;
+
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
   @override
   void initState() {
@@ -455,7 +456,6 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                       ); // This pops the `BookingDetailsBody` screen.
                                     }
                                     // widget.updateTabCallback!(1);
-                                    
                                   },
                                   child: Text(
                                     "Đồng ý",
@@ -574,8 +574,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               _buildSectionTitle("Khách hàng"),
-                              order.status != 'COMPLETED' ||
-                                      order.status != 'CANCELLED'
+                              order.status == 'ASSIGNED'
                                   ? InkWell(
                                       onTap: () {
                                         Navigator.pushReplacement(
@@ -745,7 +744,6 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                     icon: 'assets/svg/pickup_icon.svg',
                                     title:
                                         departureAddress, // Use addresses parameter
-                                    body: '',
                                     onPressed: () {},
                                   ),
                                 );

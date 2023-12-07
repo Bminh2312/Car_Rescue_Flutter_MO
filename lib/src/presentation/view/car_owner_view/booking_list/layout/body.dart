@@ -45,7 +45,9 @@ class _BookingListBodyState extends State<BookingListBody>
     with SingleTickerProviderStateMixin {
   List<Booking> inprogressBookings = [];
   List<Booking> assiginingBookings = [];
+
   List<Booking> assiginedBookings = [];
+  List<Booking> waitingBookings = [];
   String addressDep = '';
   AuthService authService = AuthService();
   bool isDataLoaded = false;
@@ -54,12 +56,13 @@ class _BookingListBodyState extends State<BookingListBody>
   TabController? _tabController;
   Map<String, dynamic>? userProfile;
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
-String? accessToken = GetStorage().read<String>("accessToken");
+  String? accessToken = GetStorage().read<String>("accessToken");
   String accountId = '';
   String phoneNumber = '';
   String avatar = ''; // Default index
   bool isAssiginingEmpty = false;
   bool isAssiginedEmpty = false;
+  bool isWaitingEmpty = false;
   bool isInprogressEmpty = false;
   bool isDataLoadedForTab0 = false;
   bool isDataLoadedForTab1 = false;
@@ -69,7 +72,7 @@ String? accessToken = GetStorage().read<String>("accessToken");
   void initState() {
     super.initState();
     loadAssigningBookings();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _tabController!.addListener(_handleTabSelection);
   }
 
@@ -79,7 +82,10 @@ String? accessToken = GetStorage().read<String>("accessToken");
       loadAssigningBookings();
     } else if (_tabController!.index == 1) {
       loadAssignedBookings();
+      // loadAssignedBookings();
     } else if (_tabController!.index == 2) {
+      separateBookings();
+    } else if (_tabController!.index == 3) {
       loadInprogressBookings();
     }
   }
@@ -107,10 +113,11 @@ String? accessToken = GetStorage().read<String>("accessToken");
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
 
-    final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $accessToken'
-        });
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
@@ -287,15 +294,19 @@ String? accessToken = GetStorage().read<String>("accessToken");
 
   Future<bool> separateBookings() async {
     try {
+      setState(() {
+        // This seems like a naming error. You might want to change this to canceledBookings.
+        isDataLoaded = false;
+      });
       final List<Booking> data =
           await AuthService().fetchCarOwnerBookings(widget.userId);
       print(data);
 
-      // data.sort((a, b) {
-      //   if (a.createdAt == null) return 1;
-      //   if (b.createdAt == null) return -1;
-      //   return b.createdAt!.compareTo(a.createdAt!);
-      // }); // If createdAt is a String
+      data.sort((a, b) {
+        if (a.createdAt == null) return 1;
+        if (b.createdAt == null) return -1;
+        return b.createdAt!.compareTo(a.createdAt!);
+      }); // If createdAt is a String
 
       for (Booking booking in data) {
         Vehicle vehicleInfoFromAPI =
@@ -306,31 +317,12 @@ String? accessToken = GetStorage().read<String>("accessToken");
 
       // Use `setState` to reflect changes
       setState(() {
-        inprogressBookings = data.where((booking) {
+        waitingBookings = data.where((booking) {
           final status = booking.status.trim().toUpperCase();
-          return status == 'INPROGRESS';
+          return status == 'WAITING';
         }).toList();
-        if (inprogressBookings.isEmpty) {
-          isInprogressEmpty = true;
-        }
-        assiginingBookings = data.where((booking) {
-          final status = booking.status.trim().toUpperCase();
-          return status == 'ASSIGNING';
-        }).toList();
-        if (assiginingBookings.isEmpty) {
-          isAssiginingEmpty = true;
-        }
-        assiginedBookings = data.where((booking) {
-          final status = booking.status.trim().toUpperCase();
-          return status == 'ASSIGNED';
-        }).toList();
-        if (assiginedBookings.isEmpty) {
-          isAssiginedEmpty = true;
-        }
-        if (assiginingBookings.isEmpty) {
-          setState(() {
-            isEmpty = true;
-          });
+        if (waitingBookings.isEmpty) {
+          isWaitingEmpty = true;
         }
         isDataLoaded = true; // Mark the data as loaded
       });
@@ -354,9 +346,11 @@ String? accessToken = GetStorage().read<String>("accessToken");
                 Tab(
                   child: Center(
                     child: Text(
-                      'Chờ xác nhận',
+                      textAlign: TextAlign.center,
+                      'Đang chờ',
                       style: TextStyle(
                         color: Colors.black,
+                        // or TextOverflow.clip
                       ),
                     ),
                   ),
@@ -364,7 +358,8 @@ String? accessToken = GetStorage().read<String>("accessToken");
                 Tab(
                   child: Center(
                     child: Text(
-                      'Đã phân công',
+                      textAlign: TextAlign.center,
+                      'Đã điều phối',
                       style: TextStyle(
                         color: Colors.black,
                       ),
@@ -372,8 +367,18 @@ String? accessToken = GetStorage().read<String>("accessToken");
                   ),
                 ),
                 Tab(
+                  child: Text(
+                    textAlign: TextAlign.center,
+                    'Chờ chấp nhận',
+                    style: TextStyle(
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+                Tab(
                   child: Center(
                     child: Text(
+                      textAlign: TextAlign.center,
                       'Đang hoạt động',
                       style: TextStyle(
                         color: Colors.black,
@@ -400,6 +405,11 @@ String? accessToken = GetStorage().read<String>("accessToken");
                       : isAssiginedEmpty
                           ? EmptyState()
                           : _buildOtherListView(assiginedBookings),
+                  !isDataLoaded
+                      ? LoadingState()
+                      : isWaitingEmpty
+                          ? EmptyState()
+                          : _buildOtherListView(waitingBookings),
                   Column(
                     children: [
                       Expanded(

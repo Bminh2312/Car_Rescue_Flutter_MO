@@ -609,12 +609,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                 const EdgeInsets.symmetric(horizontal: 12.0),
                             child: RideSelectionWidget(
                               icon: 'assets/svg/pickup_icon.svg',
-                              title:
-                                  widget.addressesDepart[widget.booking.id] ??
-                                      '', // Use addresses parameter
-                              body: widget
+                              title: widget
                                       .subAddressesDepart[widget.booking.id] ??
-                                  '',
+                                  '', // Use addresses parameter
+
                               onPressed: () {},
                             ),
                           ),
@@ -636,9 +634,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                 const EdgeInsets.symmetric(horizontal: 12.0),
                             child: RideSelectionWidget(
                               icon: 'assets/svg/location_icon.svg',
-                              title: widget.addressesDesti[widget.booking.id] ??
-                                  '',
-                              body:
+                              title:
                                   widget.subAddressesDesti[widget.booking.id] ??
                                       '',
                               onPressed: () {},
@@ -886,47 +882,46 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 mainAxisSize: MainAxisSize
                     .min, // Quan trọng để đảm bảo Column không chiếm toàn bộ không gian
                 children: [
-                  if (widget.booking.status == 'ASSIGNED')
-                    Container(
-                      width: double.infinity,
-                      child: SliderButton(
-                        alignLabel: Alignment.center,
-                        shimmer: true,
-                        baseColor: Colors.white,
-                        buttonSize: 45,
-                        height: 60,
-                        backgroundColor: FrontendConfigs.kActiveColor,
-                        action: () async {
-                          setState(() {
-                            _isLoading = true;
-                          });
-                          bool isSuccess =
-                              await authService.startOrder(widget.booking.id);
-                          if (isSuccess) {
-                            setState(() {
-                              _isLoading = false;
-                            });
-                            //
-                            //Navigate back to the previous screen
-                            widget.updateTabCallback!(2);
+                  // if (widget.booking.status == 'ASSIGNED')
+                  //   Container(
+                  //     width: double.infinity,
+                  //     child: SliderButton(
+                  //       alignLabel: Alignment.center,
+                  //       shimmer: true,
+                  //       baseColor: Colors.white,
+                  //       buttonSize: 45,
+                  //       height: 60,
+                  //       backgroundColor: FrontendConfigs.kActiveColor,
+                  //       action: () async {
+                  //         setState(() {
+                  //           _isLoading = true;
+                  //         });
+                  //         bool isSuccess =
+                  //             await authService.startOrder(widget.booking.id);
+                  //         if (isSuccess) {
+                  //           setState(() {
+                  //             _isLoading = false;
+                  //           });
+                  //           //
+                  //           //Navigate back to the previous screen
+                  //           widget.updateTabCallback!(2);
 
-                            Navigator.pop(context,
-                                'reload'); // This pops the `BookingDetailsBody` screen.
+                  //           Navigator.pop(context,
+                  //               'reload'); // This pops the `BookingDetailsBody` screen.
 
-                            // Set the specific tab you want to navigate to
-                          }
-                        },
-                        label: const Text(
-                          "Bắt đầu",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16),
-                        ),
-                        icon: SvgPicture.asset("assets/svg/cancel_icon.svg"),
-                      ),
-                    ),
-
+                  //           // Set the specific tab you want to navigate to
+                  //         }
+                  //       },
+                  //       label: const Text(
+                  //         "Bắt đầu",
+                  //         style: TextStyle(
+                  //             color: Colors.white,
+                  //             fontWeight: FontWeight.bold,
+                  //             fontSize: 16),
+                  //       ),
+                  //       icon: SvgPicture.asset("assets/svg/cancel_icon.svg"),
+                  //     ),
+                  //   ),
                   if (widget.booking.status != 'COMPLETED' &&
                       widget.booking.status != 'CANCELLED')
                     GestureDetector(
@@ -1007,7 +1002,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   ),
                   if (widget.booking.status != 'COMPLETED' &&
                       widget.booking.status != 'CANCELLED' &&
-                      widget.booking.status != 'INPROGRESS')
+                      widget.booking.status != 'INPROGRESS' &&
+                      widget.booking.status != 'ASSIGNING')
                     Center(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1059,7 +1055,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         ],
                       ),
                     ),
-                  if (widget.booking.status == 'INPROGRESS')
+                  if (widget.booking.status == 'INPROGRESS' &&
+                      widget.booking.status != 'ASSIGNING')
                     Center(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1116,69 +1113,70 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   SizedBox(
                     height: 10,
                   ),
-                  // Row(
-                  //   children: [
-                  //     Expanded(
-                  //       child: ElevatedButton(
-                  //         style: ElevatedButton.styleFrom(
-                  //           backgroundColor:
-                  //               Colors.green, // color for accept button
-                  //           elevation: 0,
-                  //           shape: RoundedRectangleBorder(
-                  //             borderRadius: BorderRadius.circular(16),
-                  //           ),
-                  //         ),
-                  //         onPressed: () async {
-                  //           setState(() {
-                  //             _isLoading = true;
-                  //           });
-                  //           bool decision = true;
-                  //           bool isSuccess = await authService.acceptOrder(
-                  //               widget.booking.id, decision);
+                  if (widget.booking.status == 'ASSIGNING')
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Colors.green, // color for accept button
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            onPressed: () async {
+                              setState(() {
+                                _isLoading = true;
+                              });
+                              bool decision = true;
+                              bool isSuccess = await authService.acceptOrderRVO(
+                                  widget.booking.id, decision);
 
-                  //           if (isSuccess) {
-                  //             setState(() {
-                  //               _isLoading = false;
-                  //             });
-                  //             widget.updateTabCallback!(1);
+                              if (isSuccess) {
+                                setState(() {
+                                  _isLoading = false;
+                                });
+                                widget.updateTabCallback!(1);
 
-                  //             Navigator.pop(context,
-                  //                 'reload'); // This pops the `BookingDetailsBody` screen.
-                  //           }
-                  //           // widget.updateTabCallback!(1);
-                  //         },
-                  //         child: Text(
-                  //           "Đồng ý",
-                  //           style: TextStyle(color: Colors.white),
-                  //         ),
-                  //       ),
-                  //     ),
-                  //     SizedBox(
-                  //         width:
-                  //             2), // Optional: you can use this for a small gap between the buttons
-                  //     Expanded(
-                  //       child: ElevatedButton(
-                  //         style: ElevatedButton.styleFrom(
-                  //           backgroundColor:
-                  //               Colors.red, // color for cancel button
-                  //           elevation: 0,
-                  //           shape: RoundedRectangleBorder(
-                  //             borderRadius: BorderRadius.circular(16),
-                  //           ),
-                  //         ),
-                  //         onPressed: () async {
-                  //           bool decision = false;
-                  //           await authService.acceptOrder(
-                  //               widget.booking.id, decision);
-                  //         },
-                  //         child: Text(
-                  //           "Hủy",
-                  //           style: TextStyle(color: Colors.white),
-                  //         ),
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
+                                Navigator.pop(context,
+                                    'reload'); // This pops the `BookingDetailsBody` screen.
+                              }
+                              // widget.updateTabCallback!(1);
+                            },
+                            child: Text(
+                              "Đồng ý",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                            width:
+                                2), // Optional: you can use this for a small gap between the buttons
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Colors.red, // color for cancel button
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            onPressed: () async {
+                              bool decision = false;
+                              await authService.acceptOrder(
+                                  widget.booking.id, decision);
+                            },
+                            child: Text(
+                              "Hủy",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   if (_currentBooking != null &&
                       _currentBooking?.status == 'INPROGRESS')
                     Container(

@@ -42,6 +42,7 @@ class _NotificationListState extends State<NotificationList> {
   void initState() {
     super.initState();
     loadNotifyList();
+    print(widget.accountId);
   }
 
   @override

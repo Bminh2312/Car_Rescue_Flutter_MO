@@ -16,7 +16,7 @@ import 'package:CarRescue/src/presentation/view/car_owner_view/notification/noti
 import 'package:CarRescue/src/presentation/view/car_owner_view/profile/profile_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/wallet/layout/wallet_transation.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/wallet/layout/widgets/withdraw_form.dart';
-import 'package:CarRescue/src/presentation/view/customer_view/notify/notify_view.dart';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:CarRescue/src/providers/firebase_message_provider.dart';
 import 'package:flutter/cupertino.dart';
@@ -106,7 +106,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
                     largeIcon:
                         DrawableResourceAndroidBitmap('@drawable/download'))));
       }
-
+      handleIncomingNotification(message);
       print('Received message: ${message.notification?.body}');
       // Handle the incoming message
     });
@@ -128,7 +128,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
               ),
             );
           });
-      handleIncomingNotification(message);
+
       handleNotificationOpenedApp(message);
     });
   }
@@ -459,7 +459,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              DateFormat('MMM')
+                              DateFormat.MMM('vi')
                                   .format(workShift.date)
                                   .toUpperCase(),
                               style: TextStyle(
@@ -506,7 +506,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
                                   alignment: Alignment.centerLeft,
                                   child: Chip(
                                     padding: EdgeInsets.zero,
-                                    label: Text("SCHEDULED"),
+                                    label: Text("Đã lên lịch"),
                                     backgroundColor: Colors.green,
                                     labelStyle: TextStyle(
                                         color: Colors.white,
@@ -637,33 +637,6 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
                     ),
                   );
                 },
-              ),
-              ShakeAnimationWidget(
-                shakeAnimationController: _shakeAnimationController,
-                shakeAnimationType: ShakeAnimationType.SkewShake,
-                isForward: false,
-                shakeCount: 0,
-                shakeRange: 0.2,
-                child: IconButton(
-                  icon: badges.Badge(
-                    badgeContent: Text(
-                      unreadNotificationCount > 0
-                          ? '$unreadNotificationCount'
-                          : '',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    child: Icon(Icons.notifications),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            NotificationView(accountId: widget.accountId),
-                      ),
-                    ).then((value) => {reloadData()});
-                  },
-                ),
               ),
             ],
           ),
@@ -855,19 +828,59 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
                                   initialIndex: 2,
                                 )));
                   },
-                  child: CircleAvatar(
-                    backgroundColor: FrontendConfigs.kIconColor,
-                    radius: 25,
-                    child: ClipOval(
-                      child: Image(
-                        image: NetworkImage(
-                          _owner?.avatar ?? '',
+                  child: Row(
+                    children: [
+                      ShakeAnimationWidget(
+                        shakeAnimationController: _shakeAnimationController,
+                        shakeAnimationType: ShakeAnimationType.RandomShake,
+                        isForward: false,
+                        shakeCount: 0,
+                        shakeRange: 0.2,
+                        child: IconButton(
+                          icon: badges.Badge(
+                            position: badges.BadgePosition.custom(
+                                start: 13, bottom: 10),
+                            badgeContent: Text(
+                              unreadNotificationCount > 0
+                                  ? '$unreadNotificationCount'
+                                  : '',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            child: Image.asset(
+                              'assets/icons/notification.png',
+                              height: 20,
+                              width: 20,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => NotificationView(
+                                    accountId: _owner!.accountId),
+                              ),
+                            ).then((value) => {reloadData()});
+                          },
                         ),
-                        width: 64, // double the radius
-                        height: 64, // double the radius
-                        fit: BoxFit.cover,
                       ),
-                    ),
+                      SizedBox(
+                        width: 6,
+                      ),
+                      CircleAvatar(
+                        backgroundColor: FrontendConfigs.kIconColor,
+                        radius: 25,
+                        child: ClipOval(
+                          child: Image(
+                            image: NetworkImage(
+                              _owner?.avatar ?? '',
+                            ),
+                            width: 64, // double the radius
+                            height: 64, // double the radius
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 )),
             // Welcome text on top left

@@ -13,7 +13,7 @@ import 'package:CarRescue/src/utils/api.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/booking_view.dart';
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/home/layout/widgets/active_booking.dart';
-
+import 'package:badges/badges.dart' as badges;
 import 'package:CarRescue/src/presentation/elements/quick_access_buttons.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/notification/notification_view.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
+import 'package:shake_animation_widget/shake_animation_widget.dart';
 
 class TechncianHomePageBody extends StatefulWidget {
   final String userId;
@@ -52,6 +53,9 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
   List<WorkShift> weeklyShifts = [];
   DateTime? _focusedDay = DateTime.now();
   bool isLoading = true;
+  int unreadNotificationCount = 0;
+  final ShakeAnimationController _shakeAnimationController =
+      ShakeAnimationController();
   // Method to show the shift registration popup
   void initState() {
     super.initState();
@@ -85,7 +89,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                     largeIcon:
                         DrawableResourceAndroidBitmap('@drawable/download'))));
       }
-
+      handleIncomingNotification(message);
       print('Received message: ${message.notification?.body}');
       // Handle the incoming message
     });
@@ -107,6 +111,54 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
               ),
             );
           });
+      handleNotificationOpenedApp(message);
+    });
+  }
+
+  void handleIncomingNotification(RemoteMessage message) {
+    setState(() {
+      unreadNotificationCount++;
+    });
+
+    // Show local notification
+    RemoteNotification notification = message.notification!;
+    AndroidNotification android = message.notification!.android!;
+    flutterLocalNotificationsPlugin.show(
+      notification.hashCode,
+      notification.title,
+      notification.body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          channel.id,
+          channel.name,
+          channelDescription: channel.description,
+          color: Colors.blue,
+          playSound: true,
+          icon: '@drawable/ic_launcher',
+          largeIcon: DrawableResourceAndroidBitmap('@drawable/download'),
+        ),
+      ),
+    );
+  }
+
+  void handleNotificationOpenedApp(RemoteMessage message) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: Text(message.notification?.title ?? 'Unknown'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [Text(message.notification?.body ?? 'Unknown1')],
+            ),
+          ),
+        );
+      },
+    );
+
+    setState(() {
+      unreadNotificationCount = 0;
     });
   }
 
@@ -377,19 +429,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                   );
                 },
               ),
-              QuickAccessButton(
-                label: 'Thông báo',
-                icon: Icons.notifications,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          NotificationView(accountId: _tech?.accountId ?? ''),
-                    ),
-                  );
-                },
-              ),
+
               // QuickAccessButton(
               //   label: 'Test',
               //   icon: Icons.menu_book,
@@ -491,7 +531,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              DateFormat('MMM')
+                              DateFormat.MMM('vi')
                                   .format(workShift.date)
                                   .toUpperCase(),
                               style: TextStyle(
@@ -659,22 +699,62 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                     //               initialIndex: 2,
                     //             )));
                   },
-                  child: CircleAvatar(
-                      backgroundColor: FrontendConfigs.kIconColor,
-                      radius: 25,
-                      child: ClipOval(
-                        child: _tech?.avatar != null &&
-                                _tech!.avatar!.isNotEmpty
-                            ? Image.network(
-                                _tech!.avatar!,
-                                width: 64,
-                                height: 64,
-                                fit: BoxFit.cover,
-                              )
-                            : Icon(Icons.person,
-                                size:
-                                    64), // Hiển thị biểu tượng mặc định nếu `_tech?.avatar` là null hoặc rỗng
-                      )),
+                  child: Row(
+                    children: [
+                      ShakeAnimationWidget(
+                        shakeAnimationController: _shakeAnimationController,
+                        shakeAnimationType: ShakeAnimationType.RandomShake,
+                        isForward: false,
+                        shakeCount: 0,
+                        shakeRange: 0.2,
+                        child: IconButton(
+                          icon: badges.Badge(
+                            position: badges.BadgePosition.custom(
+                                start: 13, bottom: 10),
+                            badgeContent: Text(
+                              unreadNotificationCount > 0
+                                  ? '$unreadNotificationCount'
+                                  : '',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            child: Image.asset(
+                              'assets/icons/notification.png',
+                              height: 20,
+                              width: 20,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => NotificationView(
+                                    accountId: _tech!.accountId),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(
+                        width: 6,
+                      ),
+                      CircleAvatar(
+                          backgroundColor: FrontendConfigs.kIconColor,
+                          radius: 25,
+                          child: ClipOval(
+                            child: _tech?.avatar != null &&
+                                    _tech!.avatar!.isNotEmpty
+                                ? Image.network(
+                                    _tech!.avatar!,
+                                    width: 64,
+                                    height: 64,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Icon(Icons.person,
+                                    size:
+                                        64), // Hiển thị biểu tượng mặc định nếu `_tech?.avatar` là null hoặc rỗng
+                          )),
+                    ],
+                  ),
                 )),
             // Welcome text on top left
             Positioned(

@@ -227,7 +227,9 @@ class _WalletTransactionScreenState extends State<WalletTransactionScreen> {
                                   details: 'details',
                                   type: transaction.type,
                                   createdAt: DateFormat('dd-MM-yyyy | hh:mm')
-                                      .format(transaction.createdAt),
+                                      .format(transaction.createdAt
+                                          .toUtc()
+                                          .add(Duration(hours: 14))),
                                   description: transaction.description,
                                   totalAmount: transaction.totalAmount,
                                   status: transaction.status,

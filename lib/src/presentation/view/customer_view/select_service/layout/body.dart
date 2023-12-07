@@ -8,6 +8,7 @@ import 'package:CarRescue/src/presentation/elements/empty_state.dart';
 import 'package:CarRescue/src/presentation/elements/quick_access_buttons.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/car_view/car_view.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/notify/notify_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/order_detail/order_detail_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_car/select_car_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/select_service/widget/popup_service_view.dart';
@@ -27,6 +28,8 @@ import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:CarRescue/src/providers/google_map_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shake_animation_widget/shake_animation_widget.dart';
+import 'package:badges/badges.dart' as badges;
 
 class ServiceBody extends StatefulWidget {
   const ServiceBody({super.key});
@@ -53,6 +56,9 @@ class _ServiceBodyState extends State<ServiceBody>
   int _selectedIndex = 0;
   bool hasInProgressBooking = true;
   int selectedOption = -1;
+  int unreadNotificationCount = 0;
+  final ShakeAnimationController _shakeAnimationController =
+      ShakeAnimationController();
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -127,68 +133,67 @@ class _ServiceBodyState extends State<ServiceBody>
   }
 
   void checkInfo(BuildContext context) {
-  WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Define a list to store missing information messages
+      List<String> missingInfoMessages = [];
 
-    // Define a list to store missing information messages
-    List<String> missingInfoMessages = [];
+      // Check each required field
+      if (customer.fullname == "" || customer.fullname.isEmpty) {
+        missingInfoMessages.add('Họ và tên');
+      }
 
-    // Check each required field
-    if (customer.fullname == "" || customer.fullname.isEmpty) {
-      missingInfoMessages.add('Họ và tên');
-    }
+      if (customer.sex == "" || customer.sex.isEmpty) {
+        missingInfoMessages.add('Giới tính');
+      }
 
-    if (customer.sex == "" || customer.sex.isEmpty) {
-      missingInfoMessages.add('Giới tính');
-    }
+      if (customer.phone == "" || customer.phone.isEmpty) {
+        missingInfoMessages.add('Số điện thoại');
+      }
 
-    if (customer.phone == "" || customer.phone.isEmpty) {
-      missingInfoMessages.add('Số điện thoại');
-    }
+      if (customer.address == "" || customer.address.isEmpty) {
+        missingInfoMessages.add('Địa chỉ');
+      }
 
-    if (customer.address == "" || customer.address.isEmpty) {
-      missingInfoMessages.add('Địa chỉ');
-    }
+      if (customer.birthdate == "" || customer.birthdate.isEmpty) {
+        missingInfoMessages.add('Ngày sinh');
+      }
 
-    if (customer.birthdate == "" || customer.birthdate.isEmpty) {
-      missingInfoMessages.add('Ngày sinh');
-    }
-
-    // If there are missing fields, show the dialog
-    if (missingInfoMessages.isNotEmpty) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Thông báo'),
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('Thông tin sau đây chưa đầy đủ:'),
-                for (String missingInfo in missingInfoMessages)
-                  Text('- $missingInfo'),
-              ],
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  // Navigate to the profile screen for updating information
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => BottomNavBarView(page: 2),
-                    ),
-                  );
-                },
-                child: Text('Cập nhật'),
+      // If there are missing fields, show the dialog
+      if (missingInfoMessages.isNotEmpty) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Thông báo'),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Thông tin sau đây chưa đầy đủ:'),
+                  for (String missingInfo in missingInfoMessages)
+                    Text('- $missingInfo'),
+                ],
               ),
-            ],
-          );
-        },
-      );
-    }
-  });
-}
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    // Navigate to the profile screen for updating information
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => BottomNavBarView(page: 2),
+                      ),
+                    );
+                  },
+                  child: Text('Cập nhật'),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    });
+  }
 
   void launchDialPad(String phoneNumber) async {
     String uri = 'tel:$phoneNumber';
@@ -282,18 +287,7 @@ class _ServiceBodyState extends State<ServiceBody>
               //     ).then((value) => {});
               //   },
               // ),
-              QuickAccessButton(
-                label: 'Thông báo',
-                icon: Icons.notifications,
-                onPressed: () {
-                  //  Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //     builder: (context) => const NotificationView(),
-                  //   ),
-                  // );
-                },
-              ),
+
               QuickAccessButton(
                   icon: CupertinoIcons.phone_fill_arrow_down_left,
                   label: 'CSKH',
@@ -605,7 +599,6 @@ class _ServiceBodyState extends State<ServiceBody>
     );
   }
 
-  
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Container(
@@ -685,7 +678,8 @@ class _ServiceBodyState extends State<ServiceBody>
                               ),
                               TabBar(
                                 controller: _tabController,
-                                labelPadding: EdgeInsets.symmetric(horizontal: 0),
+                                labelPadding:
+                                    EdgeInsets.symmetric(horizontal: 0),
                                 tabs: [
                                   Tab(
                                     child: BookingStatus(
@@ -737,19 +731,56 @@ class _ServiceBodyState extends State<ServiceBody>
                     //                 initialIndex: 2,
                     //               )));
                   },
-                  child: CircleAvatar(
-                    backgroundColor: FrontendConfigs.kIconColor,
-                    radius: 25,
-                    child: ClipOval(
-                      child: Image(
-                        image: NetworkImage(
-                          customer.avatar,
+                  child: Row(
+                    children: [
+                      ShakeAnimationWidget(
+                        shakeAnimationController: _shakeAnimationController,
+                        shakeAnimationType: ShakeAnimationType.RandomShake,
+                        isForward: false,
+                        shakeCount: 0,
+                        shakeRange: 0.2,
+                        child: IconButton(
+                          icon: badges.Badge(
+                            position: badges.BadgePosition.custom(
+                                start: 13, bottom: 10),
+                            badgeContent: Text(
+                              unreadNotificationCount > 0
+                                  ? '$unreadNotificationCount'
+                                  : '',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            child: Image.asset(
+                              'assets/icons/notification.png',
+                              height: 20,
+                              width: 20,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => NotificationView(
+                                    accountId: customer.accountId),
+                              ),
+                            );
+                          },
                         ),
-                        width: 64, // double the radius
-                        height: 64, // double the radius
-                        fit: BoxFit.cover,
                       ),
-                    ),
+                      CircleAvatar(
+                        backgroundColor: FrontendConfigs.kIconColor,
+                        radius: 25,
+                        child: ClipOval(
+                          child: Image(
+                            image: NetworkImage(
+                              customer.avatar,
+                            ),
+                            width: 64, // double the radius
+                            height: 64, // double the radius
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 )),
             // Welcome text on top left
@@ -760,7 +791,7 @@ class _ServiceBodyState extends State<ServiceBody>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Xin chào,',
+                    'Xin chàoô,',
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.white60,
