@@ -22,7 +22,7 @@ class _CarOwnerLogInBodyState extends State<CarOwnerLogInBody> {
 
   final TextEditingController _passwordController = TextEditingController();
 
-  final box = GetStorage(); 
+  final box = GetStorage();
   String? deviceToken;
   String errorMessage = '';
   void initState() {
@@ -94,9 +94,10 @@ class _CarOwnerLogInBodyState extends State<CarOwnerLogInBody> {
                       deviceToken ?? '');
 
                   if (result != null) {
-                    box.write("role",result.role);
-                    box.write("userId",result.userId);
-                    box.write("accountId",result.accountId);
+                    box.write("role", result.role);
+                    box.write("userId", result.userId);
+                    box.write("accountId", result.accountId);
+                    print("User id: " + result.accountId);
                     print("User id: " + result.userId);
                     Navigator.push(
                       context,

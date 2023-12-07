@@ -41,20 +41,12 @@ class _AddCarScreenState extends State<AddCarScreen> {
     border: OutlineInputBorder(),
     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
   );
+  bool _isFormConfirmed = false;
   void _submitForm() async {
     var uuid = Uuid();
     String randomId = uuid.v4();
     if (_formKey.currentState!.validate()) {
-      bool? confirm = await _showAlertDialog(context);
-
-      if (confirm != null && confirm) {
-        // User confirmed, execute your createCarApproval logic
-        _submitForm();
-      } else {
-        // User canceled or dismissed the dialog, handle as needed
-      }
-
-      if (confirm!) {
+      if (_isFormConfirmed) {
         _formKey.currentState!.save();
         setState(() {
           _isLoading = true;
@@ -401,7 +393,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                 .bottomCenter, // Set the alignment to bottom center
                             child: ElevatedButton(
                               onPressed: () async {
-                                _submitForm();
+                                _showAlertDialog(context);
                               },
                               style: ButtonStyle(
                                 backgroundColor:
@@ -427,8 +419,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
     ]);
   }
 
-  Future<bool?> _showAlertDialog(BuildContext context) async {
-    return showDialog<bool?>(
+  _showAlertDialog(BuildContext context) {
+    showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -443,7 +435,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                 ),
               ),
               onPressed: () {
-                Navigator.of(context).pop(false); // Close the AlertDialog
+                Navigator.of(context).pop(); // Close the AlertDialog
               },
             ),
             TextButton(
@@ -452,7 +444,11 @@ class _AddCarScreenState extends State<AddCarScreen> {
                 style: TextStyle(color: FrontendConfigs.kActiveColor),
               ),
               onPressed: () {
-                Navigator.of(context).pop(true); // Close the AlertDialog
+                setState(() {
+                  _isFormConfirmed = true;
+                });
+                Navigator.of(context).pop();
+                _submitForm(); // Close the AlertDialog after submitting
               },
             ),
           ],

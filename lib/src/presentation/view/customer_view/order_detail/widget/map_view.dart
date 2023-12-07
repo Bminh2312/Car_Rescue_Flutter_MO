@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'dart:async';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/models/customer.dart';
@@ -37,6 +38,8 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+   final LocationUpdateService _locationUpdateService = LocationUpdateService();
+
   GoogleMapController? mapController;
   LatLng? currentLocation;
   LatLng? _targetLocation;
@@ -460,5 +463,23 @@ class _MapScreenState extends State<MapScreen> {
       isSpeedDialFABsMini: true,
       paddingBtwSpeedDialButton: 30.0,
     );
+  }
+}
+
+
+
+
+
+class LocationUpdateService {
+  final _locationController = StreamController<LatLng>();
+
+  Stream<LatLng> get locationStream => _locationController.stream;
+
+  void updateLocation(LatLng location) {
+    _locationController.add(location);
+  }
+
+  void dispose() {
+    _locationController.close();
   }
 }

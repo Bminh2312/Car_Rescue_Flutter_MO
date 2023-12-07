@@ -85,9 +85,9 @@ class _CarListViewState extends State<CarListView> {
       // Sort the list to prioritize vehicles with status 'ACTIVE', 'ASSIGNED', and then 'WAITING_APPROVAL'
       carList.sort((a, b) {
         const statusPriority = {
-          'ACTIVE': 1,
-          'ASSIGNED': 2,
-          'WAITING_APPROVAL': 3
+          'WAITING_APPROVAL': 1,
+          'ACTIVE': 2,
+          'ASSIGNED': 3
           // other statuses implicitly have lower priority
         };
 

@@ -718,7 +718,7 @@ class _CalendarViewState extends State<CalendarView> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                DateFormat('MMM')
+                                DateFormat.MMM('vi')
                                     .format(workShift.date)
                                     .toUpperCase(),
                                 style: TextStyle(

@@ -95,7 +95,7 @@ class BookingStatus extends StatelessWidget {
     String getStatusTranslation(String status) {
       switch (status) {
         case 'ASSIGNING':
-          return 'Chờ xác nhận';
+          return 'Đang chờ điều phối';
         case 'ASSIGNED':
           return 'Đã điều phối';
         case 'INPROGRESS':
@@ -109,7 +109,6 @@ class BookingStatus extends StatelessWidget {
         case 'FAILD':
           return 'Thất bại';
         case 'WAITING':
-
           return 'Chờ chấp nhận';
         default:
           return '';

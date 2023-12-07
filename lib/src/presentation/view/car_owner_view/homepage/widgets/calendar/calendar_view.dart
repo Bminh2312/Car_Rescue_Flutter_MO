@@ -561,7 +561,8 @@ class _CalendarViewState extends State<CalendarView> {
         "https://rescuecapstoneapi.azurewebsites.net/api/Schedule/CreateShiftForRVO";
     try {
       final response = await http.post(
-        Uri.parse('$apiUrl'),headers: <String, String>{
+        Uri.parse('$apiUrl'),
+        headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $accessToken'
         },
@@ -597,7 +598,8 @@ class _CalendarViewState extends State<CalendarView> {
 
     try {
       final response = await http.post(
-        Uri.parse(apiUrl),headers: <String, String>{
+        Uri.parse(apiUrl),
+        headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $accessToken'
         },
@@ -715,7 +717,7 @@ class _CalendarViewState extends State<CalendarView> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                DateFormat('MMM')
+                                DateFormat.MMM('vi')
                                     .format(workShift.date)
                                     .toUpperCase(),
                                 style: TextStyle(

@@ -747,6 +747,7 @@ class AuthService {
           print('abczx: $addressComponentsDestination1');
           String formattedAddressDestination =
               formatStreetAndRoute(addressComponentsDestination);
+
           String formattedSubAddressDestination =
               formatSubAddress(addressComponentsDestination);
 
@@ -1090,10 +1091,35 @@ class AuthService {
     if (data['status'] == 200) {
       print('Successfully accept order ${response.body}');
       return true;
-    } else if(data['status'] == 201) {
+    } else if (data['status'] == 201) {
       print('Denied success: ${response.body}');
       return true;
-    }else{
+    } else {
+      print('Failed to accept order: ${response.body}');
+    }
+    return false;
+  }
+
+  Future<bool> acceptOrderRVO(String orderId, bool decision) async {
+    final String apiUrl =
+        "https://rescuecapstoneapi.azurewebsites.net/api/Order/AcceptOrder?id=$orderId&decision=$decision";
+
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      },
+      body: json.encode({'id': orderId, 'decision': decision}),
+    );
+    var data = json.decode(response.body);
+    if (data['status'] == 200) {
+      print('Successfully accept order ${response.body}');
+      return true;
+    } else if (data['status'] == 201) {
+      print('Denied success: ${response.body}');
+      return true;
+    } else {
       print('Failed to accept order: ${response.body}');
     }
     return false;

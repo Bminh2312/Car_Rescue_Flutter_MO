@@ -1508,6 +1508,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
   @override
   Widget build(BuildContext context) {
+    double containerWidth = MediaQuery.of(context).size.width;
     return Stack(children: [
       Scaffold(
         backgroundColor: FrontendConfigs.kBackgrColor,
@@ -1548,7 +1549,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _buildSectionTitle("Khách hàng"),
-                          widget.booking.status == 'INPROGRESS'
+                          widget.booking.status == 'ASSIGNED'
                               ? InkWell(
                                   onTap: () {
                                     Navigator.pushReplacement(
@@ -1617,10 +1618,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       padding: const EdgeInsets.symmetric(horizontal: 12.0),
                       child: RideSelectionWidget(
                         icon: 'assets/svg/pickup_icon.svg',
-                        title: widget.addressesDepart[widget.booking.id] ??
+                        title: widget.subAddressesDepart[widget.booking.id] ??
                             '', // Use addresses parameter
-                        body:
-                            widget.subAddressesDepart[widget.booking.id] ?? '',
+
                         onPressed: () {},
                       ),
                     ),
@@ -1843,7 +1843,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         ]),
         bottomNavigationBar: Container(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               if (widget.booking.status != "COMPLETED" &&
                   widget.booking.status != "CANCELLED")
                 GestureDetector(
@@ -1868,6 +1868,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         ));
                   },
                   child: Container(
+                    width: containerWidth,
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     color: Colors.white,
                     child: Column(
@@ -1875,45 +1876,55 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [SizedBox()],
+                          children: [
+                            buildServiceList(
+                                context, "Chọn dịch vụ", Icon(Icons.add_box)),
+                          ],
                         ),
-                        buildServiceList(
-                            context, "Chọn dịch vụ", Icon(Icons.add_box)),
-                      ],
-                    ),
-                  ),
-                ),
-              if (widget.booking.status == "INPROGRESS")
-                GestureDetector(
-                  onTap: () {
-                    print("IncidentID: ${widget.booking.indicentId}");
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChangeRescueScreen(
-                            paymentMethod: _payment?.method ?? '',
-                            accountId: widget.accountId,
-                            userId: widget.userId,
-                            addressesDepart: widget.addressesDepart,
-                            addressesDesti: widget.addressesDesti,
-                            booking: widget.booking,
-                            subAddressesDepart: widget.subAddressesDepart,
-                            subAddressesDesti: widget.subAddressesDesti,
-                          ),
-                        ));
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [SizedBox()],
-                        ),
-                        buildServiceList(
-                            context, "Chuyển đơn", Icon(Icons.next_plan)),
+                        widget.booking.status == "INPROGRESS"
+                            ? GestureDetector(
+                                onTap: () {
+                                  print(
+                                      "IncidentID: ${widget.booking.indicentId}");
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ChangeRescueScreen(
+                                          paymentMethod: _payment?.method ?? '',
+                                          accountId: widget.accountId,
+                                          userId: widget.userId,
+                                          addressesDepart:
+                                              widget.addressesDepart,
+                                          addressesDesti: widget.addressesDesti,
+                                          booking: widget.booking,
+                                          subAddressesDepart:
+                                              widget.subAddressesDepart,
+                                          subAddressesDesti:
+                                              widget.subAddressesDesti,
+                                        ),
+                                      ));
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  color: Colors.white,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [SizedBox()],
+                                      ),
+                                      buildServiceList(context, "Chuyển đơn",
+                                          Icon(Icons.next_plan)),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : Container()
                       ],
                     ),
                   ),
@@ -1937,19 +1948,22 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               ),
             ),
             if (widget.booking.status == "INPROGRESS") _slider(false),
-            if (widget.booking.status == "ASSIGNED")
-              Center(
+            if (widget.booking.status == "ASSIGNED" ||
+                widget.booking.status == "WAITING")
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.white,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     SizedBox(width: 24.0),
                     AppButton(
+                        width: double.infinity,
                         onPressed: () async {
                           setState(() {
                             _isLoading = true;
                           });
 
-                          await _loadBooking(widget.booking.id);
                           if (_formKey.currentState!.validate() &&
                               pickedImages.isNotEmpty) {
                             await uploadImage();
