@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/car_model.dart';
+import 'package:CarRescue/src/models/notification.dart';
 import 'package:CarRescue/src/presentation/elements/car_brand.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
@@ -30,6 +32,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
           .toList();
   final _formKey = GlobalKey<FormState>();
   AuthService authService = AuthService();
+  NotifyMessage _notify = NotifyMessage();
 
   File? vehicleImage;
   String _manufacturer = '';
@@ -43,10 +46,10 @@ class _AddCarScreenState extends State<AddCarScreen> {
   bool _isValidate = false;
   List<CarModel> carModelList = [];
   Map<String, String> modelNameToId = {};
-  String _selectedType = '';
   String _selectedModelId = '';
   List<CarBrand> _brands = [];
   String? _selectedBrand;
+  String? _selectedType;
   final titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
   final inputDecoration = InputDecoration(
     border: OutlineInputBorder(),
@@ -54,9 +57,12 @@ class _AddCarScreenState extends State<AddCarScreen> {
   );
 
   void _submitForm() async {
-    var uuid = Uuid();
-    String randomId = uuid.v4();
-    if (_formKey.currentState!.validate()) {
+    if (vehicleImage == null) {
+      _notify.showToast("Vui lòng chọn ảnh xe.");
+    }
+    if (_formKey.currentState!.validate() && vehicleImage != null) {
+      var uuid = Uuid();
+      String randomId = uuid.v4();
       _showAlertDialog(context);
       _formKey.currentState!.save();
       setState(() {
@@ -119,10 +125,6 @@ class _AddCarScreenState extends State<AddCarScreen> {
           _isLoading = false;
         });
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin')),
-      );
     }
   }
 
@@ -200,8 +202,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    String? _selectedType =
-        carModelList.isNotEmpty ? carModelList[0].model1 : '';
+    // String? _selectedType =
+    //     carModelList.isNotEmpty ? carModelList[0].model1 : '';
 
     return Stack(children: [
       Scaffold(
@@ -229,6 +231,19 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                         icon: Icon(Icons.drive_eta),
                                         labelText: 'Biển số xe',
                                       ),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          print(value);
+                                          return 'Vui lòng nhập biển số xe';
+                                        }
+                                        RegExp regex = RegExp(r'^([1-9][1-9][A-Z][A-Z1-9]-\d{4,5})$');
+
+                                        if (!regex
+                                            .hasMatch(value.toUpperCase())) {
+                                          return 'Biển số xe không hợp lệ';
+                                        }
+                                        return null;
+                                      },
                                       onSaved: (value) {
                                         _licensePlate = value!;
                                       },
@@ -236,6 +251,13 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                     SizedBox(height: 12),
                                     DropdownButtonFormField<String>(
                                       value: _selectedBrand,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          print(value);
+                                          return 'Vui lòng chọn hãng xe';
+                                        }
+                                        return null;
+                                      },
                                       onChanged: (newValue) {
                                         setState(() {
                                           _manufacturer = newValue!;
@@ -285,19 +307,19 @@ class _AddCarScreenState extends State<AddCarScreen> {
                             decoration: InputDecoration(
                               labelText: 'Số khung',
                             ),
-                            // validator: (value) {
-                            //   if (value == null || value.isEmpty) {
-                            //     return 'Vui lòng nhập số khung';
-                            //   } else if (value.length != 17) {
-                            //     return 'Số khung phải chứa đúng 17 ký tự';
-                            //   } else if (value.contains(RegExp(r'[^\w]'))) {
-                            //     return 'Số khung chỉ có thể chứa số và chữ cái';
-                            //   } else if (value.contains(RegExp(r'[IQO]'))) {
-                            //     return 'Số khung không được chứa các ký tự I, Q, O';
-                            //   }
-                            //   _isValidate = true;
-                            //   return null;
-                            // },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Vui lòng nhập số khung';
+                              } else if (value.length != 17) {
+                                return 'Số khung phải chứa đúng 17 ký tự';
+                              } else if (value.contains(RegExp(r'[^\w]'))) {
+                                return 'Số khung chỉ có thể chứa số và chữ cái';
+                              } else if (value.contains(RegExp(r'[IQO]'))) {
+                                return 'Số khung không được chứa các ký tự I, Q, O';
+                              }
+                              _isValidate = true;
+                              return null;
+                            },
                             onSaved: (value) {
                               _vinNumber = value!;
                             },
@@ -326,7 +348,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                               _selectedModelId =
                                   modelNameToId[_selectedType] ?? '';
                             },
-                            value: _selectedType,
+                            value: _selectedType != null ? _selectedType : null,
                             items: carModelList.map<DropdownMenuItem<String>>(
                                 (CarModel model) {
                               return DropdownMenuItem<String>(

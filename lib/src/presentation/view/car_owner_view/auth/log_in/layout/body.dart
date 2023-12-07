@@ -111,7 +111,7 @@ class _CarOwnerLogInBodyState extends State<CarOwnerLogInBody> {
                     // Handle login failure or show an error message
                     setState(() {
                       errorMessage =
-                          'Đăng nhập thất bại. Tài khoản hoặc mật khẩu sai.';
+                          'Đăng nhập thất bại. Tài khoản hoặc mật khẩu không đúng.';
                     });
                   }
                 },

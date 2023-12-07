@@ -108,7 +108,7 @@ class _TechnicianLogInBodyState extends State<TechnicianLogInBody> {
                     // Handle login failure or show an error message
                     setState(() {
                       errorMessage =
-                          'Đăng nhập thất bại. Tài khoản hoặc mật khẩu sai.';
+                          'Đăng nhập thất bại. Tài khoản hoặc mật khẩu không đúng.';
                     });
                   }
                 },

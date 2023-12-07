@@ -198,7 +198,7 @@ class _RepairBodyState extends State<RepairBody> {
 
   Future<void> createOrder() async {
     if (selectedSymptom == null) {
-      notify.showToast("Hãy chọn ít nhất 1 trường hợp trên.");
+      notify.showToast("Hãy chọn vấn đề bạn đang gặp phải.");
     } else {
       setState(() {
         isLoading = true; // Bắt đầu hiển thị vòng quay khi bắt đầu gửi yêu cầu
