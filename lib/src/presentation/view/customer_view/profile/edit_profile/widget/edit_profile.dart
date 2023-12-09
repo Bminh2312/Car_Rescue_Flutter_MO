@@ -362,14 +362,15 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                 Navigator.pushAndRemoveUntil(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => BottomNavBarView(page: 2),
+                                    builder: (context) =>
+                                        BottomNavBarView(page: 2),
                                   ),
                                   (route) =>
                                       false, // Loại bỏ tất cả các màn hình khỏi ngăn xếp
                                 );
                               }
                             },
-                            child: Text('Save Profile'),
+                            child: Text('Lưu thông tin'),
                           ),
                         ),
                       ],

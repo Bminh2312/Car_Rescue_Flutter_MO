@@ -78,23 +78,6 @@ class _MapTechScreenState extends State<MapTechScreen> {
     super.dispose();
   }
 
-  var itemsActionBar = [
-    FloatingActionButton(
-      backgroundColor: Colors.greenAccent,
-      onPressed: () {},
-      child: Icon(Icons.add),
-    ),
-    FloatingActionButton(
-      backgroundColor: Colors.indigoAccent,
-      onPressed: () {},
-      child: Icon(Icons.camera),
-    ),
-    FloatingActionButton(
-      backgroundColor: Colors.orangeAccent,
-      onPressed: () {},
-      child: Icon(Icons.card_giftcard),
-    ),
-  ];
   void launchDialPad(String phoneNumber) async {
     String uri = 'tel:$phoneNumber';
 
@@ -137,8 +120,6 @@ class _MapTechScreenState extends State<MapTechScreen> {
       print('Error in _loadcreateLocation: $e');
     }
   }
-
- 
 
   void loadUpdateLocation() async {
     try {
@@ -211,7 +192,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
     // Fetch route coordinates
     PolylinePoints polylinePoints = PolylinePoints();
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      "AIzaSyDOI-u7wGzGG27hUGCO3z7MR8MIVsvJ2jg",
+      "AIzaSyD_bUe7UEQcksCOiUgYzWmm5JZkYrOfzLQ",
       PointLatLng(
         currentLocation!.latitude,
         currentLocation!.longitude,
@@ -244,11 +225,11 @@ class _MapTechScreenState extends State<MapTechScreen> {
                   Column(
                     children: [
                       CustomText(
-                        text: 'Kĩ thuật viên đã đến điểm của bạn',
+                        text: 'Bạn đã đến địa điểm cứu hộ',
                         fontSize: 18,
                       ),
                       CustomText(
-                        text: 'Bạn đã thấy kĩ thuật viên chưa?',
+                        text: 'Bạn đã thấy khách hàng chưa?',
                         fontSize: 18,
                       ),
                     ],
@@ -283,7 +264,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
                           children: [
                             Icon(Icons.call),
                             SizedBox(width: 8),
-                            Text("Gọi Kỹ thuật viên"),
+                            Text("Gọi khách hàng"),
                           ],
                         ),
                       ),
@@ -303,8 +284,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
                           ),
                         ),
                         onPressed: () {
-                          // Implement your action for confirming the technician's arrival
-                          // Close the dialog
+                          Navigator.pop(context);
                         },
                         child: Row(
                           children: [
@@ -408,19 +388,19 @@ class _MapTechScreenState extends State<MapTechScreen> {
                 });
               },
               initialCameraPosition: CameraPosition(
-                target: currentLocation!,
+                target: currentLocation ?? LatLng(0.0, 0.0),
                 zoom: 15.0,
               ),
               markers: {
                 Marker(
                   markerId: MarkerId("currentLocation"),
-                  position: currentLocation!,
+                  position: currentLocation ?? LatLng(0.0, 0.0),
                   icon: techIcon ?? BitmapDescriptor.defaultMarker,
                   infoWindow: InfoWindow(title: "Vị trí của tôi"),
                 ),
                 Marker(
                   markerId: MarkerId("targetLocation"),
-                  position: _targetLocation!,
+                  position: _targetLocation ?? LatLng(0.0, 0.0),
                   icon: departureIcon ?? BitmapDescriptor.defaultMarker,
                   infoWindow: InfoWindow(
                     title: "Địa điểm cứu hộ",
@@ -462,20 +442,20 @@ class _MapTechScreenState extends State<MapTechScreen> {
       //       child: Icon(Icons.my_location),
       //     ),
       //     SizedBox(height: 16),
-          // FloatingActionButton(
-          //     onPressed: () {
-          //       if (mapController != null && technicianLocation != null) {
-          //         mapController!.animateCamera(
-          //           CameraUpdate.newLatLng(technicianLocation!),
-          //         );
-          //       }
-          //     },
-          //     tooltip: 'Show technician location',
-          //     child: Image.asset(
-          //       'assets/icons/mechanic.png',
-          //       height: 30,
-          //       width: 30,
-          //     )),
+      // FloatingActionButton(
+      //     onPressed: () {
+      //       if (mapController != null && technicianLocation != null) {
+      //         mapController!.animateCamera(
+      //           CameraUpdate.newLatLng(technicianLocation!),
+      //         );
+      //       }
+      //     },
+      //     tooltip: 'Show technician location',
+      //     child: Image.asset(
+      //       'assets/icons/mechanic.png',
+      //       height: 30,
+      //       width: 30,
+      //     )),
       //   ],
       // ),
     );
@@ -500,6 +480,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
           closeMenuBackgroundColor: Colors.red),
       floatingActionButtonWidgetChildren: <FloatingActionButton>[
         FloatingActionButton(
+          mini: true,
           onPressed: () {
             if (mapController != null && currentLocation != null) {
               mapController!.animateCamera(
@@ -511,26 +492,57 @@ class _MapTechScreenState extends State<MapTechScreen> {
           child: Icon(Icons.my_location),
         ),
         FloatingActionButton(
-          mini: true,
-          child: Icon(Icons.volume_down),
-          onPressed: () {
-            //if need to toggle menu after click
-
-            setState(() {});
-          },
-          backgroundColor: Colors.orange,
-        ),
+            mini: true,
+            onPressed: () {
+              if (mapController != null && _targetLocation != null) {
+                mapController!.animateCamera(
+                  CameraUpdate.newLatLng(_targetLocation!),
+                );
+              }
+            },
+            tooltip: 'Show technician location',
+            child: Image.asset(
+              'assets/icons/location.png',
+              height: 30,
+              width: 30,
+            )),
         FloatingActionButton(
           mini: true,
-          child: Icon(Icons.volume_up),
+          child: Icon(Icons.location_on),
           onPressed: () {
-            //if no need to change the menu status
+            _showBothLocations();
           },
-          backgroundColor: Colors.deepPurple,
+          backgroundColor: Colors.green,
         ),
       ],
       isSpeedDialFABsMini: true,
       paddingBtwSpeedDialButton: 30.0,
     );
+  }
+
+  void _showBothLocations() {
+    if (mapController != null &&
+        _targetLocation != null &&
+        technicianLocation != null) {
+      double minLat = _targetLocation!.latitude < technicianLocation!.latitude
+          ? _targetLocation!.latitude
+          : technicianLocation!.latitude;
+
+      double maxLat = _targetLocation!.latitude > technicianLocation!.latitude
+          ? _targetLocation!.latitude
+          : technicianLocation!.latitude;
+
+      double minLng = _targetLocation!.longitude < technicianLocation!.longitude
+          ? _targetLocation!.longitude
+          : technicianLocation!.longitude;
+
+      double maxLng = _targetLocation!.longitude > technicianLocation!.longitude
+          ? _targetLocation!.longitude
+          : technicianLocation!.longitude;
+
+      LatLngBounds bounds = LatLngBounds(
+          southwest: LatLng(minLat, minLng), northeast: LatLng(maxLat, maxLng));
+      mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100));
+    }
   }
 }

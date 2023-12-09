@@ -574,34 +574,6 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               _buildSectionTitle("Khách hàng"),
-                              order.status == 'ASSIGNED'
-                                  ? InkWell(
-                                      onTap: () {
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => MapScreen(
-                                                cus: customer,
-                                                booking: order,
-                                                techImg:
-                                                    technicianInfo?.avatar ??
-                                                        '',
-                                                techId:
-                                                    technicianInfo?.id ?? '',
-                                                phone: technicianInfo?.phone ??
-                                                    ''),
-                                          ),
-                                        );
-                                      },
-                                      child: Row(
-                                        children: [
-                                          // Add your section title
-                                          Image.asset(
-                                              'assets/icons/location.png')
-                                        ],
-                                      ),
-                                    )
-                                  : Container()
                             ],
                           ),
                           if (_car != null)
@@ -645,8 +617,41 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                             // Use the 'order' object as needed
 
                             // Example: Text(order.id),
-
-                            _buildSectionTitle("Thông tin kĩ thuật viên"),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildSectionTitle("Thông tin kĩ thuật viên"),
+                                order.status == 'INPROGRESS'
+                                    ? InkWell(
+                                        onTap: () {
+                                          Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => MapScreen(
+                                                  cus: customer,
+                                                  booking: order,
+                                                  techImg:
+                                                      technicianInfo?.avatar ??
+                                                          '',
+                                                  techId:
+                                                      technicianInfo?.id ?? '',
+                                                  phone:
+                                                      technicianInfo?.phone ??
+                                                          ''),
+                                            ),
+                                          );
+                                        },
+                                        child: Row(
+                                          children: [
+                                            // Add your section title
+                                            Image.asset(
+                                                'assets/icons/location.png')
+                                          ],
+                                        ),
+                                      )
+                                    : Container(),
+                              ],
+                            ),
 
                             CustomerInfoRow(
                               name: technicianInfo?.fullname ?? "",
@@ -1187,8 +1192,12 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildPaymentMethod('Tổng cộng', ''),
-              Text(currencyFormat.format(_payment?.amount),
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+              Text(
+                _payment?.amount != null
+                    ? currencyFormat.format(_payment?.amount)
+                    : 'N/A', // You can replace 'N/A' with any default value
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              ),
             ],
           ),
       ],

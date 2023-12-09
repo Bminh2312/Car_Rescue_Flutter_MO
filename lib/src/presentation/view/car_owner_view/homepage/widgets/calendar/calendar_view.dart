@@ -285,10 +285,32 @@ class _CalendarViewState extends State<CalendarView> {
                         );
 
                         if (picked != null && picked != selectedDate) {
-                          setState(() {
-                            // Add this setState to update the selectedDate
-                            selectedDate = picked;
-                          });
+                          if (picked.isBefore(DateTime.now())) {
+                            // Hiển thị AlertDialog nếu selectedDate bé hơn ngày hôm nay
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text('Lỗi'),
+                                  content: Text(
+                                      'Ngày đã chọn phải lớn hơn hoặc bằng ngày hôm nay.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context)
+                                            .pop(); // Đóng AlertDialog
+                                      },
+                                      child: Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          } else {
+                            setState(() {
+                              selectedDate = picked;
+                            });
+                          }
                         }
                       },
                       child: Text('Chọn ngày'),
@@ -557,6 +579,16 @@ class _CalendarViewState extends State<CalendarView> {
     required DateTime date,
     required String type,
   }) async {
+    if (date.isBefore(DateTime.now())) {
+      // Hiển thị Snackbar nếu selectedDate bé hơn ngày hôm nay
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ngày đã chọn phải lớn hơn hoặc bằng ngày hôm nay.'),
+        ),
+      );
+      return;
+    }
+
     final String apiUrl =
         "https://rescuecapstoneapi.azurewebsites.net/api/Schedule/CreateShiftForRVO";
     try {
@@ -620,7 +652,7 @@ class _CalendarViewState extends State<CalendarView> {
           SnackBar(
             content: Text("Đã quá ngày để cập nhật"), // "Too late to update"
             duration: Duration(seconds: 1),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.red,
           ),
         );
       }

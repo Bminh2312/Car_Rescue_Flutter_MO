@@ -19,9 +19,12 @@ import 'package:CarRescue/src/presentation/view/technician_view/notification/not
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shake_animation_widget/shake_animation_widget.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class TechncianHomePageBody extends StatefulWidget {
   final String userId;
@@ -54,12 +57,13 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
   DateTime? _focusedDay = DateTime.now();
   bool isLoading = true;
   int unreadNotificationCount = 0;
+  LatLng? currentLocation;
   final ShakeAnimationController _shakeAnimationController =
       ShakeAnimationController();
   // Method to show the shift registration popup
   void initState() {
     super.initState();
-
+    initializeDateFormattingVietnamese();
     _loadInprogressBookings();
     displayFeedbackForBooking(widget.userId);
     fetchTechInfo().then((value) {
@@ -71,7 +75,9 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
       }
     });
     loadCurrentWeek();
-
+    _getCurrentLocation();
+    _loadCreateLocation();
+    loadUpdateLocation();
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       RemoteNotification notification = message.notification!;
       AndroidNotification android = message.notification!.android!;
@@ -113,6 +119,94 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
           });
       handleNotificationOpenedApp(message);
     });
+  }
+
+  Future<void> _loadCreateLocation() async {
+    try {
+      Position? currentPosition = await getCurrentLocation();
+      print(_tech!.id);
+      if (currentPosition != null) {
+        await AuthService().createLocation(
+          id: _tech!.id,
+          lat: '${currentPosition.latitude}',
+          long: '${currentPosition.longitude}',
+        );
+      }
+    } catch (e) {
+      print('Error in _loadcreateLocation: $e');
+    }
+  }
+
+  Future<Position?> getCurrentLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        // Request location permission from the user
+        permission = await Geolocator.requestPermission();
+        if (permission != LocationPermission.whileInUse &&
+            permission != LocationPermission.always) {
+          // Handle the case where the user denied location permission
+          print("User denied location permission");
+          return null;
+        }
+      }
+
+      // Get the current location
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      return position;
+    } catch (e) {
+      print("Error getting current location: $e");
+      return null;
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        currentLocation = LatLng(position.latitude, position.longitude);
+      });
+    } catch (e) {
+      print("Error getting current location: $e");
+    }
+  }
+
+  // Future<void> _loadCreateLocation() async {
+  //   try {
+  //     if (currentLocation != null) {
+  //       await AuthService().createLocation(
+  //         id: _tech!.id,
+  //         lat: '${currentLocation!.latitude}',
+  //         long: '${currentLocation!.longitude}',
+  //       );
+  //     }
+  //   } catch (e) {
+  //     print('Error in _loadcreateLocation: $e');
+  //   }
+  // }
+
+  void loadUpdateLocation() async {
+    try {
+      if (currentLocation != null) {
+        await AuthService().updateLocation(
+          id: _tech!.id,
+          lat: '${currentLocation!.latitude}',
+          long: '${currentLocation!.longitude}',
+        );
+        print('zxzx: $currentLocation');
+      }
+    } catch (error) {
+      print('Error loading updateLocation: $error');
+    }
+  }
+
+  void initializeDateFormattingVietnamese() async {
+    await initializeDateFormatting('vi_VN', null);
   }
 
   void handleIncomingNotification(RemoteMessage message) {

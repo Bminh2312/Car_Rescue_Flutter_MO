@@ -38,7 +38,7 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-   final LocationUpdateService _locationUpdateService = LocationUpdateService();
+  final LocationUpdateService _locationUpdateService = LocationUpdateService();
 
   GoogleMapController? mapController;
   LatLng? currentLocation;
@@ -121,190 +121,242 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _updateCameraToTechnicianLocation() {
-    if (mapController != null && technicianLocation != null) {
-      mapController!.animateCamera(
-        CameraUpdate.newLatLng(technicianLocation!),
-      );
-    }
+    mapController?.animateCamera(
+      CameraUpdate.newLatLng(technicianLocation ?? LatLng(0, 0)),
+    );
   }
 
   void _getOrderLocation() async {
-    String latLongString = "${widget.booking.departure}";
+    try {
+      if (widget.booking != null && widget.booking.departure != null) {
+        String latLongString = "${widget.booking.departure}";
 
-// Split the string into parts using ","
-    List<String> parts = latLongString.split(',');
+        // Split the string into parts using ","
+        List<String> parts = latLongString.split(',');
 
-// Extract latitude and longitude strings
-    String latString = parts[0].split(':')[1];
-    String longString = parts[1].split(':')[1];
+        // Check if the split parts are available
+        if (parts.length >= 2) {
+          // Extract latitude and longitude strings
+          String latString = parts[0].split(':')[1].trim();
+          String longString = parts[1].split(':')[1].trim();
 
-// Parse latitude and longitude to double
-    double latitude = double.parse(latString);
-    double longitude = double.parse(longString);
+          // Parse latitude and longitude to double
+          double latitude = double.tryParse(latString) ?? 0.0;
+          double longitude = double.tryParse(longString) ?? 0.0;
 
-// Now you can use the latitude and longitude as needed
-    LatLng targetLocation = LatLng(latitude, longitude);
-    setState(() {
-      _targetLocation = targetLocation;
-    });
-// Print the result
-    print("Latitude: $latitude, Longitude: $longitude");
-    print("Target Location: $targetLocation");
+          // Now you can use the latitude and longitude as needed
+          LatLng targetLocation = LatLng(latitude, longitude);
+          setState(() {
+            _targetLocation = targetLocation;
+          });
 
-    if (technicianLocation == null) {
-      await _loadLocation();
-    }
+          // Print the result
+          print("Latitude: $latitude, Longitude: $longitude");
+          print("Target Location: $targetLocation");
 
-    // Fetch route coordinates
-    PolylinePoints polylinePoints = PolylinePoints();
-    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      "AIzaSyDOI-u7wGzGG27hUGCO3z7MR8MIVsvJ2jg",
-      PointLatLng(
-        technicianLocation!.latitude,
-        technicianLocation!.longitude,
-      ),
-      PointLatLng(
-        _targetLocation!.latitude,
-        _targetLocation!.longitude,
-      ),
-      travelMode: TravelMode.walking,
-    );
-    if (technicianLocation != null && _targetLocation != null) {
-      double distance =
-          calculateDistance(technicianLocation!, _targetLocation!);
+          if (technicianLocation == null) {
+            await _loadLocation();
+          }
 
-      if (distance < 100) {
-        // Stop the timer
-        myTimer?.cancel();
-        print(
-            "Technician is close to the target location. Stopping the timer.");
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text("Thông báo từ Kỹ thuật viên"),
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  animated.Lottie.asset('assets/animations/technician.json',
-                      width: 250, height: 250, fit: BoxFit.fill),
-                  Column(
-                    children: [
-                      CustomText(
-                        text: 'Kĩ thuật viên đã đến điểm của bạn',
-                        fontSize: 18,
-                      ),
-                      CustomText(
-                        text: 'Bạn đã thấy kĩ thuật viên chưa?',
-                        fontSize: 18,
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  // Add relevant images or icons here
-                  // For example, you can use Image.asset or Icon widgets
+          if (technicianLocation != null && _targetLocation != null) {
+            double distance =
+                calculateDistance(technicianLocation!, _targetLocation!);
 
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        style: ButtonStyle(
-                          backgroundColor:
-                              MaterialStateProperty.resolveWith<Color>(
-                            (Set<MaterialState> states) {
-                              if (states.contains(MaterialState.pressed)) {
-                                // The button is in the pressed state
-                                return Colors.white.withOpacity(
-                                    0.5); // Change the color when pressed
-                              }
-                              // The default color when not pressed
-                              return FrontendConfigs.kActiveColor;
-                            },
-                          ),
-                        ),
-                        onPressed: () {
-                          // Implement your action for calling the technician
-                          launchDialPad(widget.phone); // Close the dialog
-                        },
-                        child: Row(
+            if (distance < 100) {
+              // Stop the timer
+              myTimer?.cancel();
+              print(
+                  "Technician is close to the target location. Stopping the timer.");
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text("Thông báo từ Kỹ thuật viên"),
+                    content: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        animated.Lottie.asset(
+                            'assets/animations/technician.json',
+                            width: 250,
+                            height: 250,
+                            fit: BoxFit.fill),
+                        Column(
                           children: [
-                            Icon(Icons.call),
-                            SizedBox(width: 8),
-                            Text("Gọi Kỹ thuật viên"),
+                            CustomText(
+                              text: 'Kĩ thuật viên đã đến điểm của bạn',
+                              fontSize: 18,
+                            ),
+                            CustomText(
+                              text: 'Bạn đã thấy kĩ thuật viên chưa?',
+                              fontSize: 18,
+                            ),
                           ],
                         ),
-                      ),
-                      ElevatedButton(
-                        style: ButtonStyle(
-                          backgroundColor:
-                              MaterialStateProperty.resolveWith<Color>(
-                            (Set<MaterialState> states) {
-                              if (states.contains(MaterialState.pressed)) {
-                                // The button is in the pressed state
-                                return Colors.white.withOpacity(
-                                    0.5); // Change the color when pressed
-                              }
-                              // The default color when not pressed
-                              return FrontendConfigs.kActiveColor;
-                            },
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: Row(
+                        SizedBox(height: 10),
+                        // Add relevant images or icons here
+                        // For example, you can use Image.asset or Icon widgets
+
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            Icon(Icons.check),
-                            SizedBox(width: 8),
-                            Text("Đã xác nhận"),
+                            ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor:
+                                    MaterialStateProperty.resolveWith<Color>(
+                                  (Set<MaterialState> states) {
+                                    if (states
+                                        .contains(MaterialState.pressed)) {
+                                      // The button is in the pressed state
+                                      return Colors.white.withOpacity(
+                                          0.5); // Change the color when pressed
+                                    }
+                                    // The default color when not pressed
+                                    return FrontendConfigs.kActiveColor;
+                                  },
+                                ),
+                              ),
+                              onPressed: () {
+                                // Implement your action for calling the technician
+                                launchDialPad(widget.phone); // Close the dialog
+                              },
+                              child: Row(
+                                children: [
+                                  Icon(Icons.call),
+                                  SizedBox(width: 8),
+                                  Text("Gọi Kỹ thuật viên"),
+                                ],
+                              ),
+                            ),
+                            ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor:
+                                    MaterialStateProperty.resolveWith<Color>(
+                                  (Set<MaterialState> states) {
+                                    if (states
+                                        .contains(MaterialState.pressed)) {
+                                      // The button is in the pressed state
+                                      return Colors.white.withOpacity(
+                                          0.5); // Change the color when pressed
+                                    }
+                                    // The default color when not pressed
+                                    return FrontendConfigs.kActiveColor;
+                                  },
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: Row(
+                                children: [
+                                  Icon(Icons.check),
+                                  SizedBox(width: 8),
+                                  Text("Đã xác nhận"),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        );
+                      ],
+                    ),
+                  );
+                },
+              );
+            }
+          }
+
+          PolylinePoints polylinePoints = PolylinePoints();
+          PolylineResult result =
+              await polylinePoints.getRouteBetweenCoordinates(
+            "YOUR_GOOGLE_MAPS_API_KEY",
+            PointLatLng(
+              technicianLocation?.latitude ?? 0.0,
+              technicianLocation?.longitude ?? 0.0,
+            ),
+            PointLatLng(
+              _targetLocation?.latitude ?? 0.0,
+              _targetLocation?.longitude ?? 0.0,
+            ),
+            travelMode: TravelMode.walking,
+          );
+
+          if (result.points.isNotEmpty) {
+            setState(() {
+              routeCoordinates = result.points
+                  .map((point) => LatLng(point.latitude, point.longitude))
+                  .toList();
+            });
+          } else {
+            print("Error fetching route coordinates");
+          }
+        }
       }
-    }
-    if (result.points.isNotEmpty) {
-      setState(() {
-        routeCoordinates = result.points
-            .map((point) => LatLng(point.latitude, point.longitude))
-            .toList();
-      });
-    } else {
-      print("Error fetching route coordinates");
+    } catch (e, stackTrace) {
+      print("Error in _getOrderLocation: $e");
+      print(stackTrace);
+      // Handle the error as needed
     }
   }
 
   Future<Uint8List> getBytesFromAsset(String path, int width) async {
-    ByteData data = await rootBundle.load(path);
-    ui.Codec codec = await ui.instantiateImageCodec(
-      data.buffer.asUint8List(),
-      targetWidth: width,
-    );
-    ui.FrameInfo fi = await codec.getNextFrame();
-    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
-        .buffer
-        .asUint8List();
+    try {
+      // Load asset data
+      ByteData? data = await rootBundle.load(path);
+      if (data == null) {
+        throw Exception("Failed to load asset data for $path");
+      }
+
+      // Decode image
+      ui.Codec codec = await ui.instantiateImageCodec(
+        data.buffer.asUint8List(),
+        targetWidth: width,
+      );
+      ui.FrameInfo fi = await codec.getNextFrame();
+
+      // Convert to Uint8List
+      ByteData? byteData =
+          await fi.image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) {
+        throw Exception("Failed to convert image to ByteData for $path");
+      }
+
+      return byteData.buffer.asUint8List();
+    } catch (e) {
+      print("Error in getBytesFromAsset: $e");
+      // Handle the error, e.g., return a default image or rethrow the exception
+      throw e;
+    }
   }
 
   Future<Uint8List> getBytesFromUrl(String url, int width) async {
-    http.Response response = await http.get(Uri.parse(url));
-    List<int> bytes = response.bodyBytes;
+    try {
+      // Fetch image data
+      http.Response response = await http.get(Uri.parse(url));
+      List<int>? bytes = response.bodyBytes;
+      if (bytes == null) {
+        throw Exception("Failed to fetch image data from $url");
+      }
 
-    ui.Codec codec = await ui.instantiateImageCodec(
-      Uint8List.fromList(bytes),
-      targetWidth: width,
-    );
-    ui.FrameInfo fi = await codec.getNextFrame();
-    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
-        .buffer
-        .asUint8List();
+      // Decode image
+      ui.Codec codec = await ui.instantiateImageCodec(
+        Uint8List.fromList(bytes),
+        targetWidth: width,
+      );
+      ui.FrameInfo fi = await codec.getNextFrame();
+
+      // Convert to Uint8List
+      ByteData? byteData =
+          await fi.image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) {
+        throw Exception("Failed to convert image to ByteData from $url");
+      }
+
+      return byteData.buffer.asUint8List();
+    } catch (e) {
+      print("Error in getBytesFromUrl: $e");
+      // Handle the error, e.g., return a default image or rethrow the exception
+      throw e;
+    }
   }
 
   Future<void> setSourceAndDepartureIcons() async {
@@ -373,34 +425,39 @@ class _MapScreenState extends State<MapScreen> {
                   zoom: 15.0,
                 ),
                 markers: {
-                  Marker(
-                    markerId: MarkerId("currentLocation"),
-                    position: currentLocation!,
-                    icon: departureIcon ?? BitmapDescriptor.defaultMarker,
-                    infoWindow: InfoWindow(title: "Vị trí của tôi"),
-                  ),
-                  Marker(
-                    markerId: MarkerId("targetLocation"),
-                    position: _targetLocation!,
-                    icon: destinationIcon ?? BitmapDescriptor.defaultMarker,
-                    infoWindow: InfoWindow(
-                      title: "Địa điểm cứu hộ",
+                  if (currentLocation != null)
+                    Marker(
+                      markerId: MarkerId("currentLocation"),
+                      position: currentLocation ??
+                          LatLng(0.0,
+                              0.0), // Provide a default LatLng if currentLocation is null
+                      icon: departureIcon ?? BitmapDescriptor.defaultMarker,
+                      infoWindow: InfoWindow(title: "Vị trí của tôi"),
                     ),
-                  ),
-                  Marker(
-                    markerId: MarkerId("technicianLocation"),
-                    position: technicianLocation!,
-                    icon: techIcon ?? BitmapDescriptor.defaultMarker,
-                    infoWindow: InfoWindow(title: "Vị trí của nhân viên"),
-                  ),
+                  if (_targetLocation != null)
+                    Marker(
+                      markerId: MarkerId("targetLocation"),
+                      position: _targetLocation ?? LatLng(0.0, 0.0),
+                      icon: destinationIcon ?? BitmapDescriptor.defaultMarker,
+                      infoWindow: InfoWindow(
+                        title: "Địa điểm cứu hộ",
+                      ),
+                    ),
+                  if (technicianLocation != null)
+                    Marker(
+                      markerId: MarkerId("technicianLocation"),
+                      position: technicianLocation ?? LatLng(0.0, 0.0),
+                      icon: techIcon ?? BitmapDescriptor.defaultMarker,
+                      infoWindow: InfoWindow(title: "Vị trí của nhân viên"),
+                    ),
                 },
                 polylines: {
                   Polyline(
                     polylineId: PolylineId("route"),
                     color: FrontendConfigs.kAuthColor,
                     width: 3,
-                    points:
-                        routeCoordinates, // Use routeCoordinates instead of [technicianLocation!, _targetLocation!]
+                    points: routeCoordinates ??
+                        [], // Use routeCoordinates with a default value
                   ),
                 },
               )
@@ -429,6 +486,8 @@ class _MapScreenState extends State<MapScreen> {
           closeMenuBackgroundColor: Colors.red),
       floatingActionButtonWidgetChildren: <FloatingActionButton>[
         FloatingActionButton(
+          heroTag: 'a',
+          mini: true,
           onPressed: () {
             if (mapController != null && currentLocation != null) {
               mapController!.animateCamera(
@@ -440,12 +499,16 @@ class _MapScreenState extends State<MapScreen> {
           child: Icon(Icons.my_location),
         ),
         FloatingActionButton(
+          heroTag: 'a',
+          mini: true,
           onPressed: () {
             launchDialPad(widget.phone);
           },
           child: Icon(Icons.phone),
         ),
         FloatingActionButton(
+            heroTag: 'a',
+            mini: true,
             onPressed: () {
               if (mapController != null && technicianLocation != null) {
                 mapController!.animateCamera(
@@ -459,16 +522,47 @@ class _MapScreenState extends State<MapScreen> {
               height: 30,
               width: 30,
             )),
+        FloatingActionButton(
+          heroTag: 'a',
+          mini: true,
+          child: Icon(Icons.location_on),
+          onPressed: () {
+            _showBothLocations();
+          },
+          backgroundColor: Colors.green,
+        ),
       ],
       isSpeedDialFABsMini: true,
       paddingBtwSpeedDialButton: 30.0,
     );
   }
+
+  void _showBothLocations() {
+    if (mapController != null &&
+        _targetLocation != null &&
+        technicianLocation != null) {
+      double minLat = _targetLocation!.latitude < technicianLocation!.latitude
+          ? _targetLocation!.latitude
+          : technicianLocation!.latitude;
+
+      double maxLat = _targetLocation!.latitude > technicianLocation!.latitude
+          ? _targetLocation!.latitude
+          : technicianLocation!.latitude;
+
+      double minLng = _targetLocation!.longitude < technicianLocation!.longitude
+          ? _targetLocation!.longitude
+          : technicianLocation!.longitude;
+
+      double maxLng = _targetLocation!.longitude > technicianLocation!.longitude
+          ? _targetLocation!.longitude
+          : technicianLocation!.longitude;
+
+      LatLngBounds bounds = LatLngBounds(
+          southwest: LatLng(minLat, minLng), northeast: LatLng(maxLat, maxLng));
+      mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100));
+    }
+  }
 }
-
-
-
-
 
 class LocationUpdateService {
   final _locationController = StreamController<LatLng>();

@@ -791,7 +791,7 @@ class _ServiceBodyState extends State<ServiceBody>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Xin chàoô,',
+                    'Xin chàoo,',
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.white60,
