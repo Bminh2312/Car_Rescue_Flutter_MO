@@ -106,7 +106,7 @@ class _ActiveBookingCardState extends State<ActiveBookingCard> {
           MaterialPageRoute(
             builder: (context) => BookingDetailsView(
               userId: widget.userId,
-              accountId:widget.userId ,
+              accountId: widget.userId,
               booking: widget.booking,
               addressesDepart: addressesDepart,
               addressesDesti: addressesDesti,
@@ -193,7 +193,7 @@ class _ActiveBookingCardState extends State<ActiveBookingCard> {
                                 width: 190,
                                 child: CustomText(
                                   text:
-                                      '${subAddressesDepart[widget.booking.id]}',
+                                      '${subAddressesDepart[widget.booking.id] ?? ''}',
                                   fontSize: 16.0,
                                   fontWeight: FontWeight.bold,
                                 ),

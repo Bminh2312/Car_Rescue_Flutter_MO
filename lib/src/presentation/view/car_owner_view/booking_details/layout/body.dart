@@ -882,46 +882,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 mainAxisSize: MainAxisSize
                     .min, // Quan trọng để đảm bảo Column không chiếm toàn bộ không gian
                 children: [
-                  // if (widget.booking.status == 'ASSIGNED')
-                  //   Container(
-                  //     width: double.infinity,
-                  //     child: SliderButton(
-                  //       alignLabel: Alignment.center,
-                  //       shimmer: true,
-                  //       baseColor: Colors.white,
-                  //       buttonSize: 45,
-                  //       height: 60,
-                  //       backgroundColor: FrontendConfigs.kActiveColor,
-                  //       action: () async {
-                  //         setState(() {
-                  //           _isLoading = true;
-                  //         });
-                  //         bool isSuccess =
-                  //             await authService.startOrder(widget.booking.id);
-                  //         if (isSuccess) {
-                  //           setState(() {
-                  //             _isLoading = false;
-                  //           });
-                  //           //
-                  //           //Navigate back to the previous screen
-                  //           widget.updateTabCallback!(2);
-
-                  //           Navigator.pop(context,
-                  //               'reload'); // This pops the `BookingDetailsBody` screen.
-
-                  //           // Set the specific tab you want to navigate to
-                  //         }
-                  //       },
-                  //       label: const Text(
-                  //         "Bắt đầu",
-                  //         style: TextStyle(
-                  //             color: Colors.white,
-                  //             fontWeight: FontWeight.bold,
-                  //             fontSize: 16),
-                  //       ),
-                  //       icon: SvgPicture.asset("assets/svg/cancel_icon.svg"),
-                  //     ),
-                  //   ),
                   if (widget.booking.status != 'COMPLETED' &&
                       widget.booking.status != 'CANCELLED')
                     GestureDetector(
@@ -1053,6 +1013,49 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                   ? "Đang gửi về hệ thống"
                                   : "Hoàn thiện đơn hàng"),
                         ],
+                      ),
+                    ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  if (widget.booking.status == 'ASSIGNED')
+                    Container(
+                      width: double.infinity,
+                      child: SliderButton(
+                        alignLabel: Alignment.center,
+                        shimmer: true,
+                        baseColor: Colors.white,
+                        buttonSize: 45,
+                        height: 60,
+                        backgroundColor: FrontendConfigs.kActiveColor,
+                        action: () async {
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          bool isSuccess =
+                              await authService.startOrder(widget.booking.id);
+                          if (isSuccess) {
+                            setState(() {
+                              _isLoading = false;
+                            });
+                            //
+                            //Navigate back to the previous screen
+                            widget.updateTabCallback!(2);
+
+                            Navigator.pop(context,
+                                'reload'); // This pops the `BookingDetailsBody` screen.
+
+                            // Set the specific tab you want to navigate to
+                          }
+                        },
+                        label: const Text(
+                          "Bắt đầu",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16),
+                        ),
+                        icon: SvgPicture.asset("assets/svg/cancel_icon.svg"),
                       ),
                     ),
                   if (widget.booking.status == 'INPROGRESS' &&

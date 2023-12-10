@@ -58,7 +58,10 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
   String? selectedServices;
   List<Map<String, dynamic>> orderDetails = [];
   bool _isLoading = true;
-  Future<List<Service>>? availableServices; // Replace with your actual method
+  Future<List<Service>>? availableServices; 
+  
+  
+  // Replace with your actual method
   Future<List<Service>> loadService() async {
     final serviceProvider = ServiceProvider();
     try {

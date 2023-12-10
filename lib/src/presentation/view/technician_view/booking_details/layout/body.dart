@@ -143,7 +143,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       Position? currentPosition = await getCurrentLocation();
       if (currentPosition != null) {
         await AuthService().createLocation(
-          id: widget.booking.technicianId,
+          id: technicianInfo!.id,
           lat: '${currentPosition.latitude}',
           long: '${currentPosition.longitude}',
         );
@@ -1550,7 +1550,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _buildSectionTitle("Khách hàng"),
-                          widget.booking.status == 'ASSIGNED'
+                          widget.booking.status != 'ASSIGNED'
                               ? InkWell(
                                   onTap: () {
                                     Navigator.pushReplacement(
@@ -1563,7 +1563,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                                 technicianInfo?.avatar ?? '',
                                             techId: technicianInfo?.id ?? '',
                                             techPhone:
-                                                technicianInfo?.phone ?? ''),
+                                                customerInfo?.phone ?? ''),
                                       ),
                                     );
                                   },

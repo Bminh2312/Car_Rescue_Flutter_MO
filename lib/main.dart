@@ -12,8 +12,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:CarRescue/src/presentation/view/splash_screen/splash_view.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-
+import 'package:intl/intl.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 String? userRole;
@@ -28,6 +29,9 @@ const AndroidNotificationChannel channel = AndroidNotificationChannel(
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+void initializeDateFormattingVietnamese() async {
+  await initializeDateFormatting('vi_VN', null);
+}
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -40,12 +44,12 @@ Future<void> main() async {
   await FirebaseMessaging.instance.requestPermission();
   // await FireBaseMessageProvider().initLocalNotifications();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
+  Intl.defaultLocale = 'vi';
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
-
+  initializeDateFormattingVietnamese();
   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
       alert: true, badge: true, sound: true);
   // Read the 'role' value

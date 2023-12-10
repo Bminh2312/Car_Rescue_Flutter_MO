@@ -285,10 +285,32 @@ class _CalendarViewState extends State<CalendarView> {
                         );
 
                         if (picked != null && picked != selectedDate) {
-                          setState(() {
-                            // Add this setState to update the selectedDate
-                            selectedDate = picked;
-                          });
+                          if (picked.isBefore(DateTime.now())) {
+                            // Hiển thị AlertDialog nếu selectedDate bé hơn ngày hôm nay
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text('Lỗi'),
+                                  content: Text(
+                                      'Ngày đã chọn phải lớn hơn hoặc bằng ngày hôm nay.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context)
+                                            .pop(); // Đóng AlertDialog
+                                      },
+                                      child: Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          } else {
+                            setState(() {
+                              selectedDate = picked;
+                            });
+                          }
                         }
                       },
                       child: Text('Chọn ngày'),

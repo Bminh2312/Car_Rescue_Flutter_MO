@@ -16,7 +16,7 @@ import 'package:CarRescue/src/presentation/view/car_owner_view/notification/noti
 import 'package:CarRescue/src/presentation/view/car_owner_view/profile/profile_view.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/wallet/layout/wallet_transation.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/wallet/layout/widgets/withdraw_form.dart';
-
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:CarRescue/src/providers/firebase_message_provider.dart';
 import 'package:flutter/cupertino.dart';
@@ -77,6 +77,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
   @override
   void initState() {
     super.initState();
+    initializeDateFormattingVietnamese();
     loadWalletInfo(widget.userId);
     displayFeedbackForBooking(widget.userId);
     loadCurrentWeek();
@@ -131,6 +132,10 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
 
       handleNotificationOpenedApp(message);
     });
+  }
+
+  void initializeDateFormattingVietnamese() async {
+    await initializeDateFormatting('vi_VN', null);
   }
 
   Future<void> loadCurrentWeek() async {

@@ -72,7 +72,7 @@ class _BookingListBodyState extends State<BookingListBody>
   void initState() {
     super.initState();
     loadAssigningBookings();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController!.addListener(_handleTabSelection);
   }
 
@@ -84,8 +84,6 @@ class _BookingListBodyState extends State<BookingListBody>
       loadAssignedBookings();
       // loadAssignedBookings();
     } else if (_tabController!.index == 2) {
-      separateBookings();
-    } else if (_tabController!.index == 3) {
       loadInprogressBookings();
     }
   }
@@ -367,15 +365,6 @@ class _BookingListBodyState extends State<BookingListBody>
                   ),
                 ),
                 Tab(
-                  child: Text(
-                    textAlign: TextAlign.center,
-                    'Chờ chấp nhận',
-                    style: TextStyle(
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-                Tab(
                   child: Center(
                     child: Text(
                       textAlign: TextAlign.center,
@@ -405,11 +394,6 @@ class _BookingListBodyState extends State<BookingListBody>
                       : isAssiginedEmpty
                           ? EmptyState()
                           : _buildOtherListView(assiginedBookings),
-                  !isDataLoaded
-                      ? LoadingState()
-                      : isWaitingEmpty
-                          ? EmptyState()
-                          : _buildOtherListView(waitingBookings),
                   Column(
                     children: [
                       Expanded(
