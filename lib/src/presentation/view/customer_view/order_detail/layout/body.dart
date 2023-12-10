@@ -446,7 +446,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                         // _isLoading = false;
                                       });
                                       // widget.updateTabCallback!(1);
-
+                                      notifyMessage.showToast("Đã đồng ý đơn hàng.");
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
@@ -477,6 +477,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                     bool decision = false;
                                     await AuthService()
                                         .acceptOrder(order.id, decision);
+                                        notifyMessage.showToast("Đã hủy đơn hàng.");
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(

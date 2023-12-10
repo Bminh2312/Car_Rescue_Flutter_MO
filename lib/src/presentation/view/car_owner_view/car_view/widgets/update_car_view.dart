@@ -277,19 +277,19 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
                             decoration: InputDecoration(
                               labelText: 'Số khung',
                             ),
-                            // validator: (value) {
-                            //   if (value == null || value.isEmpty) {
-                            //     return 'Vui lòng nhập số khung';
-                            //   } else if (value.length != 17) {
-                            //     return 'Số khung phải chứa đúng 17 ký tự';
-                            //   } else if (value.contains(RegExp(r'[^\w]'))) {
-                            //     return 'Số khung chỉ có thể chứa số và chữ cái';
-                            //   } else if (value.contains(RegExp(r'[IQO]'))) {
-                            //     return 'Số khung không được chứa các ký tự I, Q, O';
-                            //   }
-                            //   _isValidate = true;
-                            //   return null;
-                            // },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Vui lòng nhập số khung';
+                              } else if (value.length != 17) {
+                                return 'Số khung phải chứa đúng 17 ký tự';
+                              } else if (value.contains(RegExp(r'[^\w]'))) {
+                                return 'Số khung chỉ có thể chứa số và chữ cái';
+                              } else if (value.contains(RegExp(r'[IQO]'))) {
+                                return 'Số khung không được chứa các ký tự I, Q, O';
+                              }
+                              _isValidate = true;
+                              return null;
+                            },
                             onSaved: (value) {
                               _vinNumber = value!;
                             },
