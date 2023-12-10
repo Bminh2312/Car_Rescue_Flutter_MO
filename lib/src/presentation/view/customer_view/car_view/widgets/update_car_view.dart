@@ -280,6 +280,19 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
                                       onSaved: (value) {
                                         _licensePlate = value!;
                                       },
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          print(value);
+                                          return 'Vui lòng nhập biển số xe';
+                                        }
+                                        RegExp regex = RegExp(r'^([1-9][1-9][A-Z][A-Z1-9]-\d{4,5})$');
+
+                                        if (!regex
+                                            .hasMatch(value.toUpperCase())) {
+                                          return 'Biển số xe không hợp lệ';
+                                        }
+                                        return null;
+                                      },
                                     ),
                                     SizedBox(height: 12),
                                     TextFormField(
@@ -334,19 +347,19 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
                             decoration: InputDecoration(
                               labelText: 'Số khung',
                             ),
-                            // validator: (value) {
-                            //   if (value == null || value.isEmpty) {
-                            //     return 'Vui lòng nhập số khung';
-                            //   } else if (value.length != 17) {
-                            //     return 'Số khung phải chứa đúng 17 ký tự';
-                            //   } else if (value.contains(RegExp(r'[^\w]'))) {
-                            //     return 'Số khung chỉ có thể chứa số và chữ cái';
-                            //   } else if (value.contains(RegExp(r'[IQO]'))) {
-                            //     return 'Số khung không được chứa các ký tự I, Q, O';
-                            //   }
-                            //   _isValidate = true;
-                            //   return null;
-                            // },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Vui lòng nhập số khung';
+                              } else if (value.length != 17) {
+                                return 'Số khung phải chứa đúng 17 ký tự';
+                              } else if (value.contains(RegExp(r'[^\w]'))) {
+                                return 'Số khung chỉ có thể chứa số và chữ cái';
+                              } else if (value.contains(RegExp(r'[IQO]'))) {
+                                return 'Số khung không được chứa các ký tự I, Q, O';
+                              }
+                              _isValidate = true;
+                              return null;
+                            },
                             onSaved: (value) {
                               _vinNumber = value!;
                             },

@@ -1,4 +1,5 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/car_view/car_view.dart';
@@ -24,6 +25,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
           .toList();
   final _formKey = GlobalKey<FormState>();
   AuthService authService = AuthService();
+  NotifyMessage _notifyMessage = NotifyMessage();
   File? _carRegistrationFontImage;
   File? _carRegistrationBackImage;
   File? vehicleImage;
@@ -45,7 +47,10 @@ class _AddCarScreenState extends State<AddCarScreen> {
   void _submitForm() async {
     var uuid = Uuid();
     String randomId = uuid.v4();
-    if (_formKey.currentState!.validate()) {
+    if(_carRegistrationFontImage == null && _carRegistrationBackImage == null){
+      _notifyMessage.showToast('Cần ảnh mặt trước và sau');
+    }
+    if (_formKey.currentState!.validate() && _carRegistrationFontImage != null && _carRegistrationBackImage != null) {
       if (_isFormConfirmed) {
         _formKey.currentState!.save();
         setState(() {
@@ -114,7 +119,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Failed to create car approval. Please try again.',
+                  'Tạo xe thất bại. Xin hãy tạo lại.',
                 ),
               ),
             );
@@ -123,7 +128,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
           Navigator.pop(context, false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('An error occurred. Please try again.'),
+              content: Text('Hệ thống đang có vấn đề. Xin hãy tạo sau 15p.'),
             ),
           );
           setState(() {
@@ -131,10 +136,6 @@ class _AddCarScreenState extends State<AddCarScreen> {
           });
         }
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin')),
-      );
     }
   }
 
@@ -169,6 +170,20 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                       onSaved: (value) {
                                         _licensePlate = value!;
                                       },
+                                      validator: (value) {
+                                        if (value == null ||
+                                            value.trim().isEmpty) {
+                                          return 'Vui lòng biển số xe';
+                                        }
+                                        RegExp regex = RegExp(r'^([1-9][1-9][A-Z][A-Z1-9]-\d{4,5})$');
+
+                                        if (!regex
+                                            .hasMatch(value.toUpperCase())) {
+                                          return 'Biển số xe không hợp lệ';
+                                        }
+                                        _isValidate = true;
+                                        return null;
+                                      },
                                     ),
                                     SizedBox(height: 12),
                                     TextFormField(
@@ -199,11 +214,10 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                 onImageChange: (file) {
                                   if (file!.lengthSync() > 3 * 1024 * 1024) {
                                     // 3MB in bytes
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.')),
-                                    );
+                                    _notifyMessage.showToast("Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.");
+                                    
+                                  }else if(file.length() == 0){
+                                    _notifyMessage.showToast("Xin hãy thêm hình phương tiện.");
                                   } else {
                                     setState(() {
                                       vehicleImage = file;
@@ -220,19 +234,19 @@ class _AddCarScreenState extends State<AddCarScreen> {
                             decoration: InputDecoration(
                               labelText: 'Số khung',
                             ),
-                            // validator: (value) {
-                            //   if (value == null || value.isEmpty) {
-                            //     return 'Vui lòng nhập số khung';
-                            //   } else if (value.length != 17) {
-                            //     return 'Số khung phải chứa đúng 17 ký tự';
-                            //   } else if (value.contains(RegExp(r'[^\w]'))) {
-                            //     return 'Số khung chỉ có thể chứa số và chữ cái';
-                            //   } else if (value.contains(RegExp(r'[IQO]'))) {
-                            //     return 'Số khung không được chứa các ký tự I, Q, O';
-                            //   }
-                            //   _isValidate = true;
-                            //   return null;
-                            // },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Vui lòng nhập số khung';
+                              } else if (value.length != 17) {
+                                return 'Số khung phải chứa đúng 17 ký tự';
+                              } else if (value.contains(RegExp(r'[^\w]'))) {
+                                return 'Số khung chỉ có thể chứa số và chữ cái';
+                              } else if (value.contains(RegExp(r'[IQO]'))) {
+                                return 'Số khung không được chứa các ký tự I, Q, O';
+                              }
+                              _isValidate = true;
+                              return null;
+                            },
                             onSaved: (value) {
                               _vinNumber = value!;
                             },
@@ -353,11 +367,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                 onImageChange: (file) {
                                   if (file!.lengthSync() > 3 * 1024 * 1024) {
                                     // 3MB in bytes
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.')),
-                                    );
+                                    _notifyMessage.showToast("Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.");
                                   } else {
                                     setState(() {
                                       _carRegistrationFontImage = file;
@@ -373,11 +383,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                 onImageChange: (file) {
                                   if (file!.lengthSync() > 3 * 1024 * 1024) {
                                     // 3MB in bytes
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.')),
-                                    );
+                                    _notifyMessage.showToast("Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.");
                                   } else {
                                     setState(() {
                                       _carRegistrationBackImage = file;

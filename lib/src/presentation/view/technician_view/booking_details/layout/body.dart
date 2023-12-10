@@ -631,6 +631,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           checkUpdate = false;
         });
       }
+      notifyMessage.showToast("Đã cập nhật.");
     } catch (error) {
       print('Lỗi khi cập nhật đơn hàng: $error');
       setState(() {
@@ -2012,6 +2013,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                             });
                           } else {
                             print("Note or pickedImages empty");
+                            notifyMessage.showToast("Cần chụp ảnh hiện trường");
                             notifyMessage.showToast("Cần ghi chú");
                             setState(() {
                               _isLoading = false;
