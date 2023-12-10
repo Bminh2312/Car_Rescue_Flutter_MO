@@ -236,7 +236,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                           print(value);
                                           return 'Vui lòng nhập biển số xe';
                                         }
-                                        RegExp regex = RegExp(r'^([1-9][1-9][A-Z][A-Z1-9]-\d{4,5})$');
+                                        RegExp regex = RegExp(
+                                            r'^([1-9][1-9][A-Z]-\d{4,5})$');
 
                                         if (!regex
                                             .hasMatch(value.toUpperCase())) {

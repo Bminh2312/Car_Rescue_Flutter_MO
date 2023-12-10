@@ -673,6 +673,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           )),
+                          if (widget.booking.status.toUpperCase() == 'COMPLETED')
+                        
                       if (widget.booking.status.toUpperCase() == 'CANCELLED')
                         _buildInfoRow(
                             "Lí do hủy đơn",

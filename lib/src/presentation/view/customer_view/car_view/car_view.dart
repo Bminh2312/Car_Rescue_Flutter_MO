@@ -4,6 +4,8 @@ import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/car_model.dart';
 import 'package:CarRescue/src/models/customer_car.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
+import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:CarRescue/src/presentation/elements/empty_state.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/car_view/widgets/add_car_view.dart';
@@ -22,10 +24,7 @@ class CarListView extends StatefulWidget {
   _CarListViewState createState() => _CarListViewState();
 }
 
-
 enum SortingOption { byName, byStatus, defaultSort }
-
-
 
 class _CarListViewState extends State<CarListView> {
   List<CustomerCar> carData = [];
@@ -35,7 +34,7 @@ class _CarListViewState extends State<CarListView> {
   bool isAscending = true;
   String selectedStatus = 'ACTIVE';
   CarModel? carModel;
-
+  bool isEmpty = true;
   @override
   void initState() {
     super.initState();
@@ -57,21 +56,30 @@ class _CarListViewState extends State<CarListView> {
                     'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/vehicle%2Fimages%2Fcar.png?alt=media&token=4a112258-d73c-4f2e-9f2f-bf46aa204790'))
             .toList();
 
-        setState(() {
-          carData = carList;
-          isLoading = false;
-        });
+        if (carList.isNotEmpty) {
+          setState(() {
+            carData = carList;
+            isLoading = false;
+          });
+        } else {
+          // Handle the case where the resulting carData list is empty.
+          // You can set a default value, display a message, or take other actions.
+          setState(() {
+            carData = [];
+            isLoading = false;
+          });
+          // Example: showSnackBar('No car data available');
+          // Example: log('Warning: Car data list is empty');
+        }
       } else {
         // Handle the case where 'data['data']' is null.
         // You can set a default value for carData or take other actions.
         setState(() {
-          carData =
-              []; // Set an empty list as a default value or choose an appropriate default.
+          carData = [];
           isLoading = false;
         });
-
         // Alternatively, you can display a message to the user or log the issue.
-        // Example: showSnackBar('No car data available');
+
         // Example: log('Warning: Car data is null');
       }
     });

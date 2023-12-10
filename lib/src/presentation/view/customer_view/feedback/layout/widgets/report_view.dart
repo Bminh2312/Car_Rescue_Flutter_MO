@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
@@ -171,80 +172,97 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: customAppBar(context, text: 'Báo cáo sự cố', showText: true),
-      body: isSubmitting
-          ? LoadingState()
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CustomText(
-                    text: 'Đơn hàng ${widget.orderId}',
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Mô tả sự cố',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
-                  TextField(
-                    maxLines: 5,
-                    onChanged: (value) {
-                      setState(() {
-                        reportText = value;
-                        reportTextError = '';
-                      });
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Nhập mô tả sự cố...',
-                      border: OutlineInputBorder(),
-                      errorText:
-                          reportTextError.isNotEmpty ? reportTextError : null,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  CustomText(
-                    text: 'Hình ảnh sự cố',
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+        appBar: customAppBar(context, text: 'Báo cáo sự cố', showText: true),
+        body: isSubmitting
+            ? LoadingState()
+            : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      _buildImageFrame(imageFile, image1Error),
-                      _buildImageFrame(image2File, image2Error),
+                      CustomText(
+                        text: 'Đơn hàng ${widget.orderId}',
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Mô tả sự cố',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 8),
+                      TextField(
+                        maxLines: 5,
+                        onChanged: (value) {
+                          setState(() {
+                            reportText = value;
+                            reportTextError = '';
+                          });
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Nhập mô tả sự cố...',
+                          border: OutlineInputBorder(),
+                          errorText: reportTextError.isNotEmpty
+                              ? reportTextError
+                              : null,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      CustomText(
+                        text: 'Hình ảnh sự cố',
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildImageFrame(imageFile, image1Error),
+                          _buildImageFrame(image2File, image2Error),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildImageButton(1, Icons.photo, "gallery"),
+                          _buildImageButton(1, Icons.camera_alt, "camera"),
+                          SizedBox(width: 1),
+                          _buildImageButton(2, Icons.photo, "gallery"),
+                          _buildImageButton(2, Icons.camera_alt, "camera"),
+                        ],
+                      ),
+                      SizedBox(height: 100),
+                      Container(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              _onSubmitReport();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              primary: FrontendConfigs
+                                  .kActiveColor, // Background color
+                              onPrimary: Colors.white, // Text color
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12), // Button padding
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    8), // Button border radius
+                              ),
+                              textStyle: TextStyle(
+                                fontSize: 18, // Text font size
+                                fontWeight: FontWeight.bold, // Text font weight
+                              ),
+                            ),
+                            child: Text('Báo cáo'),
+                          )),
                     ],
                   ),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildImageButton(1, Icons.photo, "gallery"),
-                      _buildImageButton(1, Icons.camera_alt, "camera"),
-                      SizedBox(width: 1),
-                      _buildImageButton(2, Icons.photo, "gallery"),
-                      _buildImageButton(2, Icons.camera_alt, "camera"),
-                    ],
-                  ),
-                  SizedBox(height: 16),
-                  Spacer(),
-                  Container(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _onSubmitReport();
-                      },
-                      child: Text('Báo cáo'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-    );
+                ),
+              ));
   }
 
   Widget _buildImageFrame(File? imageFile, String error) {
