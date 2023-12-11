@@ -1906,56 +1906,60 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             buildServiceList(
                                 context, "Chọn dịch vụ", Icon(Icons.add_box)),
+                            widget.booking.status == "INPROGRESS"
+                                ? GestureDetector(
+                                    onTap: () {
+                                      print(
+                                          "IncidentID: ${widget.booking.indicentId}");
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ChangeRescueScreen(
+                                              paymentMethod:
+                                                  _payment?.method ?? '',
+                                              accountId: widget.accountId,
+                                              userId: widget.userId,
+                                              addressesDepart:
+                                                  widget.addressesDepart,
+                                              addressesDesti:
+                                                  widget.addressesDesti,
+                                              booking: widget.booking,
+                                              subAddressesDepart:
+                                                  widget.subAddressesDepart,
+                                              subAddressesDesti:
+                                                  widget.subAddressesDesti,
+                                            ),
+                                          ));
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 8),
+                                      color: Colors.white,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [SizedBox()],
+                                          ),
+                                          buildServiceList(
+                                              context,
+                                              "Chuyển đơn",
+                                              Icon(Icons.next_plan)),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : Container()
                           ],
                         ),
-                        widget.booking.status == "INPROGRESS"
-                            ? GestureDetector(
-                                onTap: () {
-                                  print(
-                                      "IncidentID: ${widget.booking.indicentId}");
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ChangeRescueScreen(
-                                          paymentMethod: _payment?.method ?? '',
-                                          accountId: widget.accountId,
-                                          userId: widget.userId,
-                                          addressesDepart:
-                                              widget.addressesDepart,
-                                          addressesDesti: widget.addressesDesti,
-                                          booking: widget.booking,
-                                          subAddressesDepart:
-                                              widget.subAddressesDepart,
-                                          subAddressesDesti:
-                                              widget.subAddressesDesti,
-                                        ),
-                                      ));
-                                },
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 8),
-                                  color: Colors.white,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [SizedBox()],
-                                      ),
-                                      buildServiceList(context, "Chuyển đơn",
-                                          Icon(Icons.next_plan)),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : Container()
                       ],
                     ),
                   ),

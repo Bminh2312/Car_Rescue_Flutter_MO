@@ -673,17 +673,16 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           )),
-                          if (widget.booking.status.toUpperCase() == 'COMPLETED')
-                        
-                      if (widget.booking.status.toUpperCase() == 'CANCELLED')
-                        _buildInfoRow(
-                            "Lí do hủy đơn",
-                            Text(
-                                widget.booking.cancellationReason ??
-                                    'Không Cung Cấp Lí Do',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15))),
+                      if (widget.booking.status.toUpperCase() == 'COMPLETED')
+                        if (widget.booking.status.toUpperCase() == 'CANCELLED')
+                          _buildInfoRow(
+                              "Lí do hủy đơn",
+                              Text(
+                                  widget.booking.cancellationReason ??
+                                      'Không Cung Cấp Lí Do',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15))),
                       if (widget.booking.status.toUpperCase() == 'COMPLETED')
                         _buildInfoRow(
                           'Đánh giá',
@@ -1202,8 +1201,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                           AuthService().sendNotification(
                               deviceId: _managerToken ?? '',
                               isAndroidDevice: true,
-                              title: 'Thông báo từ kĩ thuật viên',
-                              body: 'Đơn hàng ${widget.booking.id} đã kết thúc',
+                              title: 'Thông báo',
+                              body:
+                                  'Đơn hàng ${widget.booking.id} đã kết thúc. Phương tiện đã được bàn giao',
                               target: _managerAccountId ?? '',
                               orderId: widget.booking.id);
                           // Fetch the updated data and wait for it to complete

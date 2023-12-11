@@ -29,6 +29,7 @@ class _ReportScreenState extends State<ReportScreen> {
   String reportTextError = '';
   String image1Error = '';
   String image2Error = '';
+  String contentError = '';
   bool isSubmitting = false;
   Future<void> _getImage(ImageSource source, int imageIndex) async {
     final picker = ImagePicker();
@@ -124,11 +125,30 @@ class _ReportScreenState extends State<ReportScreen> {
       } else {
         image2Error = ''; // Clear error if image is selected
       }
+
+      if (content.isEmpty) {
+        // Validate that the content input is not empty
+        contentError = 'Vui lòng nhập nội dung'; // Set error message
+      } else {
+        contentError = ''; // Clear error if content is not empty
+      }
     });
+
+    if (reportTextError.isNotEmpty ||
+        image1Error.isNotEmpty ||
+        image2Error.isNotEmpty ||
+        contentError.isNotEmpty) {
+      // There are validation errors, do not proceed with report creation
+      setState(() {
+        isSubmitting = false; // Hide loading indicator
+      });
+      return;
+    }
 
     try {
       print('Attempting to create report...');
       await createReport(widget.orderId, reportText, imageFile!, image2File!);
+
       print('Report created successfully!');
 
       // Hide loading indicator
@@ -269,26 +289,25 @@ class _ReportScreenState extends State<ReportScreen> {
     return Column(
       children: [
         Container(
-          width: 150,
-          height: 150,
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: Colors.black,
-              width: 2,
+            width: 150,
+            height: 150,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Colors.black,
+                width: 2,
+              ),
             ),
-          ),
-          child: imageFile != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.file(
-                    imageFile,
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.cover,
-                  ),
-                )
-              : Icon(Icons.add, size: 40),
-        ),
+            child: imageFile != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.file(
+                      imageFile,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Container()),
         if (error.isNotEmpty)
           Padding(
             padding: const EdgeInsets.all(8.0),
