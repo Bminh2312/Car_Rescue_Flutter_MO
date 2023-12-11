@@ -28,6 +28,7 @@ class _SelectCarBodyState extends State<SelectCarBody> {
     fetchCustomerCar(customer.id).then((data) {
       if (data['data'] != null) {
         final carList = (data['data'] as List<dynamic>)
+            .where((carData) => carData['status'] == 'ACTIVE')
             .map((carData) => CustomerCar(
                 id: carData['id'],
                 customerId: carData['customerId'],
