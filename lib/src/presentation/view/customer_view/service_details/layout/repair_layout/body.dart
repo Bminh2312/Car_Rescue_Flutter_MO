@@ -60,9 +60,9 @@ class _RepairBodyState extends State<RepairBody> {
   List<String> pickedImages = [];
   List<String> _updateImage = [];
   final List<Map<String, dynamic>> dropdownItems = [
-    {"name": "Quận 1", "value": 1},
-    {"name": "Quận 2", "value": 2},
-    {"name": "Quận 3", "value": 3},
+    {"name": "Khu vực 1", "value": 1},
+    {"name": "Khu vực 2", "value": 2},
+    {"name": "Khu vực 3", "value": 3},
     // Thêm các quận khác nếu cần
   ];
   List<Symptom> _symptoms = [];
