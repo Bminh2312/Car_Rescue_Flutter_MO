@@ -490,8 +490,8 @@ class _ServiceBodyState extends State<ServiceBody>
                                   child: RideSelectionWidget(
                                     icon: 'assets/svg/pickup_icon.svg',
                                     title:
-                                        "", // Add your title here
-                                    body: departureAddress,
+                                        departureAddress, // Add your title here
+
                                     onPressed: () {},
                                   ),
                                 );
@@ -532,8 +532,7 @@ class _ServiceBodyState extends State<ServiceBody>
                                         horizontal: 12.0),
                                     child: RideSelectionWidget(
                                       icon: 'assets/svg/location_icon.svg',
-                                      title: "",
-                                      body: destinationAddress,
+                                      title: destinationAddress,
                                       onPressed: () {},
                                     ),
                                   );

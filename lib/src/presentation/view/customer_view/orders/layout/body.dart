@@ -166,10 +166,11 @@ class _OrderListState extends State<OrderList> {
             background: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                if (type != 'Fixing') _buildFilterButton(type,'NEW', Colors.yellow),
-                _buildFilterButton(type,'ASSIGNING', Colors.blue),
-                _buildFilterButton(type,'COMPLETED', Colors.green),
-                _buildFilterButton(type,'CANCELLED', Colors.red),
+                if (type != 'Fixing')
+                  _buildFilterButton(type, 'NEW', Colors.yellow),
+                _buildFilterButton(type, 'ASSIGNING', Colors.blue),
+                _buildFilterButton(type, 'COMPLETED', Colors.green),
+                _buildFilterButton(type, 'CANCELLED', Colors.red),
               ],
             ),
           ),
@@ -313,71 +314,73 @@ class _OrderListState extends State<OrderList> {
                                           fontSize: 16,
                                           status: order.status,
                                         ),
-                                         if(order.status == "COMPLETED")
-                                        Expanded(
-                                          child:
-                                              FutureBuilder<FeedbackCustomer?>(
-                                            future: fetchFeedback(order.id),
-                                            builder:
-                                                (context, feedbackSnapshot) {
-                                              if (feedbackSnapshot
-                                                      .connectionState ==
-                                                  ConnectionState.waiting) {
-                                                // Display loading indicator or placeholder text
-                                                return CircularProgressIndicator(
-                                                  value:
-                                                      null, // Set to null for an indeterminate (spinning) indicator
-                                                  strokeWidth:
-                                                      2, // Adjust the value to make the indicator smaller
-                                                );
-                                              } else if (feedbackSnapshot
-                                                  .hasError) {
-                                                return Text(
-                                                    'Error: ${feedbackSnapshot.error}');
-                                              } else {
-                                                // Assuming your FeedbackCustomer class has a 'rating' field
+                                        if (order.status == "COMPLETED")
+                                          Expanded(
+                                            child: FutureBuilder<
+                                                FeedbackCustomer?>(
+                                              future: fetchFeedback(order.id),
+                                              builder:
+                                                  (context, feedbackSnapshot) {
+                                                if (feedbackSnapshot
+                                                        .connectionState ==
+                                                    ConnectionState.waiting) {
+                                                  // Display loading indicator or placeholder text
+                                                  return CircularProgressIndicator(
+                                                    value:
+                                                        null, // Set to null for an indeterminate (spinning) indicator
+                                                    strokeWidth:
+                                                        2, // Adjust the value to make the indicator smaller
+                                                  );
+                                                } else if (feedbackSnapshot
+                                                    .hasError) {
+                                                  return Text(
+                                                      'Error: ${feedbackSnapshot.error}');
+                                                } else {
+                                                  // Assuming your FeedbackCustomer class has a 'rating' field
 
-                                                int rating = feedbackSnapshot
-                                                        .data?.rating ??
-                                                    0;
-                                                double ratingParse =
-                                                    rating.toDouble();
+                                                  int rating = feedbackSnapshot
+                                                          .data?.rating ??
+                                                      0;
+                                                  double ratingParse =
+                                                      rating.toDouble();
 
-                                                String status = feedbackSnapshot
-                                                        .data?.status ??
-                                                    '';
+                                                  String status =
+                                                      feedbackSnapshot
+                                                              .data?.status ??
+                                                          '';
 
-                                                return status == 'COMPLETED'
-                                                    ? RatingBar.builder(
-                                                        initialRating:
-                                                            ratingParse,
-                                                        minRating: 1,
-                                                        direction:
-                                                            Axis.horizontal,
-                                                        allowHalfRating: false,
-                                                        itemCount: 5,
-                                                        itemSize: 20,
-                                                        itemPadding: EdgeInsets
-                                                            .symmetric(
-                                                                horizontal:
-                                                                    2.0),
-                                                        itemBuilder:
-                                                            (context, _) =>
-                                                                Icon(
-                                                          Icons.star,
-                                                          color: Colors.amber,
-                                                        ),
-                                                        onRatingUpdate:
-                                                            (newRating) {
-                                                          // Handle the updated rating if needed
-                                                        },
-                                                        ignoreGestures: true,
-                                                      )
-                                                    : Text("Chưa đánh giá");
-                                              }
-                                            },
+                                                  return status == 'COMPLETED'
+                                                      ? RatingBar.builder(
+                                                          initialRating:
+                                                              ratingParse,
+                                                          minRating: 1,
+                                                          direction:
+                                                              Axis.horizontal,
+                                                          allowHalfRating:
+                                                              false,
+                                                          itemCount: 5,
+                                                          itemSize: 20,
+                                                          itemPadding: EdgeInsets
+                                                              .symmetric(
+                                                                  horizontal:
+                                                                      2.0),
+                                                          itemBuilder:
+                                                              (context, _) =>
+                                                                  Icon(
+                                                            Icons.star,
+                                                            color: Colors.amber,
+                                                          ),
+                                                          onRatingUpdate:
+                                                              (newRating) {
+                                                            // Handle the updated rating if needed
+                                                          },
+                                                          ignoreGestures: true,
+                                                        )
+                                                      : Text("Chưa đánh giá");
+                                                }
+                                              },
+                                            ),
                                           ),
-                                        ),
                                       ],
                                     ),
                                     // Use the BookingStatusWidget here
@@ -415,8 +418,8 @@ class _OrderListState extends State<OrderList> {
                                                 icon:
                                                     'assets/svg/pickup_icon.svg',
                                                 title:
-                                                    "", // Add your title here
-                                                body: departureAddress,
+                                                    departureAddress, // Add your title here
+
                                                 onPressed: () {},
                                               ),
                                             );
@@ -462,8 +465,7 @@ class _OrderListState extends State<OrderList> {
                                                 child: RideSelectionWidget(
                                                   icon:
                                                       'assets/svg/location_icon.svg',
-                                                  title: "",
-                                                  body: destinationAddress,
+                                                  title: destinationAddress,
                                                   onPressed: () {},
                                                 ),
                                               );
@@ -521,33 +523,32 @@ class _OrderListState extends State<OrderList> {
     );
   }
 
-  Widget _buildFilterButton(String type,String status, Color textColor) {
-  String translatedText = status;
+  Widget _buildFilterButton(String type, String status, Color textColor) {
+    String translatedText = status;
 
-  if (status == 'ASSIGNING') {
-    translatedText = 'Đang duyệt';
-  } else if (status == 'COMPLETED') {
-    translatedText = 'Hoàn Thành';
-  } else if (status == 'CANCELLED') {
-    translatedText = 'Đã hủy';
-  } else if (status == 'NEW') {
-    translatedText = 'Mới';
+    if (status == 'ASSIGNING') {
+      translatedText = 'Đang duyệt';
+    } else if (status == 'COMPLETED') {
+      translatedText = 'Hoàn Thành';
+    } else if (status == 'CANCELLED') {
+      translatedText = 'Đã hủy';
+    } else if (status == 'NEW') {
+      translatedText = 'Mới';
+    }
+    return ElevatedButton(
+      style: ButtonStyle(
+        backgroundColor: MaterialStateProperty.all(textColor),
+      ),
+      onPressed: () {
+        setState(() {
+          selectedStatusMap[type] = status;
+        });
+      },
+      child: Text(
+        translatedText,
+      ),
+    );
   }
-  return ElevatedButton(
-    style: ButtonStyle(
-      backgroundColor: MaterialStateProperty.all(textColor),
-    ),
-    onPressed: () {
-      setState(() {
-        selectedStatusMap[type] = status;
-      });
-    },
-    child: Text(
-      translatedText,
-    ),
-  );
-}
-
 
   Future<List<Order>> getAllOrders(String type) async {
     final orderProvider = OrderProvider();
