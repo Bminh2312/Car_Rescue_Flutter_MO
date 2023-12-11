@@ -298,7 +298,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   Future<void> _loadTechInfo(String techId) async {
     Map<String, dynamic>? techProfile =
         await authService.fetchTechProfile(techId);
-    print('day la ${techProfile}');
+
     if (techProfile != null) {
       setState(() {
         technicianInfo = Technician.fromJson(techProfile);
@@ -434,19 +434,14 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                     bool decision = true;
                                     bool isSuccess = await AuthService()
                                         .acceptOrder(order.id, decision);
-                                    // AuthService().sendNotification(
-                                    //     deviceId:
-                                    //         'eW2_hO5k8iFCpdzKBwt6b0:APA91bGNee9KwsiJVzMCxuPvsKlq2sd41O3rBjP8rpoeCnFk3WgS20ewmDujrOmEkg09TFu7wjmVAen4e5YEkJyYA7C9AB7dlAl_t-c_blbKsNs5n1xuzpTT0-5J2Ur1NtL-ouMc3s2C',
-                                    //     isAndroidDevice: true,
-                                    //     title: 'Khách hàng',
-                                    //     body:
-                                    //         'Khách hàng đã chấp nhận đơn hàng. Hãy điều phối nhân sự');
+                                    //  AuthService().sendNotification(deviceId: deviceId, isAndroidDevice: isAndroidDevice, title: title, body: body, target: target, orderId: orderId)
                                     if (isSuccess) {
                                       setState(() {
                                         // _isLoading = false;
                                       });
                                       // widget.updateTabCallback!(1);
-                                      notifyMessage.showToast("Đã đồng ý đơn hàng.");
+                                      notifyMessage
+                                          .showToast("Đã đồng ý đơn hàng.");
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
@@ -477,7 +472,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                     bool decision = false;
                                     await AuthService()
                                         .acceptOrder(order.id, decision);
-                                        notifyMessage.showToast("Đã hủy đơn hàng.");
+                                    notifyMessage.showToast("Đã hủy đơn hàng.");
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
@@ -945,25 +940,30 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                         color: Colors.white,
                         child: AppButton(
                             onPressed: () {
-                              if (widget.techId != null) {
+                              if (technicianInfo != null &&
+                                  technicianInfo!.id.isNotEmpty) {
+                                print('b');
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => FeedbackScreen(
-                                            techId: widget.techId!,
-                                            orderId: widget.orderId,
-                                            customerId: customer.id,
-                                          )),
+                                    builder: (context) => FeedbackScreen(
+                                      techId: widget.techId!,
+                                      orderId: widget.orderId,
+                                      customerId: customer.id,
+                                    ),
+                                  ),
                                 );
                               } else if (vehicleInfo != null) {
+                                print('a');
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => FeedbackScreen(
-                                            orderId: widget.orderId,
-                                            customerId: customer.id,
-                                            vehicleInfo: vehicleInfo,
-                                          )),
+                                    builder: (context) => FeedbackScreen(
+                                      orderId: widget.orderId,
+                                      customerId: customer.id,
+                                      vehicleInfo: vehicleInfo,
+                                    ),
+                                  ),
                                 );
                               }
                             },
@@ -1140,7 +1140,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                   return Column(
                     children: [
                       _buildInfoRow(
-                        '$name (Số lượng: $quantity) ',
+                        '$name (Đơn giá/km) ',
                         Text(
                           '$formattedTotal',
                           style: TextStyle(

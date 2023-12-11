@@ -50,7 +50,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   void _loadTechInfo(String techId) async {
     Map<String, dynamic>? techProfile =
         await authService.fetchTechProfile(techId);
-    print('day la ${techProfile}');
+
     if (techProfile != null) {
       setState(() {
         technicianInfo = Technician.fromJson(techProfile);
@@ -65,7 +65,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       if (_formKey.currentState!.validate()) {
         String feedbackId = await feedBackProvider.getWaitingFeedbacks(
             widget.customerId, widget.orderId);
-        print(feedbackId);
+
         // Now you have feedbackId, you can use it for updating feedback
         bool isSuccess = await feedBackProvider.updateFeedback(
             feedbackId, _rating, _noteController.text);

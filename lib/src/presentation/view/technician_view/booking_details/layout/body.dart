@@ -8,7 +8,7 @@ import 'package:CarRescue/src/presentation/view/customer_view/service_details/wi
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/change_rescue_type.dart';
 
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/map_tech_view.dart';
-
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/select_service.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/widgets/selection_location_widget.dart';
 import 'package:geolocator/geolocator.dart';
@@ -1647,6 +1647,36 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                 fontWeight: FontWeight.bold,
                                 color: FrontendConfigs.kAuthColor,
                                 fontSize: 15))),
+                    if (widget.booking.status.toUpperCase() == 'COMPLETED')
+                      _buildInfoRow(
+                        'Đánh giá',
+                        Container(
+                          child: RatingBar.builder(
+                            itemSize: 19,
+                            initialRating: widget.booking.rating ?? 0,
+                            minRating: 1,
+                            direction: Axis.horizontal,
+                            allowHalfRating: true,
+                            itemCount: 5,
+                            itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
+                            itemBuilder: (context, _) => Icon(
+                              Icons.star,
+                              size: 10,
+                              color: Colors.amber,
+                            ),
+                            onRatingUpdate: (rating) {
+                              print(rating);
+                            },
+                          ),
+                        ),
+                      ),
+                    if (widget.booking.status.toUpperCase() == 'COMPLETED')
+                      _buildInfoRow(
+                          'Nội dung đánh giá',
+                          Text(
+                            widget.booking.note ?? 'Không có',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          )),
                     if (widget.booking.status == 'CANCELLED')
                       _buildInfoRow(
                           "Lí do hủy đơn",
@@ -1876,56 +1906,60 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             buildServiceList(
                                 context, "Chọn dịch vụ", Icon(Icons.add_box)),
+                            widget.booking.status == "INPROGRESS"
+                                ? GestureDetector(
+                                    onTap: () {
+                                      print(
+                                          "IncidentID: ${widget.booking.indicentId}");
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ChangeRescueScreen(
+                                              paymentMethod:
+                                                  _payment?.method ?? '',
+                                              accountId: widget.accountId,
+                                              userId: widget.userId,
+                                              addressesDepart:
+                                                  widget.addressesDepart,
+                                              addressesDesti:
+                                                  widget.addressesDesti,
+                                              booking: widget.booking,
+                                              subAddressesDepart:
+                                                  widget.subAddressesDepart,
+                                              subAddressesDesti:
+                                                  widget.subAddressesDesti,
+                                            ),
+                                          ));
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 8),
+                                      color: Colors.white,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [SizedBox()],
+                                          ),
+                                          buildServiceList(
+                                              context,
+                                              "Chuyển đơn",
+                                              Icon(Icons.next_plan)),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : Container()
                           ],
                         ),
-                        widget.booking.status == "INPROGRESS"
-                            ? GestureDetector(
-                                onTap: () {
-                                  print(
-                                      "IncidentID: ${widget.booking.indicentId}");
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ChangeRescueScreen(
-                                          paymentMethod: _payment?.method ?? '',
-                                          accountId: widget.accountId,
-                                          userId: widget.userId,
-                                          addressesDepart:
-                                              widget.addressesDepart,
-                                          addressesDesti: widget.addressesDesti,
-                                          booking: widget.booking,
-                                          subAddressesDepart:
-                                              widget.subAddressesDepart,
-                                          subAddressesDesti:
-                                              widget.subAddressesDesti,
-                                        ),
-                                      ));
-                                },
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 8),
-                                  color: Colors.white,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [SizedBox()],
-                                      ),
-                                      buildServiceList(context, "Chuyển đơn",
-                                          Icon(Icons.next_plan)),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : Container()
                       ],
                     ),
                   ),

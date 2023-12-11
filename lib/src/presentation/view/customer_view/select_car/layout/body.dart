@@ -9,7 +9,8 @@ import 'package:http/http.dart' as http;
 import 'widgets/select_car.dart';
 
 class SelectCarBody extends StatefulWidget {
-  const SelectCarBody({Key? key, required this.onCarSelected}) : super(key: key);
+  const SelectCarBody({Key? key, required this.onCarSelected})
+      : super(key: key);
   final Function(String?) onCarSelected;
 
   @override
@@ -96,7 +97,7 @@ class _SelectCarBodyState extends State<SelectCarBody> {
               ),
               carData.isEmpty
                   ? Center(
-                      child: Text("Không có xe nào..."),
+                      child: Text("Không có xe nào đang hoạt động"),
                     )
                   : isLoading
                       ? CircularProgressIndicator()
