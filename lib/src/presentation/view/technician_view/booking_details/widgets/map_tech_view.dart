@@ -47,6 +47,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
   List<LatLng> routeCoordinates = [];
   Set<Polyline> polylines = {};
   Timer? myTimer;
+  bool isArrived = false;
   @override
   void initState() {
     super.initState();
@@ -192,7 +193,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
     // Fetch route coordinates
     PolylinePoints polylinePoints = PolylinePoints();
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      "AIzaSyD_bUe7UEQcksCOiUgYzWmm5JZkYrOfzLQ",
+      "AIzaSyBXriBmJwX5fjH4_WTFbANezA9lNXzmL_w",
       PointLatLng(
         currentLocation!.latitude,
         currentLocation!.longitude,
@@ -208,99 +209,104 @@ class _MapTechScreenState extends State<MapTechScreen> {
 
       if (distance < 100) {
         // Stop the timer
-        myTimer?.cancel();
+        // myTimer?.cancel();
+
         print(
             "Technician is close to the target location. Stopping the timer.");
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text("Thông báo từ Kỹ thuật viên"),
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  animated.Lottie.asset('assets/animations/technician.json',
-                      width: 250, height: 250, fit: BoxFit.fill),
-                  Column(
-                    children: [
-                      CustomText(
-                        text: 'Bạn đã đến địa điểm cứu hộ',
-                        fontSize: 18,
-                      ),
-                      CustomText(
-                        text: 'Bạn đã thấy khách hàng chưa?',
-                        fontSize: 18,
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  // Add relevant images or icons here
-                  // For example, you can use Image.asset or Icon widgets
+        if (!isArrived)
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text("Thông báo từ Kỹ thuật viên"),
+                content: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    animated.Lottie.asset('assets/animations/technician.json',
+                        width: 250, height: 250, fit: BoxFit.fill),
+                    Column(
+                      children: [
+                        CustomText(
+                          text: 'Bạn đã đến địa điểm cứu hộ',
+                          fontSize: 18,
+                        ),
+                        CustomText(
+                          text: 'Bạn đã thấy khách hàng chưa?',
+                          fontSize: 18,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    // Add relevant images or icons here
+                    // For example, you can use Image.asset or Icon widgets
 
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        style: ButtonStyle(
-                          backgroundColor:
-                              MaterialStateProperty.resolveWith<Color>(
-                            (Set<MaterialState> states) {
-                              if (states.contains(MaterialState.pressed)) {
-                                // The button is in the pressed state
-                                return Colors.white.withOpacity(
-                                    0.5); // Change the color when pressed
-                              }
-                              // The default color when not pressed
-                              return FrontendConfigs.kActiveColor;
-                            },
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          style: ButtonStyle(
+                            backgroundColor:
+                                MaterialStateProperty.resolveWith<Color>(
+                              (Set<MaterialState> states) {
+                                if (states.contains(MaterialState.pressed)) {
+                                  // The button is in the pressed state
+                                  return Colors.white.withOpacity(
+                                      0.5); // Change the color when pressed
+                                }
+                                // The default color when not pressed
+                                return FrontendConfigs.kActiveColor;
+                              },
+                            ),
+                          ),
+                          onPressed: () {
+                            // Implement your action for calling the technician
+                            launchDialPad(widget.techPhone); // Close the dialog
+                          },
+                          child: Row(
+                            children: [
+                              Icon(Icons.call),
+                              SizedBox(width: 8),
+                              Text("Gọi khách hàng"),
+                            ],
                           ),
                         ),
-                        onPressed: () {
-                          // Implement your action for calling the technician
-                          launchDialPad(widget.techPhone); // Close the dialog
-                        },
-                        child: Row(
-                          children: [
-                            Icon(Icons.call),
-                            SizedBox(width: 8),
-                            Text("Gọi khách hàng"),
-                          ],
-                        ),
-                      ),
-                      ElevatedButton(
-                        style: ButtonStyle(
-                          backgroundColor:
-                              MaterialStateProperty.resolveWith<Color>(
-                            (Set<MaterialState> states) {
-                              if (states.contains(MaterialState.pressed)) {
-                                // The button is in the pressed state
-                                return Colors.white.withOpacity(
-                                    0.5); // Change the color when pressed
-                              }
-                              // The default color when not pressed
-                              return FrontendConfigs.kActiveColor;
-                            },
+                        ElevatedButton(
+                          style: ButtonStyle(
+                            backgroundColor:
+                                MaterialStateProperty.resolveWith<Color>(
+                              (Set<MaterialState> states) {
+                                if (states.contains(MaterialState.pressed)) {
+                                  // The button is in the pressed state
+                                  return Colors.white.withOpacity(
+                                      0.5); // Change the color when pressed
+                                }
+                                // The default color when not pressed
+                                return FrontendConfigs.kActiveColor;
+                              },
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: Row(
+                            children: [
+                              Icon(Icons.check),
+                              SizedBox(width: 8),
+                              Text("Đã xác nhận"),
+                            ],
                           ),
                         ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: Row(
-                          children: [
-                            Icon(Icons.check),
-                            SizedBox(width: 8),
-                            Text("Đã xác nhận"),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        );
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        setState(() {
+          isArrived = true;
+        });
       }
     }
     if (result.points.isNotEmpty) {
@@ -416,7 +422,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
               polylines: {
                 Polyline(
                   polylineId: PolylineId("route"),
-                  color: FrontendConfigs.kAuthColor,
+                  color: Colors.blue,
                   width: 3,
                   points:
                       routeCoordinates, // Use routeCoordinates instead of [technicianLocation!, _targetLocation!]

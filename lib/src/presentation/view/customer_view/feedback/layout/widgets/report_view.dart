@@ -125,29 +125,12 @@ class _ReportScreenState extends State<ReportScreen> {
       } else {
         image2Error = ''; // Clear error if image is selected
       }
-
-      if (content.isEmpty) {
-        // Validate that the content input is not empty
-        contentError = 'Vui lòng nhập nội dung'; // Set error message
-      } else {
-        contentError = ''; // Clear error if content is not empty
-      }
     });
-
-    if (reportTextError.isNotEmpty ||
-        image1Error.isNotEmpty ||
-        image2Error.isNotEmpty ||
-        contentError.isNotEmpty) {
-      // There are validation errors, do not proceed with report creation
-      setState(() {
-        isSubmitting = false; // Hide loading indicator
-      });
-      return;
-    }
 
     try {
       print('Attempting to create report...');
-      await createReport(widget.orderId, reportText, imageFile!, image2File!);
+      await createReport(widget.orderId, reportText, imageFile ?? File(''),
+          image2File ?? File(''));
 
       print('Report created successfully!');
 

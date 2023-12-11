@@ -63,7 +63,7 @@ class _MapScreenState extends State<MapScreen> {
       _loadLocation();
       _getCurrentLocation();
       _getOrderLocation();
-      _updateCameraToTechnicianLocation();
+      // _updateCameraToTechnicianLocation();
       // Stop the timer after a certain condition (e.g., after 10 ticks)
       // if (timer.tick == 10) {
       //   print("Stopping the timer.");
