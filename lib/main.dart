@@ -53,6 +53,7 @@ Future<void> main() async {
   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
       alert: true, badge: true, sound: true);
   // Read the 'role' value
+  await GetStorage().initStorage;
   userRole = GetStorage().read('role');
   userId = GetStorage().read('userId');
   accountId = GetStorage().read('accountId');

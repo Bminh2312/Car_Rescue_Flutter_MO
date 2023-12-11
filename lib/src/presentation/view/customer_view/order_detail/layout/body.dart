@@ -1140,7 +1140,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                   return Column(
                     children: [
                       _buildInfoRow(
-                        '$name (Đơn giá/km) ',
+                        '$name',
                         Text(
                           '$formattedTotal',
                           style: TextStyle(
