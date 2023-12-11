@@ -415,7 +415,7 @@ class _OrderListState extends State<OrderList> {
                                                 icon:
                                                     'assets/svg/pickup_icon.svg',
                                                 title:
-                                                    "Địa điểm hiện tại", // Add your title here
+                                                    "", // Add your title here
                                                 body: departureAddress,
                                                 onPressed: () {},
                                               ),
@@ -462,7 +462,7 @@ class _OrderListState extends State<OrderList> {
                                                 child: RideSelectionWidget(
                                                   icon:
                                                       'assets/svg/location_icon.svg',
-                                                  title: "Địa điểm muốn đến",
+                                                  title: "",
                                                   body: destinationAddress,
                                                   onPressed: () {},
                                                 ),
