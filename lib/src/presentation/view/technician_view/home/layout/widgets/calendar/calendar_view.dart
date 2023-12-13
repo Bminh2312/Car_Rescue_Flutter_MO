@@ -29,6 +29,7 @@ class _CalendarViewState extends State<CalendarView> {
   CurrentWeek? _nextWeek;
   DateTime? _focusedDay = DateTime.now();
   bool isTrue = true;
+  bool _isExisted = false;
   String? accessToken = GetStorage().read<String>("accessToken");
   @override
   void initState() {
@@ -582,6 +583,27 @@ class _CalendarViewState extends State<CalendarView> {
     final String apiUrl =
         "https://rescuecapstoneapi.azurewebsites.net/api/Schedule/CreateShiftForTechnician";
     try {
+      // Check if the shift already exists in the list
+      bool isShiftExisted = weeklyShifts.any((shift) =>
+          shift.date.year == date.year &&
+          shift.date.month == date.month &&
+          shift.date.day == date.day);
+
+      if (isShiftExisted) {
+        // Shift already exists, show a toast message and return
+        Fluttertoast.showToast(
+          msg: 'Ngày làm việc này đã được đăng kí',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+        return;
+      }
+
+      // If the shift doesn't exist, proceed to create it
       final response = await http.post(
         Uri.parse('$apiUrl'),
         headers: <String, String>{
@@ -591,14 +613,31 @@ class _CalendarViewState extends State<CalendarView> {
         body: json.encode({
           "technicianId": technicianId,
           "workScheduleId": workScheduleId,
-          "date": date.toUtc().add(Duration(hours: 8)).toIso8601String(),
+          "date": date.toUtc().add(Duration(hours: 7)).toIso8601String(),
           "type": type,
         }),
       );
-      print(response.statusCode);
+
+      print(
+        json.encode({
+          "technicianId": technicianId,
+          "workScheduleId": workScheduleId,
+          "date": date.toUtc().add(Duration(hours: 7)).toIso8601String(),
+          "type": type,
+        }),
+      );
+
       if (response.statusCode == 200) {
         loadWeeklyShift(_currentWeek!.id, widget.userId);
-        // Successfully created the weekly shift
+        Fluttertoast.showToast(
+          msg: 'Tạo ngày làm việc thành công.',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
         print('Weekly shift created successfully.');
       } else {
         // Failed to create the weekly shift
@@ -635,16 +674,19 @@ class _CalendarViewState extends State<CalendarView> {
       final responseData = json.decode(response.body);
       // final int status = responseData['status'];
       final String message = responseData['message'];
-
-      if (message == 'Success') {
+      print(message);
+      if (message == 'Create successfully!') {
+        loadWeeklyShift(_currentWeek!.id, widget.userId);
         print('Weekly shift updated successfully: $message');
       } else if (message == 'Fail To update due to past due date') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Đã quá ngày để cập nhật"), // "Too late to update"
-            duration: Duration(seconds: 1),
-            backgroundColor: Colors.green,
-          ),
+        Fluttertoast.showToast(
+          msg: 'Đã quá thời gian để cập nhật',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 16.0,
         );
       }
 

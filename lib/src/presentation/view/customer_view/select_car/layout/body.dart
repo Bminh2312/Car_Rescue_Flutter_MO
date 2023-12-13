@@ -22,7 +22,7 @@ class _SelectCarBodyState extends State<SelectCarBody> {
   bool isLoading = true;
   String? selectedCarId;
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
-
+  String? accessToken = GetStorage().read<String>("accessToken");
   @override
   void initState() {
     super.initState();
@@ -61,7 +61,13 @@ class _SelectCarBodyState extends State<SelectCarBody> {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Car/GetAllOfUser?id=$userId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response = await http.get(
+      Uri.parse(apiUrl),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      },
+    );
 
     if (response.statusCode == 200) {
       Map<String, dynamic> data = json.decode(response.body);

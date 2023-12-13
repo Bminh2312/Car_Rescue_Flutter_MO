@@ -51,7 +51,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   String? _selectedGenderString;
   File? _profileImage;
   String? _downloadURL;
-String? accessToken = GetStorage().read<String>("accessToken");
+  String? accessToken = GetStorage().read<String>("accessToken");
 // Chuyển đổi sang đối tượng DateTime
   String updatedAtString = DateFormat('yyyy-MM-dd').format(DateTime.now());
   final ImagePicker imagePicker = ImagePicker();
@@ -59,6 +59,7 @@ String? accessToken = GetStorage().read<String>("accessToken");
   DateTime _birthday = DateTime(2000, 1, 1);
   bool _profileImageChanged = false;
   bool _isUpdating = false;
+  bool _isLoading = false;
   @override
   void initState() {
     super.initState();
@@ -66,6 +67,9 @@ String? accessToken = GetStorage().read<String>("accessToken");
   }
 
   Future<void> _loadUserProfileData(String userId) async {
+    setState(() {
+      _isLoading = true;
+    });
     Map<String, dynamic>? userProfile =
         await authService.fetchRescueCarOwnerProfile(userId);
 
@@ -88,6 +92,9 @@ String? accessToken = GetStorage().read<String>("accessToken");
         }
       });
     }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<void> updateProfile({
@@ -115,10 +122,11 @@ String? accessToken = GetStorage().read<String>("accessToken");
 
     final response = await http.put(
       Uri.parse(
-          'https://rescuecapstoneapi.azurewebsites.net/api/RescueVehicleOwner/Update'),headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $accessToken'
-        },
+          'https://rescuecapstoneapi.azurewebsites.net/api/RescueVehicleOwner/Update'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      },
       body: jsonEncode(requestBody),
     );
 
@@ -149,7 +157,7 @@ String? accessToken = GetStorage().read<String>("accessToken");
       print(_downloadURL);
       // Display a success message to the user
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Profile updated successfully')),
+        SnackBar(content: Text('Cập nhật thông tin thành công')),
       );
     } else {
       _isUpdating = false;
@@ -187,267 +195,278 @@ String? accessToken = GetStorage().read<String>("accessToken");
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Stack(children: [
-        SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 120),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Color(0xFFE0AC69),
-                                Color(0xFF8D5524),
-                              ],
-                            ),
-                          ),
-                          height: 120,
-                        ),
-                      ),
-                      CircleAvatar(
-                        radius: 60,
-                        backgroundImage: _profileImage != null
-                            ? FileImage(_profileImage!)
-                            : (_downloadURL != null && _downloadURL!.isNotEmpty)
-                                ? NetworkImage(_downloadURL!)
-                                : AssetImage('assets/images/profile.png')
-                                    as ImageProvider<Object>,
-                      ),
-                      Positioned(
-                        bottom: 60,
-                        right: 120,
-                        child: CircleAvatar(
-                          backgroundColor: Colors.blue,
-                          radius: 20,
-                          child: IconButton(
-                            icon: Icon(Icons.camera_alt),
-                            color: Colors.white,
-                            onPressed: _pickImage, // Open image picker
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    'Thông tin cá nhân',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Montserrat',
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: InputDecoration(
-                      labelText: 'Tên đầy đủ',
-                      prefixIcon: Icon(Icons.person),
-                    ),
-                    style: TextStyle(fontFamily: 'Montserrat'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Hãy nhập họ tên đầy đủ';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 10),
-                  TextFormField(
-                    controller: _phoneController,
-                    decoration: InputDecoration(
-                      labelText: 'Số điện thoại',
-                      prefixIcon: Icon(Icons.phone),
-                    ),
-                    style: TextStyle(fontFamily: 'Montserrat'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Hãy nhập số điện thoại.';
-                      }
-                      if (value.length != 10) {
-                        return 'Số điện thoại phải bao gồm 10 số.';
-                      }
-                      // You can add more phone number validation here if needed.
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 10),
-                  TextFormField(
-                    controller: _addressController,
-                    decoration: InputDecoration(
-                      labelText: 'Địa chỉ',
-                      prefixIcon: Icon(Icons.location_on),
-                    ),
-                    style: TextStyle(fontFamily: 'Montserrat'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Hãy nhập địa chỉ';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    'Giới tính',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Montserrat',
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Radio(
-                        activeColor: FrontendConfigs.kIconColor,
-                        value: 'Nam',
-                        groupValue: _selectedGenderString,
-                        onChanged: (String? value) {
-                          setState(() {
-                            _selectedGenderString = value;
-                          });
-                        },
-                      ),
-                      Text('Nam', style: TextStyle(fontFamily: 'Montserrat')),
-                      Radio(
-                        activeColor: FrontendConfigs.kIconColor,
-                        value: 'Nữ',
-                        groupValue: _selectedGenderString,
-                        onChanged: (String? value) {
-                          setState(() {
-                            _selectedGenderString = value;
-                          });
-                        },
-                      ),
-                      Text('Nữ', style: TextStyle(fontFamily: 'Montserrat')),
-                    ],
-                  ),
-                  Text(
-                    'Ngày sinh',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Montserrat',
-                    ),
-                  ),
-                  SizedBox(
-                    height: 8,
-                  ),
-                  GestureDetector(
-                      onTap: () async {
-                        DateTime? selectedDate = await showDatePicker(
-                          context: context,
-                          initialDate: _birthday,
-                          firstDate: DateTime(1900),
-                          lastDate: DateTime.now(),
-                        );
-                        if (selectedDate != null && selectedDate != _birthday) {
-                          setState(() {
-                            _birthday = selectedDate;
-                            _birthdayController.text =
-                                DateFormat('dd-MM-yyyy').format(_birthday);
-                          });
-                        }
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.black),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return _isLoading
+        ? LoadingState()
+        : SafeArea(
+            child: Stack(children: [
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Stack(
+                          alignment: Alignment.center,
                           children: [
-                            Text(
-                              DateFormat('dd-MM-yyyy').format(_birthday),
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 120),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Color(0xFFE0AC69),
+                                      Color(0xFF8D5524),
+                                    ],
+                                  ),
+                                ),
+                                height: 120,
+                              ),
+                            ),
+                            CircleAvatar(
+                              radius: 60,
+                              backgroundImage: _profileImage != null
+                                  ? FileImage(_profileImage!)
+                                  : (_downloadURL != null &&
+                                          _downloadURL!.isNotEmpty)
+                                      ? NetworkImage(_downloadURL!)
+                                      : NetworkImage(
+                                              'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431')
+                                          as ImageProvider<Object>,
+                            ),
+                            Positioned(
+                              bottom: 60,
+                              right: 120,
+                              child: CircleAvatar(
+                                backgroundColor: Colors.blue,
+                                radius: 20,
+                                child: IconButton(
+                                  icon: Icon(Icons.camera_alt),
+                                  color: Colors.white,
+                                  onPressed: _pickImage, // Open image picker
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      )),
-                  SizedBox(
-                    height: 8,
-                  ),
-                  Container(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ButtonStyle(
-                          textStyle: MaterialStatePropertyAll(TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              fontFamily: 'Montserrat')),
-                          backgroundColor: MaterialStatePropertyAll(
-                              FrontendConfigs.kPrimaryColor),
-                          foregroundColor:
-                              MaterialStatePropertyAll(Colors.white)),
-                      onPressed: () async {
-                        setState(() {
-                          _isUpdating = true;
-                        });
-                        if (_formKey.currentState!.validate()) {
-                          String? downloadURL;
-                          if (_profileImage != null && _profileImageChanged) {
-                            downloadURL =
-                                await authService.uploadImageToFirebase(
-                                    _profileImage!, 'RVOprofile_images/');
-                            if (downloadURL == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text(
-                                        'Failed to upload profile image. Please try again.')),
-                              );
-                              return; // Exit the function, don't proceed to updateProfile
+                        Text(
+                          'Thông tin cá nhân',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: InputDecoration(
+                            labelText: 'Tên đầy đủ',
+                            prefixIcon: Icon(Icons.person),
+                          ),
+                          style: TextStyle(fontFamily: 'Montserrat'),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Hãy nhập họ tên đầy đủ';
                             }
-                          }
-                          String selectedGender = _selectedGenderString ?? '';
-                          String formattedBirthdate =
-                              DateFormat('yyyy-MM-dd').format(_birthday);
-                          await updateProfile(
-                              userId: widget.userId,
-                              accountId: widget.accountId,
-                              name: _nameController.text,
-                              phone: _phoneController.text,
-                              address: _addressController.text,
-                              birthdate: formattedBirthdate,
-                              sex: selectedGender,
-                              downloadURL: downloadURL,
-                              updateAt: updatedAtString);
-                        }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 10),
+                        TextFormField(
+                          controller: _phoneController,
+                          decoration: InputDecoration(
+                            labelText: 'Số điện thoại',
+                            prefixIcon: Icon(Icons.phone),
+                          ),
+                          style: TextStyle(fontFamily: 'Montserrat'),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Hãy nhập số điện thoại.';
+                            }
+                            if (value.length != 10) {
+                              return 'Số điện thoại phải bao gồm 10 số.';
+                            }
+                            // You can add more phone number validation here if needed.
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 10),
+                        TextFormField(
+                          controller: _addressController,
+                          decoration: InputDecoration(
+                            labelText: 'Địa chỉ',
+                            prefixIcon: Icon(Icons.location_on),
+                          ),
+                          style: TextStyle(fontFamily: 'Montserrat'),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Hãy nhập địa chỉ';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          'Giới tính',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Radio(
+                              activeColor: FrontendConfigs.kIconColor,
+                              value: 'Nam',
+                              groupValue: _selectedGenderString,
+                              onChanged: (String? value) {
+                                setState(() {
+                                  _selectedGenderString = value;
+                                });
+                              },
+                            ),
+                            Text('Nam',
+                                style: TextStyle(fontFamily: 'Montserrat')),
+                            Radio(
+                              activeColor: FrontendConfigs.kIconColor,
+                              value: 'Nữ',
+                              groupValue: _selectedGenderString,
+                              onChanged: (String? value) {
+                                setState(() {
+                                  _selectedGenderString = value;
+                                });
+                              },
+                            ),
+                            Text('Nữ',
+                                style: TextStyle(fontFamily: 'Montserrat')),
+                          ],
+                        ),
+                        Text(
+                          'Ngày sinh',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                        SizedBox(
+                          height: 8,
+                        ),
+                        GestureDetector(
+                            onTap: () async {
+                              DateTime? selectedDate = await showDatePicker(
+                                context: context,
+                                initialDate: _birthday,
+                                firstDate: DateTime(1900),
+                                lastDate: DateTime.now(),
+                              );
+                              if (selectedDate != null &&
+                                  selectedDate != _birthday) {
+                                setState(() {
+                                  _birthday = selectedDate;
+                                  _birthdayController.text =
+                                      DateFormat('dd-MM-yyyy')
+                                          .format(_birthday);
+                                });
+                              }
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.black),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    DateFormat('dd-MM-yyyy').format(_birthday),
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )),
+                        SizedBox(
+                          height: 8,
+                        ),
+                        Container(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ButtonStyle(
+                                textStyle: MaterialStatePropertyAll(TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    fontFamily: 'Montserrat')),
+                                backgroundColor: MaterialStatePropertyAll(
+                                    FrontendConfigs.kPrimaryColor),
+                                foregroundColor:
+                                    MaterialStatePropertyAll(Colors.white)),
+                            onPressed: () async {
+                              setState(() {
+                                _isUpdating = true;
+                              });
+                              if (_formKey.currentState!.validate()) {
+                                String? downloadURL;
+                                if (_profileImage != null &&
+                                    _profileImageChanged) {
+                                  downloadURL =
+                                      await authService.uploadImageToFirebase(
+                                          _profileImage!, 'RVOprofile_images/');
+                                  if (downloadURL == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              'Failed to upload profile image. Please try again.')),
+                                    );
+                                    return; // Exit the function, don't proceed to updateProfile
+                                  }
+                                }
+                                String selectedGender =
+                                    _selectedGenderString ?? '';
+                                String formattedBirthdate =
+                                    DateFormat('yyyy-MM-dd').format(_birthday);
+                                await updateProfile(
+                                    userId: widget.userId,
+                                    accountId: widget.accountId,
+                                    name: _nameController.text,
+                                    phone: _phoneController.text,
+                                    address: _addressController.text,
+                                    birthdate: formattedBirthdate,
+                                    sex: selectedGender,
+                                    downloadURL: downloadURL,
+                                    updateAt: updatedAtString);
+                              }
 
-                        Navigator.pop(context, true);
-                      },
-                      child: Text('Lưu thông tin'),
+                              Navigator.pop(context, true);
+                            },
+                            child: Text('Lưu thông tin'),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ),
-        if (_isUpdating)
-          Opacity(
-            opacity: 0.5,
-            child: ModalBarrier(
-              dismissible: false,
-              color: Colors.black,
-            ),
-          ),
-        if (_isUpdating) LoadingState()
-      ]),
-    );
+              if (_isUpdating)
+                Opacity(
+                  opacity: 0.5,
+                  child: ModalBarrier(
+                    dismissible: false,
+                    color: Colors.black,
+                  ),
+                ),
+              if (_isUpdating) LoadingState()
+            ]),
+          );
   }
 }

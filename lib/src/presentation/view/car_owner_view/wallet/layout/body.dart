@@ -30,6 +30,12 @@ class _WalletBodyState extends State<WalletBody> {
     loadWalletInfo(widget.userId);
   }
 
+  @override
+  void dispose() {
+    // Clean up resources, cancel asynchronous operations, etc.
+    super.dispose();
+  }
+
   void reloadData() {
     loadWalletInfo(widget.userId);
     // Optionally, reload other necessary data

@@ -1,19 +1,25 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/models/rescue_vehicle_owner.dart';
+import 'package:CarRescue/src/models/technician.dart';
+import 'package:CarRescue/src/models/vehicle_item.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/orders/orders_view.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 
 class ReportScreen extends StatefulWidget {
   final String orderId;
-
-  ReportScreen({required this.orderId});
+  final Technician? tech;
+  final Vehicle? vehicle;
+  ReportScreen({required this.orderId, this.tech, this.vehicle});
 
   @override
   _ReportScreenState createState() => _ReportScreenState();
@@ -29,8 +35,12 @@ class _ReportScreenState extends State<ReportScreen> {
   String reportTextError = '';
   String image1Error = '';
   String image2Error = '';
-  String contentError = '';
+  String avaTech =
+      'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431';
   bool isSubmitting = false;
+  Technician? _tech;
+  Vehicle? _vehicle;
+  String? accessToken = GetStorage().read<String>("accessToken");
   Future<void> _getImage(ImageSource source, int imageIndex) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
@@ -83,9 +93,9 @@ class _ReportScreenState extends State<ReportScreen> {
       final response = await http.post(
         Uri.parse(apiUrl),
         body: jsonEncode(requestBody),
-        headers: {
-          'Content-Type': 'application/json',
-          // Add any additional headers if needed
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
       );
 
@@ -115,61 +125,81 @@ class _ReportScreenState extends State<ReportScreen> {
       }
 
       if (imageFile == null) {
-        image1Error = 'Vui lòng chọn hình ảnh '; // Set error message
+        image1Error = 'Vui lòng chọn ít nhất 1 hình ảnh '; // Set error message
       } else {
         image1Error = ''; // Clear error if image is selected
       }
 
-      if (image2File == null) {
-        image2Error = 'Vui lòng chọn hình ảnh '; // Set error message
-      } else {
-        image2Error = ''; // Clear error if image is selected
-      }
+      // if (image2File == null) {
+      //   image2Error = 'Vui lòng chọn hình ảnh '; // Set error message
+      // } else {
+      //   image2Error = ''; // Clear error if image is selected
+      // }
     });
 
     try {
-      print('Attempting to create report...');
-      await createReport(widget.orderId, reportText, imageFile ?? File(''),
-          image2File ?? File(''));
+      if (reportTextError.isEmpty && image1Error.isEmpty) {
+        print('Attempting to create report...');
+        await createReport(
+            widget.orderId, reportText, imageFile!, image2File ?? File(''));
+        print('Report created successfully!');
 
-      print('Report created successfully!');
+        // Hide loading indicator
+        setState(() {
+          isSubmitting = false;
+        });
 
-      // Hide loading indicator
-      setState(() {
-        isSubmitting = false;
-      });
+        // Pop the current screen
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: ((context) => OrderView())));
 
-      // Pop the current screen
-      Navigator.pop(context);
-
-      // Show success dialog
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Thành công'),
-            content: Text(
-              'Hệ thống đã tiếp nhận báo cáo của bạn\nChúng tôi sẽ giải quyết vấn đề trong thời gian sớm nhất',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text('OK'),
+        // Show success dialog
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Thành công'),
+              content: Text(
+                'Hệ thống đã tiếp nhận báo cáo của bạn\nChúng tôi sẽ giải quyết vấn đề trong thời gian sớm nhất',
               ),
-            ],
-          );
-        },
-      );
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // Hide loading indicator on validation error
+        setState(() {
+          isSubmitting = false;
+        });
+      }
     } catch (error) {
-      // Hide loading indicator on error
+      // Handle other errors
       setState(() {
         isSubmitting = false;
       });
-
       print('Error creating report: $error');
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.tech != null) {
+      avaTech = widget.tech!.avatar!;
+    }
+
+    if (widget.vehicle != null) {
+      avaTech = widget.vehicle!.image!;
+    }
+    _tech = widget.tech;
+    _vehicle = widget.vehicle;
   }
 
   @override
@@ -184,10 +214,97 @@ class _ReportScreenState extends State<ReportScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      CustomText(
-                        text: 'Đơn hàng ${widget.orderId}',
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      Column(
+                        children: [
+                          CustomText(
+                            text: 'Đơn hàng ${widget.orderId}',
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          SizedBox(height: 16.0),
+                          Container(
+                            padding: EdgeInsets.all(16.0),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  spreadRadius: 1,
+                                  blurRadius: 5,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                CircleAvatar(
+                                  radius: 30.0,
+                                  backgroundImage: NetworkImage(avaTech),
+                                ),
+                                SizedBox(width: 16.0),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (_tech != null)
+                                      Text(
+                                        'Kĩ thuật viên',
+                                        style: TextStyle(
+                                          fontSize: 18.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    if (_vehicle != null)
+                                      Text(
+                                        'Cứu hộ',
+                                        style: TextStyle(
+                                          fontSize: 18.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    SizedBox(height: 8.0),
+                                    if (_tech != null)
+                                      Text(
+                                        widget.tech!.fullname!,
+                                        style: TextStyle(
+                                          fontSize: 16.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    if (_vehicle != null) SizedBox(height: 8.0),
+                                    Text(
+                                      _vehicle!.manufacturer,
+                                      style: TextStyle(
+                                        fontSize: 16.0,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 8.0),
+                                    Container(
+                                      padding: EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                          color: Colors.grey.shade300),
+                                      child: Text(
+                                        _vehicle!.licensePlate,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: FrontendConfigs.kAuthColor),
+                                      ),
+                                    ),
+                                    SizedBox(height: 8.0),
+                                    Text(
+                                      _vehicle!.type,
+                                      style: TextStyle(
+                                        fontSize: 16.0,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          )
+                        ],
                       ),
                       SizedBox(height: 16),
                       Text(

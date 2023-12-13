@@ -8,6 +8,7 @@ import 'package:CarRescue/src/presentation/view/customer_view/car_view/widgets/c
 import 'package:CarRescue/src/presentation/view/customer_view/car_view/widgets/update_car_view.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:get_storage/get_storage.dart';
 
 class CarCard extends StatefulWidget {
   final CustomerCar customerCar;
@@ -24,6 +25,7 @@ class CarCard extends StatefulWidget {
 
 class _CarCardState extends State<CarCard> {
   CarModel? carModel;
+  String? accessToken = GetStorage().read<String>("accessToken");
   @override
   void initState() {
     super.initState();
@@ -34,7 +36,11 @@ class _CarCardState extends State<CarCard> {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Model/Get?id=$modelId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
     try {
       if (response.statusCode == 200) {
         Map<String, dynamic> data = json.decode(response.body);

@@ -1,13 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/booking.dart';
+import 'package:CarRescue/src/models/car_model.dart';
 import 'package:CarRescue/src/models/customer.dart';
 import 'package:CarRescue/src/models/customerInfo.dart';
+import 'package:CarRescue/src/models/customer_car.dart';
 import 'package:CarRescue/src/models/order.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/utils/api.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -24,13 +28,17 @@ class MapTechScreen extends StatefulWidget {
   final Booking booking;
   final String techId;
   final String techPhone;
+  final CustomerCar car;
+  final CarModel model;
   const MapTechScreen(
       {super.key,
       required this.techImg,
       required this.booking,
       required this.cus,
       required this.techId,
-      required this.techPhone});
+      required this.techPhone,
+      required this.car,
+      required this.model});
   final CustomerInfo cus;
   @override
   _MapTechScreenState createState() => _MapTechScreenState();
@@ -48,6 +56,8 @@ class _MapTechScreenState extends State<MapTechScreen> {
   Set<Polyline> polylines = {};
   Timer? myTimer;
   bool isArrived = false;
+  String? _duration;
+  String? _distance;
   @override
   void initState() {
     super.initState();
@@ -59,11 +69,15 @@ class _MapTechScreenState extends State<MapTechScreen> {
 
     _loadCreateLocation();
     loadUpdateLocation();
+    _getEstimatedTravelTime();
     myTimer = Timer.periodic(Duration(seconds: 5), (Timer timer) {
       _loadLocation();
       _getCurrentLocation();
       _getOrderLocation();
       loadUpdateLocation();
+      if (currentLocation != null && _targetLocation != null) {
+        _getEstimatedTravelTime(); // Call the function to get estimated travel time
+      }
       // Stop the timer after a certain condition (e.g., after 10 ticks)
       // if (timer.tick == 10) {
       //   print("Stopping the timer.");
@@ -163,6 +177,63 @@ class _MapTechScreenState extends State<MapTechScreen> {
     );
   }
 
+  double calculateTotalDistance(PolylineResult result) {
+    double totalDistance = 0.0;
+
+    for (int i = 0; i < result.points.length - 1; i++) {
+      double distance = Geolocator.distanceBetween(
+        result.points[i].latitude,
+        result.points[i].longitude,
+        result.points[i + 1].latitude,
+        result.points[i + 1].longitude,
+      );
+
+      totalDistance += distance;
+    }
+
+    // Convert distance to kilometers
+    totalDistance /= 1000.0;
+
+    return totalDistance;
+  }
+
+  Future<void> _getEstimatedTravelTime() async {
+    final String apiKey = "AIzaSyAiyZLdDwpp0_dAOPNBMItItXixgLH9ABo";
+    final String apiUrl =
+        "https://maps.googleapis.com/maps/api/directions/json";
+
+    final response = await http.get(
+      Uri.parse(
+        "$apiUrl?origin=${currentLocation!.latitude},${currentLocation!.longitude}&destination=${_targetLocation!.latitude},${_targetLocation!.longitude}&key=$apiKey",
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      if (data["status"] == "OK") {
+        final List<dynamic> routes = data["routes"];
+        if (routes.isNotEmpty) {
+          final Map<String, dynamic> route = routes.first;
+          final Map<String, dynamic> legs = route["legs"].first;
+          print(legs);
+          final String durationText = legs["duration"]["text"];
+          final String distance = legs["distance"]["text"];
+          setState(() {
+            _duration = durationText;
+            _distance = distance;
+          });
+          print("Estimated Travel Time: $durationText");
+
+          // You can use durationSeconds or durationText as needed
+
+          return;
+        }
+      }
+    }
+
+    print("Error fetching estimated travel time");
+  }
+
   void _getOrderLocation() async {
     String latLongString = "${widget.booking.departure}";
 
@@ -193,7 +264,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
     // Fetch route coordinates
     PolylinePoints polylinePoints = PolylinePoints();
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      "AIzaSyBXriBmJwX5fjH4_WTFbANezA9lNXzmL_w",
+      "AIzaSyAiyZLdDwpp0_dAOPNBMItItXixgLH9ABo",
       PointLatLng(
         currentLocation!.latitude,
         currentLocation!.longitude,
@@ -207,9 +278,9 @@ class _MapTechScreenState extends State<MapTechScreen> {
     if (currentLocation != null && _targetLocation != null) {
       double distance = calculateDistance(currentLocation!, _targetLocation!);
 
-      if (distance < 100) {
+      if (distance < 50) {
         // Stop the timer
-        // myTimer?.cancel();
+        myTimer?.cancel();
 
         print(
             "Technician is close to the target location. Stopping the timer.");
@@ -315,6 +386,8 @@ class _MapTechScreenState extends State<MapTechScreen> {
             .map((point) => LatLng(point.latitude, point.longitude))
             .toList();
       });
+      double totalDistance = calculateTotalDistance(result);
+      print("Total Distance: $totalDistance km");
     } else {
       print("Error fetching route coordinates");
     }
@@ -386,52 +459,215 @@ class _MapTechScreenState extends State<MapTechScreen> {
           },
         ),
       ),
-      body: (currentLocation != null && _targetLocation != null)
-          ? GoogleMap(
-              onMapCreated: (controller) {
-                setState(() {
-                  mapController = controller;
-                });
-              },
-              initialCameraPosition: CameraPosition(
-                target: currentLocation ?? LatLng(0.0, 0.0),
-                zoom: 15.0,
-              ),
-              markers: {
-                Marker(
-                  markerId: MarkerId("currentLocation"),
-                  position: currentLocation ?? LatLng(0.0, 0.0),
-                  icon: techIcon ?? BitmapDescriptor.defaultMarker,
-                  infoWindow: InfoWindow(title: "Vị trí của tôi"),
+      body: Stack(children: [
+        (currentLocation != null && _targetLocation != null)
+            ? GoogleMap(
+                onMapCreated: (controller) {
+                  setState(() {
+                    mapController = controller;
+                  });
+                },
+                initialCameraPosition: CameraPosition(
+                  target: currentLocation ?? LatLng(0.0, 0.0),
+                  zoom: 15.0,
                 ),
-                Marker(
-                  markerId: MarkerId("targetLocation"),
-                  position: _targetLocation ?? LatLng(0.0, 0.0),
-                  icon: departureIcon ?? BitmapDescriptor.defaultMarker,
-                  infoWindow: InfoWindow(
-                    title: "Địa điểm cứu hộ",
+                markers: {
+                  Marker(
+                    markerId: MarkerId("currentLocation"),
+                    position: currentLocation ?? LatLng(0.0, 0.0),
+                    icon: techIcon ?? BitmapDescriptor.defaultMarker,
+                    infoWindow: InfoWindow(title: "Vị trí của tôi"),
                   ),
+                  Marker(
+                    markerId: MarkerId("targetLocation"),
+                    position: _targetLocation ?? LatLng(0.0, 0.0),
+                    icon: departureIcon ?? BitmapDescriptor.defaultMarker,
+                    infoWindow: InfoWindow(
+                      title: "Địa điểm cứu hộ",
+                    ),
+                  ),
+                  // Marker(
+                  //   markerId: MarkerId("technicianLocation"),
+                  //   position: technicianLocation!,
+                  //   icon: departureIcon ?? BitmapDescriptor.defaultMarker,
+                  //   infoWindow: InfoWindow(title: "Vị trí gặp nạn của khách"),
+                  // ),
+                },
+                polylines: {
+                  Polyline(
+                    polylineId: PolylineId("route"),
+                    color: Colors.blue,
+                    width: 3,
+                    points:
+                        routeCoordinates, // Use routeCoordinates instead of [technicianLocation!, _targetLocation!]
+                  ),
+                },
+              )
+            : Center(
+                child: CircularProgressIndicator(),
+              ),
+        DraggableScrollableSheet(
+          initialChildSize: 0.28,
+          minChildSize: 0.2,
+          maxChildSize: 0.9,
+          builder: (BuildContext context, ScrollController scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
                 ),
-                // Marker(
-                //   markerId: MarkerId("technicianLocation"),
-                //   position: technicianLocation!,
-                //   icon: departureIcon ?? BitmapDescriptor.defaultMarker,
-                //   infoWindow: InfoWindow(title: "Vị trí gặp nạn của khách"),
-                // ),
-              },
-              polylines: {
-                Polyline(
-                  polylineId: PolylineId("route"),
-                  color: Colors.blue,
-                  width: 3,
-                  points:
-                      routeCoordinates, // Use routeCoordinates instead of [technicianLocation!, _targetLocation!]
-                ),
-              },
-            )
-          : Center(
-              child: CircularProgressIndicator(),
-            ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          child: Column(
+                            children: [
+                              CustomText(
+                                text: 'Khoảng cách',
+                                fontWeight: FontWeight.bold,
+                              ),
+                              CustomText(
+                                text: '$_distance',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          height: 40,
+                          child: VerticalDivider(
+                            thickness: 1,
+                          ),
+                        ),
+                        Container(
+                          child: Column(
+                            children: [
+                              CustomText(
+                                text: 'Thời gian',
+                                fontWeight: FontWeight.bold,
+                              ),
+                              CustomText(
+                                text: '$_duration',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Divider(
+                    height: 1,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CustomText(
+                          text: 'Thông tin khách hàng',
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CustomText(
+                              text: '${widget.cus.fullname}',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            SizedBox(
+                              height: 4,
+                            ),
+                            CustomText(
+                              text: '${widget.car.manufacturer}',
+                              fontSize: 15,
+                            ),
+                            SizedBox(
+                              height: 4,
+                            ),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                      color: Colors.grey.shade300),
+                                  child: Text(
+                                    '${widget.car.licensePlate}',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: FrontendConfigs.kAuthColor),
+                                  ),
+                                ),
+                                Text(
+                                  ' | ${widget.model.model1 ?? ''} ',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: FrontendConfigs.kAuthColor),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        CircleAvatar(
+                          radius: 30,
+                          backgroundImage: NetworkImage(widget.car.image ??
+                              'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fcardefault.png?alt=media&token=8344e522-0e82-426f-93c9-6204a7e3a760'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: FrontendConfigs.kActiveColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                      onPressed: () {
+                        launchDialPad(widget.cus.phone);
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(CupertinoIcons.phone_arrow_down_left),
+                          SizedBox(width: 5),
+                          Text('Gọi khách hàng'),
+                        ],
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            );
+          },
+        ),
+      ]),
+      
       floatingActionButton: _getFloatingActionButton(),
       // floatingActionButton: Column(
       //   mainAxisAlignment: MainAxisAlignment.end,
