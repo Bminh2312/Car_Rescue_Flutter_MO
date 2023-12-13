@@ -36,7 +36,7 @@ class _OrderListState extends State<OrderList> {
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
   FeedBackProvider feedBackProvider = FeedBackProvider();
   FeedbackCustomer? feedbackCustomer;
-
+  String? accessToken = GetStorage().read<String>("accessToken");
   Future<String> getPlaceDetails(String latLng) async {
     try {
       final locationProvider = LocationProvider();
@@ -55,7 +55,11 @@ class _OrderListState extends State<OrderList> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://rescuecapstoneapi.azurewebsites.net/api/Report/GetByOrderID?id=$orderId'), // Replace with your actual API endpoint
+            'https://rescuecapstoneapi.azurewebsites.net/api/Report/GetByOrderID?id=$orderId'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        }, // Replace with your actual API endpoint
       );
       if (response.statusCode == 200) {
         print(response.statusCode);

@@ -434,7 +434,13 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                     bool decision = true;
                                     bool isSuccess = await AuthService()
                                         .acceptOrder(order.id, decision);
-                                    //  AuthService().sendNotification(deviceId: deviceId, isAndroidDevice: isAndroidDevice, title: title, body: body, target: target, orderId: orderId)
+                                    //                      AuthService().sendNotification(
+                                    // deviceId: _managerToken ?? '',
+                                    // isAndroidDevice: true,
+                                    // title: 'Thông báo từ khách hàng',
+                                    // body: 'Đơn hàng ${widget.booking.id} đã được chấp nhận',
+                                    // target: _managerAccountId ?? '',
+                                    // orderId: widget.booking.id);
                                     if (isSuccess) {
                                       setState(() {
                                         // _isLoading = false;
@@ -494,14 +500,28 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                   order.status == 'COMPLETED' && widget.hasFailedStatus == true
                       ? InkWell(
                           onTap: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ReportScreen(
-                                  orderId: widget.orderId,
+                            if (technicianInfo != null &&
+                                technicianInfo!.id.isNotEmpty) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ReportScreen(
+                                    orderId: widget.orderId,
+                                    tech: technicianInfo,
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            } else {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ReportScreen(
+                                    orderId: widget.orderId,
+                                    vehicle: vehicleInfo,
+                                  ),
+                                ),
+                              );
+                            }
                           },
                           child: Container(
                             padding: EdgeInsets.symmetric(

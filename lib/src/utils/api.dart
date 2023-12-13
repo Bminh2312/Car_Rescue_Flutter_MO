@@ -38,10 +38,16 @@ class LoginResult {
   });
 }
 
-final String apiKey1 = 'AIzaSyB1GPWHcGXG5TA-0RaxW8E_QM8P2_4RScc';
 
-final String fcmToken =
-    'eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTUxMiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6IlRlY2huaWNpYW5AZ21haWwuY29tIiwiQWNjb3VudElEIjoiZGQyZjFhMjAtNTc2OS00MDUyLTg1MTktOTIyYmZkYzk5NWViIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiVGVjaG5pY2lhbiIsImV4cCI6MTcwMTYwNTIyOH0.OaLPzJzbtudoQYRPwlEjG1WEUGVPVc6lFZa2xoxxlCEGyoCvrKGckemMvceeMgtPwffbDy-MJcROKs3ad78nhw';
+class ManagerData {
+  final String managerID;
+  final String deviceToken;
+  
+  ManagerData({required this.managerID, required this.deviceToken});
+}
+
+// final String apiKey1 = 'AIzaSyAiyZLdDwpp0_dAOPNBMItItXixgLH9ABo';
+final String apiKey1 = 'AIzaSyB1GPWHcGXG5TA-0RaxW8E_QM8P2_4RScc';
 
 class AuthService {
   String? accessToken = GetStorage().read<String>("accessToken");
@@ -76,7 +82,7 @@ class AuthService {
             final avatar = technician['avatar'] ?? '';
             // Fetch user profile information using the user ID
             final userProfile = await fetchTechProfile(userId);
-
+            print(accessToken);
             if (userProfile != null) {
               // Now you have the user profile data
               print('PROFILE: $userProfile');
@@ -705,8 +711,10 @@ class AuthService {
           'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=${apiKey1}';
 
       final responseDeparture = await http.get(Uri.parse(urlDeparture));
+      print(responseDeparture.statusCode);
       if (responseDeparture.statusCode != 200) {
-        // Handle error or return default values
+        print('Geocoding API error: ${responseDeparture.statusCode}');
+        print('Response body: ${responseDeparture.body}');
       } else {
         var jsonResponseDeparture = json.decode(responseDeparture.body);
         if (jsonResponseDeparture['status'] == 'OK' &&
@@ -1612,12 +1620,12 @@ class AuthService {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $accessToken'
       });
-      print('codew real :${response.statusCode}');
+      print('getlivelocation :${response.statusCode}');
       if (response.statusCode == 200) {
         Map<String, dynamic> data = json.decode(response.body);
         var dataField = data['data'];
 
-        print('day la1: $dataField');
+        print('getlivelocation: $dataField');
         if (dataField != null && dataField is Map<String, dynamic>) {
           // Parse the "body" string as JSON
           Map<String, dynamic> bodyData = json.decode(dataField['body']);
@@ -1785,6 +1793,48 @@ class AuthService {
       }
     } catch (error) {
       print('Error to update location: $error');
+    }
+  }
+
+  Future<Map<String, String>> getAreaOfRVO(String rvoId) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Manager/GetOfArea?id=$rvoId';
+
+    try {
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken',
+        },
+      );
+
+      print("${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        Map<String, dynamic> data = jsonResponse['data'];
+        Map<String, dynamic> accountData = data['account'];
+
+        // Print or use the account data as needed
+        print('Account ID: ${accountData['id']}');
+        print('Email: ${accountData['email']}');
+
+        // Extract the managerID and deviceToken
+        String managerID = accountData['id'];
+        String deviceToken = accountData['deviceToken'];
+
+        return {'managerId': managerID, 'deviceToken': deviceToken};
+      } else {
+        print('Error: ${response.statusCode}');
+        // Handle non-200 status code when fetching notifications
+        throw Exception('Failed to fetch notifications');
+      }
+    } catch (e) {
+      print('Error fetching notifications: $e');
+      // Handle other errors that may occur during the HTTP request
+      throw Exception('Failed to fetch notifications');
     }
   }
 }

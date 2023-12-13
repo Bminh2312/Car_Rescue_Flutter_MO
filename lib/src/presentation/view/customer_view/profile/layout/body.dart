@@ -10,6 +10,7 @@ import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:get_storage/get_storage.dart';
 
 import 'row_widget.dart';
+import 'test.dart';
 
 class ProfileBody extends StatefulWidget {
   ProfileBody({Key? key}) : super(key: key);
@@ -31,7 +32,8 @@ class _ProfileBodyState extends State<ProfileBody> {
 
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
 
-  String avt = '';
+  String avt =
+      'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431';
 
   String fullname = '';
 
@@ -61,7 +63,7 @@ class _ProfileBodyState extends State<ProfileBody> {
         phone = fetchData.phone;
       });
     } catch (e) {
-      print("Lỗi: ${e}}");
+      print("Lỗi: $e}");
     }
   }
 
@@ -157,7 +159,10 @@ class _ProfileBodyState extends State<ProfileBody> {
               icon: "assets/svg/help_center.svg",
               title: "",
               name: 'Trung tâm hỗ trợ',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => WebsocketDemo()));
+              },
             ),
             const SizedBox(
               height: 24,

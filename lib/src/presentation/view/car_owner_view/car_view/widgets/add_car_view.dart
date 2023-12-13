@@ -9,6 +9,13 @@ import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
 
+class ManagerData {
+  final String managerID;
+  final String deviceToken;
+
+  ManagerData({required this.managerID, required this.deviceToken});
+}
+
 class AddCarScreen extends StatefulWidget {
   final String userId;
 
@@ -44,26 +51,56 @@ class _AddCarScreenState extends State<AddCarScreen> {
     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
   );
   bool _isFormConfirmed = false;
+  String? _deviceToken;
+  String? _managerId;
+  @override
+  void initState() {
+    super.initState();
+    _loadManager(widget.userId);
+  }
+
+  Future<Map<String, String>> _loadManager(String userId) async {
+    try {
+      final managerData = await AuthService().getAreaOfRVO(userId);
+      setState(() {
+        _managerId = managerData['managerId'];
+        _deviceToken = managerData['deviceToken'];
+      });
+      print('Manager ID: $_managerId');
+      print('Device Token: $_deviceToken');
+      return managerData;
+    } catch (e) {
+      // Handle any errors that might occur during the loading process
+      print('Error loading manager: $e');
+      throw e; // Rethrow the exception if needed
+    }
+  }
+
   void _submitForm() async {
     var uuid = Uuid();
     String randomId = uuid.v4();
-    if(_carRegistrationFontImage == null && _carRegistrationBackImage == null){
+    if (_carRegistrationFontImage == null &&
+        _carRegistrationBackImage == null) {
       _notifyMessage.showToast('Cần ảnh mặt trước và sau');
     }
-    if (_formKey.currentState!.validate() && _carRegistrationFontImage != null && _carRegistrationBackImage != null) {
+    if (_formKey.currentState!.validate() &&
+        _carRegistrationFontImage != null &&
+        _carRegistrationBackImage != null) {
       if (_isFormConfirmed) {
         _formKey.currentState!.save();
         setState(() {
           _isLoading = true;
         });
-        AuthService().sendNotification(
-            deviceId:
-                'eGwrKYghm6vuhnwlMicYsE:APA91bFR9eNQAPggKuJ1S7fweiTyIWHY8WNhnyFB2ZinOHG0euRkJsLghyCLuRTTEs0qER3ss8OkFlNqoIRArs0XqpCtow9q5PFY2-1HeRc8vCmhlZJqmBHhLA1aErqX2kOGKCg2f8AV',
-            isAndroidDevice: true,
-            title: 'Thông báo từ chủ xe cứu hộ',
-            body: 'Có một phương tiện cần được kiểm duyệt',
-            target: '4a30e2d2-149a-4442-817c-9e73ee4e4477',
-            orderId: '');
+        if (_deviceToken != null && _managerId != null) {
+          AuthService().sendNotification(
+              deviceId: _deviceToken!,
+              isAndroidDevice: true,
+              title: 'Thông báo từ chủ xe cứu hộ',
+              body: 'Có một phương tiện cần được kiểm duyệt',
+              target: _managerId!,
+              orderId: '');
+        }
+
         try {
           bool isSuccess = await authService.createCarApproval(
             randomId,
@@ -175,7 +212,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                             value.trim().isEmpty) {
                                           return 'Vui lòng biển số xe';
                                         }
-                                        RegExp regex = RegExp(r'^([1-9][1-9][A-Z][A-Z1-9]-\d{4,5})$');
+                                        RegExp regex = RegExp(
+                                            r'^([1-9][1-9][A-Z][A-Z1-9]-\d{4,5})$');
 
                                         if (!regex
                                             .hasMatch(value.toUpperCase())) {
@@ -214,10 +252,11 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                 onImageChange: (file) {
                                   if (file!.lengthSync() > 3 * 1024 * 1024) {
                                     // 3MB in bytes
-                                    _notifyMessage.showToast("Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.");
-                                    
-                                  }else if(file.length() == 0){
-                                    _notifyMessage.showToast("Xin hãy thêm hình phương tiện.");
+                                    _notifyMessage.showToast(
+                                        "Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.");
+                                  } else if (file.length() == 0) {
+                                    _notifyMessage.showToast(
+                                        "Xin hãy thêm hình phương tiện.");
                                   } else {
                                     setState(() {
                                       vehicleImage = file;
@@ -367,7 +406,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                 onImageChange: (file) {
                                   if (file!.lengthSync() > 3 * 1024 * 1024) {
                                     // 3MB in bytes
-                                    _notifyMessage.showToast("Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.");
+                                    _notifyMessage.showToast(
+                                        "Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.");
                                   } else {
                                     setState(() {
                                       _carRegistrationFontImage = file;
@@ -383,7 +423,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                 onImageChange: (file) {
                                   if (file!.lengthSync() > 3 * 1024 * 1024) {
                                     // 3MB in bytes
-                                    _notifyMessage.showToast("Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.");
+                                    _notifyMessage.showToast(
+                                        "Ảnh quá lớn. Vui lòng tải lên ảnh dưới 3MB.");
                                   } else {
                                     setState(() {
                                       _carRegistrationBackImage = file;

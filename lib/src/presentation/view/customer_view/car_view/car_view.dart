@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:get_storage/get_storage.dart';
 
 class CarListView extends StatefulWidget {
   final String userId;
@@ -35,6 +36,7 @@ class _CarListViewState extends State<CarListView> {
   String selectedStatus = 'ACTIVE';
   CarModel? carModel;
   bool isEmpty = true;
+  String? accessToken = GetStorage().read<String>("accessToken");
   @override
   void initState() {
     super.initState();
@@ -89,7 +91,11 @@ class _CarListViewState extends State<CarListView> {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Car/GetAllOfUser?id=$userId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       Map<String, dynamic> data = json.decode(response.body);
@@ -120,7 +126,11 @@ class _CarListViewState extends State<CarListView> {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Car/Delete?id=$id';
 
-    final response = await http.post(Uri.parse(apiUrl));
+    final response =
+        await http.post(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     try {
       if (response.statusCode == 200) {
@@ -145,7 +155,11 @@ class _CarListViewState extends State<CarListView> {
     final String fetchCarUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Car/Get?id=$carId'; // Replace with your actual API endpoint for fetching car data
 
-    final response = await http.get(Uri.parse(fetchCarUrl));
+    final response =
+        await http.get(Uri.parse(fetchCarUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
     try {
       if (response.statusCode == 200) {
         Map<String, dynamic> data = json.decode(response.body);

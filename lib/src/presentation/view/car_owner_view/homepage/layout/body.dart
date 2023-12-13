@@ -105,7 +105,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
                     playSound: true,
                     icon: '@drawable/ic_launcher',
                     largeIcon:
-                        DrawableResourceAndroidBitmap('@drawable/download'))));
+                        DrawableResourceAndroidBitmap('@drawable/logo1'))));
       }
       handleIncomingNotification(message);
       print('Received message: ${message.notification?.body}');
@@ -250,6 +250,12 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
     } catch (error) {
       print("Error in displayFeedbackForBooking: $error");
     }
+  }
+
+  @override
+  void dispose() {
+    // Clean up resources, cancel asynchronous operations, etc.
+    super.dispose();
   }
 
   Widget buildWallet() {
@@ -877,7 +883,8 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
                         child: ClipOval(
                           child: Image(
                             image: NetworkImage(
-                              _owner?.avatar ?? '',
+                              _owner?.avatar ??
+                                  'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431',
                             ),
                             width: 64, // double the radius
                             height: 64, // double the radius
