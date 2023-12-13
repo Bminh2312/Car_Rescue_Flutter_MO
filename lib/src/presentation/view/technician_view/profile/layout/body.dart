@@ -29,7 +29,8 @@ class _ProfileBodyState extends State<ProfileBody> {
   bool isThirdSelected = false;
   String userName = '';
   String phoneNumber = '';
-  String avatarTech = '';
+  String avatarTech =
+      'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431';
   AuthService authService = AuthService();
   Map<String, dynamic>? userProfileData;
   @override

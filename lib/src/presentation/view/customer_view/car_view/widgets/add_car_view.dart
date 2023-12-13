@@ -10,6 +10,7 @@ import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/car_view/car_view.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
@@ -50,6 +51,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   List<CarBrand> _brands = [];
   String? _selectedBrand;
   String? _selectedType;
+  String? accessToken = GetStorage().read<String>("accessToken");
   final titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
   final inputDecoration = InputDecoration(
     border: OutlineInputBorder(),
@@ -132,7 +134,13 @@ class _AddCarScreenState extends State<AddCarScreen> {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Model/GetAll';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response = await http.get(
+      Uri.parse(apiUrl),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      },
+    );
 
     try {
       if (response.statusCode == 200) {

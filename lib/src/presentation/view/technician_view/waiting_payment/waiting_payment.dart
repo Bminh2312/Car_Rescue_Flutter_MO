@@ -24,7 +24,10 @@ class WaitingForPaymentScreen extends StatefulWidget {
   final Map<String, String> subAddressesDepart;
   final Map<String, String> addressesDesti;
   final Map<String, String> subAddressesDesti;
+  final String managerId;
+  final String deviceToken;
   final String data;
+  final Technician tech;
   const WaitingForPaymentScreen(
       {super.key,
       required this.payment,
@@ -35,7 +38,10 @@ class WaitingForPaymentScreen extends StatefulWidget {
       required this.addressesDesti,
       required this.subAddressesDesti,
       required this.accountId,
-      required this.data});
+      required this.data,
+      required this.managerId,
+      required this.deviceToken,
+      required this.tech});
   @override
   State<WaitingForPaymentScreen> createState() =>
       _WaitingForPaymentScreenState();
@@ -114,7 +120,13 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Service/Get?id=$serviceId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response = await http.get(
+      Uri.parse(apiUrl),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      },
+    );
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
@@ -366,6 +378,14 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                           .fetchBookingById(widget.booking.id);
                       AuthService().completedOrder(widget.booking.id, true);
                       // Update the local state with the fetched booking details
+                      AuthService().sendNotification(
+                          deviceId: widget.deviceToken,
+                          isAndroidDevice: true,
+                          title: 'Thông báo từ kĩ thuật viên',
+                          body:
+                              'Kĩ thuật viên ${widget.tech.fullname} đã nhận số tiền ${_payment!.amount} cho đơn hàng ${widget.booking.id}',
+                          target: widget.managerId,
+                          orderId: widget.booking.id);
                       setState(() {
                         booking = updatedBooking;
                       });

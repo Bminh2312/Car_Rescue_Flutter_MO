@@ -105,7 +105,7 @@ class _ServiceBodyState extends State<ServiceBody>
                     playSound: true,
                     icon: '@drawable/ic_launcher',
                     largeIcon:
-                        DrawableResourceAndroidBitmap('@drawable/download'))));
+                        DrawableResourceAndroidBitmap('@drawable/logo1'))));
       }
 
       print('Received message: ${message.notification?.body}');

@@ -6,6 +6,7 @@ import 'package:CarRescue/src/presentation/view/technician_view/booking_details/
 import 'package:CarRescue/src/providers/service_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:CarRescue/src/models/service.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -29,19 +30,22 @@ class ServiceSelectionScreen extends StatefulWidget {
   final Map<String, String> subAddressesDepart;
   final Map<String, String> addressesDesti;
   final Map<String, String> subAddressesDesti;
-  
+
   ServiceSelectionScreen(
       {required this.selectedServices,
       required this.booking,
       required this.addressesDepart,
       required this.subAddressesDepart,
       required this.addressesDesti,
-      required this.subAddressesDesti, required this.userId, required this.accountId});
+      required this.subAddressesDesti,
+      required this.userId,
+      required this.accountId});
   @override
   _ServiceSelectionScreenState createState() => _ServiceSelectionScreenState();
 }
 
 class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
+  String? accessToken = GetStorage().read<String>("accessToken");
   @override
   void initState() {
     super.initState();
@@ -121,8 +125,9 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     for (var service in serviceData) {
       final response = await http.post(
         Uri.parse(apiUrl),
-        headers: {
-          "Content-Type": "application/json",
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
         },
         body: json.encode(service),
       );
@@ -174,7 +179,13 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response = await http.get(
+      Uri.parse(apiUrl),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      },
+    );
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
@@ -208,7 +219,13 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
       final apiUrl =
           'https://rescuecapstoneapi.azurewebsites.net/api/Service/Get?id=$serviceId';
 
-      final response = await http.get(Uri.parse(apiUrl));
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $accessToken'
+        },
+      );
       print(response.statusCode);
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);

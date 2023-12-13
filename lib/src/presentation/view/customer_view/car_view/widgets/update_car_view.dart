@@ -10,6 +10,7 @@ import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/car_view/car_view.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
@@ -54,7 +55,7 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
   CarModel? carModel;
   // Create a Map to associate car types (model1) with modelIds
   Map<String, String> modelNameToId = {};
-
+  String? accessToken = GetStorage().read<String>("accessToken");
   // Initialize _selectedType with an empty string or a default value
 
   String _selectedModelId = '';
@@ -97,7 +98,10 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
     // Make the API call
     var response = await http.put(
       Uri.parse('https://rescuecapstoneapi.azurewebsites.net/api/Car/Update'),
-      headers: {"Content-Type": "application/json"},
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      },
       body: jsonEncode(payload),
     );
 
@@ -182,7 +186,13 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
     final String apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Model/GetAll';
 
-    final response = await http.get(Uri.parse(apiUrl));
+    final response = await http.get(
+      Uri.parse(apiUrl),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      },
+    );
 
     try {
       if (response.statusCode == 200) {
@@ -285,7 +295,8 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
                                           print(value);
                                           return 'Vui lòng nhập biển số xe';
                                         }
-                                        RegExp regex = RegExp(r'^([1-9][1-9][A-Z][A-Z1-9]-\d{4,5})$');
+                                        RegExp regex = RegExp(
+                                            r'^([1-9][1-9][A-Z]-\d{4,5})$');
 
                                         if (!regex
                                             .hasMatch(value.toUpperCase())) {

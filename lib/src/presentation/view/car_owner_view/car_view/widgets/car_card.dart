@@ -164,7 +164,8 @@ class CarCard extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 image: DecorationImage(
-                  image: NetworkImage(vehicle.image ?? ''),
+                  image: NetworkImage(vehicle.image ??
+                      'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Ftowtruckdefault.png?alt=media&token=12833276-2866-4b3f-8167-d60652d91c1f'),
                   fit: BoxFit.cover,
                 ),
               ),

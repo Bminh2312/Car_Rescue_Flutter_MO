@@ -681,6 +681,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               context,
               MaterialPageRoute(
                 builder: (context) => WaitingForPaymentScreen(
+                  tech: technicianInfo!,
+                  deviceToken: _managerToken ?? '',
+                  managerId: _managerAccountId ?? '',
                   accountId: technicianInfo?.accountId ?? '',
                   addressesDepart: widget.addressesDepart,
                   subAddressesDepart: widget.subAddressesDepart,
@@ -1070,13 +1073,16 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-            key: PageStorageKey<String>('page'),
-            physics: ClampingScrollPhysics(),
-            itemCount: orderDetails.length,
-            itemBuilder: (context, index) {
-              return _buildOrderDetail(orderDetails[index]);
-            },
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ListView.builder(
+              key: PageStorageKey<String>('page'),
+              physics: ClampingScrollPhysics(),
+              itemCount: orderDetails.length,
+              itemBuilder: (context, index) {
+                return _buildOrderDetail(orderDetails[index]);
+              },
+            ),
           ),
         ),
       ],
@@ -1557,6 +1563,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => MapTechScreen(
+                                            car: _car!,
+                                            model: _carModel!,
                                             cus: customerInfo!,
                                             booking: widget.booking,
                                             techImg:
@@ -1580,7 +1588,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       name: customerInfo?.fullname ?? '',
                       phone: customerInfo?.phone ?? '',
                       avatar: customerInfo?.avatar ??
-                          'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/images%2Favatars-2.png?alt=media&token=ebea458f-13c0-4c20-9d52-15eca7f652ac',
+                          'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431',
                     ),
                     if (customerInfo?.fullname != 'Khách Hàng Offline')
                       CustomerCarInfoRow(
@@ -1588,7 +1596,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         type: _carModel?.model1 ?? 'Không có',
                         licensePlate: _car?.licensePlate ?? 'Không có',
                         image: _car?.image ??
-                            'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/images%2Favatars-2.png?alt=media&token=ebea458f-13c0-4c20-9d52-15eca7f652ac',
+                            'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fcardefault.png?alt=media&token=8344e522-0e82-426f-93c9-6204a7e3a760',
                       ),
                   ],
                 ),
@@ -1810,6 +1818,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                 CustomText(
                                   text: 'Phí dịch vụ',
                                   fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
                                 SizedBox(
                                   width: 7,
@@ -1874,97 +1883,107 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         ]),
         bottomNavigationBar: Container(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              if (widget.booking.status != "COMPLETED" &&
-                  widget.booking.status != "CANCELLED")
-                GestureDetector(
-                  onTap: () {
-                    List<Service> selectedServices = selectedServiceCards
-                        .where(
-                            (service) => selectedServiceCards.contains(service))
-                        .toList();
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ServiceSelectionScreen(
-                            userId: widget.userId,
-                            accountId: widget.accountId,
-                            selectedServices: selectedServices,
-                            booking: widget.booking,
-                            addressesDepart: widget.addressesDepart,
-                            subAddressesDepart: widget.subAddressesDepart,
-                            addressesDesti: widget.addressesDesti,
-                            subAddressesDesti: widget.subAddressesDesti,
+            if (widget.booking.status != "COMPLETED" &&
+                widget.booking.status != "CANCELLED")
+              Container(
+                color: Colors.white,
+                child: Row(
+                  mainAxisAlignment: widget.booking.status == "INPROGRESS"
+                      ? MainAxisAlignment.spaceEvenly
+                      : MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          List<Service> selectedServices = selectedServiceCards
+                              .where((service) =>
+                                  selectedServiceCards.contains(service))
+                              .toList();
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ServiceSelectionScreen(
+                                  userId: widget.userId,
+                                  accountId: widget.accountId,
+                                  selectedServices: selectedServices,
+                                  booking: widget.booking,
+                                  addressesDepart: widget.addressesDepart,
+                                  subAddressesDepart: widget.subAddressesDepart,
+                                  addressesDesti: widget.addressesDesti,
+                                  subAddressesDesti: widget.subAddressesDesti,
+                                ),
+                              ));
+                        },
+                        child: Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          color: Colors.white,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  buildServiceList(context, "Chọn dịch vụ",
+                                      Icon(Icons.add_box)),
+                                ],
+                              ),
+                            ],
                           ),
-                        ));
-                  },
-                  child: Container(
-                    width: containerWidth,
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            buildServiceList(
-                                context, "Chọn dịch vụ", Icon(Icons.add_box)),
-                            widget.booking.status == "INPROGRESS"
-                                ? GestureDetector(
-                                    onTap: () {
-                                      print(
-                                          "IncidentID: ${widget.booking.indicentId}");
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                ChangeRescueScreen(
-                                              paymentMethod:
-                                                  _payment?.method ?? '',
-                                              accountId: widget.accountId,
-                                              userId: widget.userId,
-                                              addressesDepart:
-                                                  widget.addressesDepart,
-                                              addressesDesti:
-                                                  widget.addressesDesti,
-                                              booking: widget.booking,
-                                              subAddressesDepart:
-                                                  widget.subAddressesDepart,
-                                              subAddressesDesti:
-                                                  widget.subAddressesDesti,
-                                            ),
-                                          ));
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 8),
-                                      color: Colors.white,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [SizedBox()],
-                                          ),
-                                          buildServiceList(
-                                              context,
-                                              "Chuyển đơn",
-                                              Icon(Icons.next_plan)),
-                                        ],
-                                      ),
-                                    ),
-                                  )
-                                : Container()
-                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    widget.booking.status == "INPROGRESS"
+                        ? Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            child: GestureDetector(
+                              onTap: () {
+                                print(
+                                    "IncidentID: ${widget.booking.indicentId}");
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ChangeRescueScreen(
+                                        paymentMethod: _payment?.method ?? '',
+                                        accountId: widget.accountId,
+                                        userId: widget.userId,
+                                        addressesDepart: widget.addressesDepart,
+                                        addressesDesti: widget.addressesDesti,
+                                        booking: widget.booking,
+                                        subAddressesDepart:
+                                            widget.subAddressesDepart,
+                                        subAddressesDesti:
+                                            widget.subAddressesDesti,
+                                      ),
+                                    ));
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                color: Colors.white,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [SizedBox()],
+                                    ),
+                                    buildServiceList(context, "Chuyển đơn",
+                                        Icon(Icons.next_plan)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
+                        : Container()
+                  ],
                 ),
-            ]),
+              ),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               color: Colors.white,

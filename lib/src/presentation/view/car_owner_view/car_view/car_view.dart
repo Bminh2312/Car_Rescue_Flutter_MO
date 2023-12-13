@@ -67,6 +67,7 @@ class _CarListViewState extends State<CarListView> {
   void initState() {
     super.initState();
     fetchCarOwnerCar(widget.userId).then((data) {
+      
       final carList = (data['data'] as List<dynamic>)
           .map((carData) => Vehicle(
               id: carData['id'],
@@ -162,7 +163,9 @@ class _CarListViewState extends State<CarListView> {
       filteredCars = sortCarsByStatus(filteredCars, selectedStatus);
     }
 
-    return Scaffold(
+    return 
+    isLoading ? LoadingState() :
+    Scaffold(
       appBar: AppBar(
         centerTitle: true,
         leading: IconButton(

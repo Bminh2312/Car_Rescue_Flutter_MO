@@ -93,7 +93,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                     playSound: true,
                     icon: '@drawable/ic_launcher',
                     largeIcon:
-                        DrawableResourceAndroidBitmap('@drawable/download'))));
+                        DrawableResourceAndroidBitmap('@drawable/logo1'))));
       }
       handleIncomingNotification(message);
       print('Received message: ${message.notification?.body}');

@@ -35,7 +35,8 @@ class Customer {
       sex: json['sex'] ?? "",
       phone: json['phone'] ?? "",
       licensePlate: json['licensePlate'] ?? "",
-      avatar: json['avatar'] ?? "",
+      avatar: json['avatar'] ??
+          "https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431",
       address: json['address'] ?? "",
       status: json['status'] ?? "",
       createAt: json['createAt'] ?? "",
