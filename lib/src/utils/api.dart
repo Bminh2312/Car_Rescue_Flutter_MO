@@ -38,7 +38,7 @@ class LoginResult {
   });
 }
 
-final String apiKey1 = 'AIzaSyBXriBmJwX5fjH4_WTFbANezA9lNXzmL_w';
+final String apiKey1 = 'AIzaSyB1GPWHcGXG5TA-0RaxW8E_QM8P2_4RScc';
 
 final String fcmToken =
     'eyJhbGciOiJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNobWFjLXNoYTUxMiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6IlRlY2huaWNpYW5AZ21haWwuY29tIiwiQWNjb3VudElEIjoiZGQyZjFhMjAtNTc2OS00MDUyLTg1MTktOTIyYmZkYzk5NWViIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiVGVjaG5pY2lhbiIsImV4cCI6MTcwMTYwNTIyOH0.OaLPzJzbtudoQYRPwlEjG1WEUGVPVc6lFZa2xoxxlCEGyoCvrKGckemMvceeMgtPwffbDy-MJcROKs3ad78nhw';
