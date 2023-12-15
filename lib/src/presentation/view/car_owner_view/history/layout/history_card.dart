@@ -105,6 +105,10 @@ class _HistoryCardState extends State<HistoryCard>
         if (b.createdAt == null) return -1;
         return b.createdAt!.compareTo(a.createdAt!);
       });
+      await authService.getAddressesForBookings(completedBookingsFromAPI,
+          setState, addressesDepart, subAddressesDepart);
+      await authService.getDestiForBookings(completedBookingsFromAPI, setState,
+          addressesDesti, subAddressesDesti);
       List<Future> vehicleAndFeedbackTasks = [];
 
       for (Booking booking in completedBookingsFromAPI) {
@@ -135,7 +139,6 @@ class _HistoryCardState extends State<HistoryCard>
   void loadCanceledBookings() async {
     try {
       setState(() {
-        // This seems like a naming error. You might want to change this to canceledBookings.
         isDataLoaded = false;
       });
       final List<Booking> canceledBookingsFromAPI =
@@ -145,21 +148,22 @@ class _HistoryCardState extends State<HistoryCard>
         if (b.createdAt == null) return -1;
         return b.createdAt!.compareTo(a.createdAt!);
       });
-      List<Future> vehicleTasks = [];
+      await authService.getAddressesForBookings(canceledBookingsFromAPI,
+          setState, addressesDepart, subAddressesDepart);
+      await authService.getDestiForBookings(
+          canceledBookingsFromAPI, setState, addressesDesti, subAddressesDesti);
 
+      List<Future> vehicleTasks = [];
       for (Booking booking in canceledBookingsFromAPI) {
         vehicleTasks.add(_fetchVehicleForBooking(booking));
       }
-
       await Future.wait(vehicleTasks);
 
       setState(() {
-        canceledBookings =
-            canceledBookingsFromAPI; // This seems like a naming error. You might want to change this to canceledBookings.
+        canceledBookings = canceledBookingsFromAPI;
         isDataLoaded = true;
       });
       if (canceledBookings.isEmpty) {
-        // This seems like a naming error. You might want to change this to canceledBookings.
         isCanceledEmpty = true;
       }
     } catch (e) {
@@ -269,8 +273,7 @@ class _HistoryCardState extends State<HistoryCard>
 
           String formattedStartTime = DateFormat('dd/MM/yyyy | HH:mm')
               .format(booking.createdAt ?? DateTime.now());
-          final int quantity = booking.quantity ?? 0;
-          final int total = booking.total ?? 0;
+
           return Container(
             color: FrontendConfigs.kBackgrColor,
             child: Padding(
@@ -314,7 +317,17 @@ class _HistoryCardState extends State<HistoryCard>
                           SizedBox(
                             height: 5,
                           ),
-                          Text(booking.rescueType),
+                          Text(
+                            booking.rescueType == "Towing"
+                                ? "Kéo xe cứu hộ"
+                                : (booking.rescueType == "Fixing"
+                                    ? "Sửa chữa tại chỗ"
+                                    : booking.rescueType),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: FrontendConfigs.kAuthColor,
+                            ),
+                          ),
                           SizedBox(
                             height: 5,
                           ),
@@ -392,9 +405,9 @@ class _HistoryCardState extends State<HistoryCard>
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: RideSelectionWidget(
                             icon: 'assets/svg/pickup_icon.svg',
-                            title: widget.addressesDepart[booking.id] ??
+                            title: subAddressesDepart[booking.id] ??
                                 '', // Use addresses parameter
-                            body: widget.subAddressesDepart[booking.id] ?? '',
+
                             onPressed: () {},
                           ),
                         ),
@@ -415,8 +428,7 @@ class _HistoryCardState extends State<HistoryCard>
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: RideSelectionWidget(
                             icon: 'assets/svg/location_icon.svg',
-                            title: widget.addressesDesti[booking.id] ?? '',
-                            body: widget.subAddressesDesti[booking.id] ?? '',
+                            title: subAddressesDesti[booking.id] ?? '',
                             onPressed: () {},
                           ),
                         ),
@@ -431,12 +443,10 @@ class _HistoryCardState extends State<HistoryCard>
                                         userId: widget.userId,
                                         accountId: widget.accountId,
                                         booking: booking,
-                                        addressesDepart: widget.addressesDepart,
-                                        addressesDesti: widget.addressesDesti,
-                                        subAddressesDepart:
-                                            widget.subAddressesDepart,
-                                        subAddressesDesti:
-                                            widget.subAddressesDesti),
+                                        addressesDepart: addressesDepart,
+                                        addressesDesti: addressesDesti,
+                                        subAddressesDepart: subAddressesDepart,
+                                        subAddressesDesti: subAddressesDesti),
                                   ),
                                 );
                               },
@@ -515,7 +525,17 @@ class _HistoryCardState extends State<HistoryCard>
                           SizedBox(
                             height: 5,
                           ),
-                          Text(booking.rescueType),
+                          Text(
+                            booking.rescueType == "Towing"
+                                ? "Kéo xe cứu hộ"
+                                : (booking.rescueType == "Fixing"
+                                    ? "Sửa chữa tại chỗ"
+                                    : booking.rescueType),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: FrontendConfigs.kAuthColor,
+                            ),
+                          ),
                           SizedBox(
                             height: 5,
                           ),
@@ -586,60 +606,6 @@ class _HistoryCardState extends State<HistoryCard>
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 2),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  SvgPicture.asset(
-                                      "assets/svg/location_icon.svg",
-                                      color: FrontendConfigs.kIconColor),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  CustomText(
-                                      text: '6.5km',
-                                      fontWeight: FontWeight.w600,
-                                      color: FrontendConfigs.kAuthColor)
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  SvgPicture.asset("assets/svg/watch_icon.svg",
-                                      color: FrontendConfigs.kIconColor),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  CustomText(
-                                      text: "15 mins",
-                                      fontWeight: FontWeight.w600,
-                                      color: FrontendConfigs.kAuthColor)
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  SvgPicture.asset(
-                                    "assets/svg/wallet_icon.svg",
-                                    color: FrontendConfigs.kIconColor,
-                                  ),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  CustomText(
-                                      text: "\$56.00",
-                                      fontWeight: FontWeight.w600,
-                                      color: FrontendConfigs.kAuthColor)
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        Divider(
-                          color: FrontendConfigs.kIconColor,
-                        ),
                         const SizedBox(
                           height: 8,
                         ),
@@ -647,9 +613,9 @@ class _HistoryCardState extends State<HistoryCard>
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: RideSelectionWidget(
                             icon: 'assets/svg/pickup_icon.svg',
-                            title: widget.addressesDepart[booking.id] ??
+                            title: subAddressesDepart[booking.id] ??
                                 '', // Use addresses parameter
-                            body: widget.subAddressesDepart[booking.id] ?? '',
+
                             onPressed: () {},
                           ),
                         ),
@@ -670,8 +636,7 @@ class _HistoryCardState extends State<HistoryCard>
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: RideSelectionWidget(
                             icon: 'assets/svg/location_icon.svg',
-                            title: widget.addressesDesti[booking.id] ?? '',
-                            body: widget.subAddressesDesti[booking.id] ?? '',
+                            title: subAddressesDesti[booking.id] ?? '',
                             onPressed: () {},
                           ),
                         ),
@@ -686,12 +651,10 @@ class _HistoryCardState extends State<HistoryCard>
                                         userId: widget.userId,
                                         accountId: widget.accountId,
                                         booking: booking,
-                                        addressesDepart: widget.addressesDepart,
-                                        addressesDesti: widget.addressesDesti,
-                                        subAddressesDepart:
-                                            widget.subAddressesDepart,
-                                        subAddressesDesti:
-                                            widget.subAddressesDesti),
+                                        addressesDepart: addressesDepart,
+                                        addressesDesti: addressesDesti,
+                                        subAddressesDepart: subAddressesDepart,
+                                        subAddressesDesti: subAddressesDesti),
                                   ),
                                 );
                               },

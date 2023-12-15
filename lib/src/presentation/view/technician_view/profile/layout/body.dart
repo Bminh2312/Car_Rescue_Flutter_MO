@@ -95,7 +95,7 @@ class _ProfileBodyState extends State<ProfileBody> {
                       backgroundColor: Color.fromARGB(0, 158, 158, 158),
                       radius: 64,
                       backgroundImage: NetworkImage(
-                          avatarTech), // Use 'backgroundImage' to set the image
+                          avatarTech ?? 'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431'), // Use 'backgroundImage' to set the image
                     ),
                     SizedBox(
                       height: 18,

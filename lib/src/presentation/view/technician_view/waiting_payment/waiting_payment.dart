@@ -56,7 +56,7 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
   num totalAmount = 0;
   int total = 0;
   Payment? _payment;
-  final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
+
   Future<void> _loadTechInfo(String techId) async {
     Map<String, dynamic>? techProfile =
         await AuthService().fetchTechProfile(techId);
@@ -218,6 +218,10 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currencyFormat = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '₫',
+    ).format(_payment?.amount ?? 0);
     return Scaffold(
       backgroundColor: FrontendConfigs.kIconColor,
       body: Column(
@@ -383,7 +387,7 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                           isAndroidDevice: true,
                           title: 'Thông báo từ kĩ thuật viên',
                           body:
-                              'Kĩ thuật viên ${widget.tech.fullname} đã nhận số tiền ${_payment!.amount} cho đơn hàng ${widget.booking.id}',
+                              'Kĩ thuật viên ${widget.tech.fullname} đã nhận số tiền ${currencyFormat} cho đơn hàng ${widget.booking.id}',
                           target: widget.managerId,
                           orderId: widget.booking.id);
                       setState(() {

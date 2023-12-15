@@ -220,7 +220,8 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                             ? FileImage(_profileImage!)
                             : (_downloadURL != null && _downloadURL!.isNotEmpty)
                                 ? NetworkImage(_downloadURL!)
-                                : AssetImage('assets/images/profile.png')
+                                : NetworkImage(
+                                        'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431')
                                     as ImageProvider<Object>,
                       ),
                       Positioned(

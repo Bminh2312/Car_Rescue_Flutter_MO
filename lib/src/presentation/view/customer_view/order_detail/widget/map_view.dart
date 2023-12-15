@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:async';
@@ -7,8 +8,10 @@ import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/models/customer.dart';
 import 'package:CarRescue/src/models/customerInfo.dart';
 import 'package:CarRescue/src/models/order.dart';
+import 'package:CarRescue/src/models/technician.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/utils/api.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -25,21 +28,23 @@ class MapScreen extends StatefulWidget {
   final Order booking;
   final String techId;
   final String phone;
+  final Technician? tech;
   const MapScreen(
       {super.key,
       required this.techImg,
       required this.booking,
       required this.cus,
       required this.techId,
-      required this.phone});
+      required this.phone,
+      required this.tech});
   final Customer cus;
   @override
   _MapScreenState createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> {
-  final LocationUpdateService _locationUpdateService = LocationUpdateService();
+final String apiKey = "AIzaSyAiyZLdDwpp0_dAOPNBMItItXixgLH9ABo";
 
+class _MapScreenState extends State<MapScreen> {
   GoogleMapController? mapController;
   LatLng? currentLocation;
   LatLng? _targetLocation;
@@ -50,6 +55,8 @@ class _MapScreenState extends State<MapScreen> {
   List<LatLng> routeCoordinates = [];
   Set<Polyline> polylines = {};
   Timer? myTimer;
+  String? _duration;
+  String? _distance;
   @override
   void initState() {
     super.initState();
@@ -69,6 +76,9 @@ class _MapScreenState extends State<MapScreen> {
       //   print("Stopping the timer.");
       //   myTimer?.cancel();
       // }
+      if (currentLocation != null && _targetLocation != null) {
+        _getEstimatedTravelTime(); // Call the function to get estimated travel time
+      }
     });
   }
 
@@ -162,7 +172,7 @@ class _MapScreenState extends State<MapScreen> {
             double distance =
                 calculateDistance(technicianLocation!, _targetLocation!);
 
-            if (distance < 100) {
+            if (distance < 50) {
               // Stop the timer
               myTimer?.cancel();
               print(
@@ -268,7 +278,7 @@ class _MapScreenState extends State<MapScreen> {
           PolylinePoints polylinePoints = PolylinePoints();
           PolylineResult result =
               await polylinePoints.getRouteBetweenCoordinates(
-            "YOUR_GOOGLE_MAPS_API_KEY",
+            "$apiKey",
             PointLatLng(
               technicianLocation?.latitude ?? 0.0,
               technicianLocation?.longitude ?? 0.0,
@@ -277,7 +287,7 @@ class _MapScreenState extends State<MapScreen> {
               _targetLocation?.latitude ?? 0.0,
               _targetLocation?.longitude ?? 0.0,
             ),
-            travelMode: TravelMode.walking,
+            travelMode: TravelMode.driving,
           );
 
           if (result.points.isNotEmpty) {
@@ -296,6 +306,43 @@ class _MapScreenState extends State<MapScreen> {
       print(stackTrace);
       // Handle the error as needed
     }
+  }
+
+  Future<void> _getEstimatedTravelTime() async {
+    // final String apiKey = "AIzaSyAiyZLdDwpp0_dAOPNBMItItXixgLH9ABo";
+    final String apiUrl =
+        "https://maps.googleapis.com/maps/api/directions/json";
+
+    final response = await http.get(
+      Uri.parse(
+        "$apiUrl?origin=${technicianLocation!.latitude},${technicianLocation!.longitude}&destination=${_targetLocation!.latitude},${_targetLocation!.longitude}&key=$apiKey",
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      if (data["status"] == "OK") {
+        final List<dynamic> routes = data["routes"];
+        if (routes.isNotEmpty) {
+          final Map<String, dynamic> route = routes.first;
+          final Map<String, dynamic> legs = route["legs"].first;
+          print(legs);
+          final String durationText = legs["duration"]["text"];
+          final String distance = legs["distance"]["text"];
+          setState(() {
+            _duration = durationText;
+            _distance = distance;
+          });
+          print("Estimated Travel Time: $durationText");
+
+          // You can use durationSeconds or durationText as needed
+
+          return;
+        }
+      }
+    }
+
+    print("Error fetching estimated travel time");
   }
 
   Future<Uint8List> getBytesFromAsset(String path, int width) async {
@@ -369,7 +416,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> setSourceAndDepartureImage() async {
-    final Uint8List icon1 = await getBytesFromUrl(widget.cus.avatar, 100);
+    final Uint8List icon1 = await getBytesFromUrl(widget.cus.avatar, 50);
     print(widget.cus.avatar);
     setState(() {
       departureIcon = BitmapDescriptor.fromBytes(icon1);
@@ -413,64 +460,224 @@ class _MapScreenState extends State<MapScreen> {
             },
           ),
         ),
-        body: (currentLocation != null && _targetLocation != null)
-            ? GoogleMap(
-                onMapCreated: (controller) {
-                  setState(() {
-                    mapController = controller;
-                  });
-                },
-                initialCameraPosition: CameraPosition(
-                  target: _targetLocation!,
-                  zoom: 15.0,
-                ),
-                markers: {
-                  if (currentLocation != null)
-                    Marker(
-                      markerId: MarkerId("currentLocation"),
-                      position: currentLocation ??
-                          LatLng(0.0,
-                              0.0), // Provide a default LatLng if currentLocation is null
-                      icon: departureIcon ?? BitmapDescriptor.defaultMarker,
-                      infoWindow: InfoWindow(title: "Vị trí của tôi"),
+        body: Stack(children: [
+          (currentLocation != null && _targetLocation != null)
+              ? GoogleMap(
+                  onMapCreated: (controller) {
+                    setState(() {
+                      mapController = controller;
+                    });
+                  },
+                  initialCameraPosition: CameraPosition(
+                    target: _targetLocation!,
+                    zoom: 15.0,
+                  ),
+                  markers: {
+                    if (currentLocation != null)
+                      Marker(
+                        markerId: MarkerId("currentLocation"),
+                        position: currentLocation ??
+                            LatLng(0.0,
+                                0.0), // Provide a default LatLng if currentLocation is null
+                        icon: departureIcon ?? BitmapDescriptor.defaultMarker,
+                        infoWindow: InfoWindow(title: "Vị trí của tôi"),
+                      ),
+                    if (_targetLocation != null)
+                      Marker(
+                        markerId: MarkerId("targetLocation"),
+                        position: _targetLocation ?? LatLng(0.0, 0.0),
+                        icon: destinationIcon ?? BitmapDescriptor.defaultMarker,
+                        infoWindow: InfoWindow(
+                          title: "Địa điểm cứu hộ",
+                        ),
+                      ),
+                    if (technicianLocation != null)
+                      Marker(
+                        markerId: MarkerId("technicianLocation"),
+                        position: technicianLocation ?? LatLng(0.0, 0.0),
+                        icon: techIcon ?? BitmapDescriptor.defaultMarker,
+                        infoWindow: InfoWindow(title: "Vị trí của nhân viên"),
+                      ),
+                  },
+                  polylines: {
+                    Polyline(
+                      polylineId: PolylineId("route"),
+                      color: Colors.blue,
+                      width: 3,
+                      points: routeCoordinates ??
+                          [], // Use routeCoordinates with a default value
                     ),
-                  if (_targetLocation != null)
-                    Marker(
-                      markerId: MarkerId("targetLocation"),
-                      position: _targetLocation ?? LatLng(0.0, 0.0),
-                      icon: destinationIcon ?? BitmapDescriptor.defaultMarker,
-                      infoWindow: InfoWindow(
-                        title: "Địa điểm cứu hộ",
+                  },
+                )
+              : Center(
+                  child: CircularProgressIndicator(),
+                ),
+          DraggableScrollableSheet(
+            initialChildSize: 0.28,
+            minChildSize: 0.2,
+            maxChildSize: 0.9,
+            builder: (BuildContext context, ScrollController scrollController) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            child: Column(
+                              children: [
+                                CustomText(
+                                  text: 'Khoảng cách',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                CustomText(
+                                  text: '${_distance ?? 'Đang tính..'}',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 40,
+                            child: VerticalDivider(
+                              thickness: 1,
+                            ),
+                          ),
+                          Container(
+                            child: Column(
+                              children: [
+                                CustomText(
+                                  text: 'Thời gian',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                CustomText(
+                                  text: '${_duration ?? 'Đang tính..'}',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  if (technicianLocation != null)
-                    Marker(
-                      markerId: MarkerId("technicianLocation"),
-                      position: technicianLocation ?? LatLng(0.0, 0.0),
-                      icon: techIcon ?? BitmapDescriptor.defaultMarker,
-                      infoWindow: InfoWindow(title: "Vị trí của nhân viên"),
+                    Divider(
+                      height: 1,
                     ),
-                },
-                polylines: {
-                  Polyline(
-                    polylineId: PolylineId("route"),
-                    color: FrontendConfigs.kAuthColor,
-                    width: 3,
-                    points: routeCoordinates ??
-                        [], // Use routeCoordinates with a default value
-                  ),
-                },
-              )
-            : Center(
-                child: CircularProgressIndicator(),
-              ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CustomText(
+                            text: 'Thông tin kĩ thuật viên',
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CustomText(
+                                text: '${widget.tech!.fullname}',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                              SizedBox(
+                                height: 4,
+                              ),
+                              SizedBox(
+                                height: 4,
+                              ),
+                              Row(
+                                children: [
+                                  // Container(
+                                  //   padding: EdgeInsets.all(4),
+                                  //   decoration: BoxDecoration(
+                                  //       color: Colors.grey.shade300),
+                                  //   child:
+                                  //   Text(
+                                  //     '${widget.car.licensePlate}',
+                                  //     style: TextStyle(
+                                  //         fontWeight: FontWeight.bold,
+                                  //         color: FrontendConfigs.kAuthColor),
+                                  //   ),
+                                  // ),
+                                  // Text(
+                                  //   ' | ${widget.model.model1 ?? ''} ',
+                                  //   style: TextStyle(
+                                  //       fontWeight: FontWeight.bold,
+                                  //       color: FrontendConfigs.kAuthColor),
+                                  // ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          CircleAvatar(
+                            radius: 30,
+                            backgroundImage: NetworkImage(widget.tech!.avatar ??
+                                'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fmechanic.png?alt=media&token=0f2f7ddb-b916-4692-a1ac-7fb7d4286cb7'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 10),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: FrontendConfigs.kActiveColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                        onPressed: () {
+                          launchDialPad(widget.cus.phone);
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(CupertinoIcons.phone_arrow_down_left),
+                            SizedBox(width: 5),
+                            Text('Gọi kĩ thuật viên'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ]),
         floatingActionButton: _getFloatingActionButton());
   }
 
   Widget _getFloatingActionButton() {
     return SpeedDialMenuButton(
       //if needed to close the menu after clicking sub-FAB
-
+      mainFABPosX: 1,
+      mainFABPosY: 230,
       //manually open or close menu
       updateSpeedDialStatus: (isShow) {
         //return any open or close change within the widget
@@ -478,7 +685,7 @@ class _MapScreenState extends State<MapScreen> {
       //general init
       isMainFABMini: false,
       mainMenuFloatingActionButton: MainMenuFloatingActionButton(
-          mini: false,
+          mini: true,
           child: Icon(Icons.menu),
           onPressed: () {},
           closeMenuChild: Icon(Icons.close),
@@ -497,14 +704,6 @@ class _MapScreenState extends State<MapScreen> {
           },
           tooltip: 'Go to current location',
           child: Icon(Icons.my_location),
-        ),
-        FloatingActionButton(
-          heroTag: 'a',
-          mini: true,
-          onPressed: () {
-            launchDialPad(widget.phone);
-          },
-          child: Icon(Icons.phone),
         ),
         FloatingActionButton(
             heroTag: 'a',
@@ -561,19 +760,5 @@ class _MapScreenState extends State<MapScreen> {
           southwest: LatLng(minLat, minLng), northeast: LatLng(maxLat, maxLng));
       mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100));
     }
-  }
-}
-
-class LocationUpdateService {
-  final _locationController = StreamController<LatLng>();
-
-  Stream<LatLng> get locationStream => _locationController.stream;
-
-  void updateLocation(LatLng location) {
-    _locationController.add(location);
-  }
-
-  void dispose() {
-    _locationController.close();
   }
 }

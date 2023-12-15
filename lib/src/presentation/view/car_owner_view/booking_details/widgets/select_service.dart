@@ -6,6 +6,7 @@ import 'package:CarRescue/src/presentation/view/car_owner_view/booking_details/b
 import 'package:CarRescue/src/providers/service_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:CarRescue/src/models/service.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -22,7 +23,7 @@ extension IterableExtension<E> on Iterable<E> {
 }
 
 class ServiceSelectionScreen extends StatefulWidget {
-  final List<Service> selectedServices;
+  // final List<Service> selectedServices;
   final Booking booking;
   final String userId;
   final String accountId;
@@ -33,8 +34,7 @@ class ServiceSelectionScreen extends StatefulWidget {
   final String orderId;
   final int quantity;
   ServiceSelectionScreen(
-      {required this.selectedServices,
-      required this.booking,
+      {required this.booking,
       required this.addressesDepart,
       required this.subAddressesDepart,
       required this.addressesDesti,
@@ -58,9 +58,8 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
   String? selectedServices;
   List<Map<String, dynamic>> orderDetails = [];
   bool _isLoading = true;
-  Future<List<Service>>? availableServices; 
-  
-  
+  Future<List<Service>>? availableServices;
+  String? accessToken = GetStorage().read<String>("accessToken");
   // Replace with your actual method
   Future<List<Service>> loadService() async {
     final serviceProvider = ServiceProvider();
@@ -115,7 +114,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     final response = await http.post(Uri.parse(apiUrl),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          // 'Authorization': 'Bearer $accessToken'
+          'Authorization': 'Bearer $accessToken'
         },
         body: json.encode({
           'orderDetailId': orderDetailId,
@@ -130,9 +129,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     print('bzzb: $requestBody');
     if (response.statusCode == 200) {
       print('Successfully update the service ${response.body}');
-      setState(() {
-        _isLoading = false;
-      });
+
       // onLoadingComplete();
     } else {
       print('Failed to update the service: ${response.body}');
@@ -209,7 +206,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     }
 
     // Only navigate to the new screen when all services are successfully added
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => BookingDetailsView(
@@ -375,12 +372,16 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onPressed: () {
-                      _updateService(
+                    onPressed: () async {
+                      await _updateService(
                         widget.orderId,
                         widget.quantity,
                         selectedServices!,
                       );
+                      setState(() {
+                        _isLoading = false;
+                      });
+                      Navigator.pop(context);
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(

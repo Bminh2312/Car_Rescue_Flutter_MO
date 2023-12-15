@@ -98,6 +98,7 @@ class _CarOwnerLogInBodyState extends State<CarOwnerLogInBody> {
                     box.write("userId", result.userId);
                     box.write("accountId", result.accountId);
                     box.write('accessToken', result.accessToken);
+                    box.write('deviceToken', result.deviceToken);
                     print("User id: " + result.accountId);
                     print("User id: " + result.userId);
                     Navigator.push(

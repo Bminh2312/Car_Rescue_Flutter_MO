@@ -362,7 +362,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                               DateTime? selectedDate = await showDatePicker(
                                 context: context,
                                 initialDate: _birthday,
-                                firstDate: DateTime(1900),
+                                firstDate: DateTime(1000),
                                 lastDate: DateTime.now(),
                               );
                               if (selectedDate != null &&

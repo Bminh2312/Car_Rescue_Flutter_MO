@@ -35,7 +35,7 @@ class NotificationCard extends StatelessWidget {
               ),
               SizedBox(height: 8.0),
               Text(
-                '${DateFormat('dd MMM yyyy • HH:mm').format(notification.createdAt)}',
+                '${DateFormat('dd MMM yyyy • HH:mm').format(notification.createdAt.add(Duration(hours: 7)))}',
                 style: TextStyle(
                   color: Colors.grey,
                   fontWeight: FontWeight.bold,

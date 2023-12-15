@@ -106,7 +106,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
           print('Service ${service['service']} already exists. Skipping...');
           print('Details of existing service: $serviceDetails');
           showToast(
-              'Service ${service['service']} already exists. Skipping...');
+              'Dịch vụ ${service['service']} đã được chọn.\nVui lòng chọn dịch vụ khác');
           anyServiceAlreadyExists = true;
           break; // Exit the inner loop when a duplicate is found
         }

@@ -229,7 +229,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
           color: Colors.blue,
           playSound: true,
           icon: '@drawable/ic_launcher',
-          largeIcon: DrawableResourceAndroidBitmap('@drawable/download'),
+          largeIcon: DrawableResourceAndroidBitmap('@drawable/logo1'),
         ),
       ),
     );
@@ -559,15 +559,6 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
       return Padding(
         padding: const EdgeInsets.all(8.0),
         child: Center(
-            child: CircularProgressIndicator(
-          color: FrontendConfigs.kActiveColor,
-        )),
-      );
-    }
-    if (weeklyShifts.length < 2) {
-      return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Center(
             child: CustomText(
           text: 'Hiện tại không có lịch làm việc',
           fontSize: 20,
@@ -575,6 +566,17 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
         )),
       );
     }
+    // if (weeklyShifts.length < 2) {
+    //   return Padding(
+    //     padding: const EdgeInsets.all(8.0),
+    //     child: Center(
+    //         child: CustomText(
+    //       text: 'Hiện tại không có lịch làm việc',
+    //       fontSize: 20,
+    //       fontWeight: FontWeight.bold,
+    //     )),
+    //   );
+    // }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -593,8 +595,9 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
           ),
         ),
         Container(
-          height: 400,
           child: ListView.builder(
+            padding: EdgeInsets.all(16),
+            shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
             itemCount: filteredShifts.length,
             itemBuilder: (context, index) {

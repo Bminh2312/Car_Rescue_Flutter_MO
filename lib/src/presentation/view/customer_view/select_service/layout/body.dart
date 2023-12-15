@@ -99,15 +99,19 @@ class _ServiceBodyState extends State<ServiceBody>
             notification.title,
             notification.body,
             NotificationDetails(
-                android: AndroidNotificationDetails(channel.id, channel.name,
-                    channelDescription: channel.description,
-                    color: Colors.blue,
-                    playSound: true,
-                    icon: '@drawable/ic_launcher',
-                    largeIcon:
-                        DrawableResourceAndroidBitmap('@drawable/logo1'))));
+                android: AndroidNotificationDetails(
+              channel.id,
+              channel.name,
+              channelDescription: channel.description,
+              color: Colors.blue,
+              playSound: true,
+              icon: '@drawable/ic_launcher',
+              largeIcon: DrawableResourceAndroidBitmap('@drawable/logo1'),
+              styleInformation:
+                  BigTextStyleInformation(notification.body ?? ''),
+            )));
       }
-
+      handleIncomingNotification(message);
       print('Received message: ${message.notification?.body}');
       // Handle the incoming message
     });
@@ -129,6 +133,55 @@ class _ServiceBodyState extends State<ServiceBody>
               ),
             );
           });
+      handleNotificationOpenedApp(message);
+    });
+  }
+
+  void handleIncomingNotification(RemoteMessage message) {
+    setState(() {
+      unreadNotificationCount++;
+    });
+
+    // Show local notification
+    RemoteNotification notification = message.notification!;
+    AndroidNotification android = message.notification!.android!;
+    flutterLocalNotificationsPlugin.show(
+      notification.hashCode,
+      notification.title,
+      notification.body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          channel.id,
+          channel.name,
+          channelDescription: channel.description,
+          color: Colors.blue,
+          playSound: true,
+          icon: '@drawable/ic_launcher',
+          largeIcon: DrawableResourceAndroidBitmap('@drawable/logo1'),
+          styleInformation: BigTextStyleInformation(notification.body ?? ''),
+        ),
+      ),
+    );
+  }
+
+  void handleNotificationOpenedApp(RemoteMessage message) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: Text(message.notification?.title ?? 'Unknown'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [Text(message.notification?.body ?? 'Unknown1')],
+            ),
+          ),
+        );
+      },
+    );
+
+    setState(() {
+      unreadNotificationCount = 0;
     });
   }
 
@@ -790,7 +843,7 @@ class _ServiceBodyState extends State<ServiceBody>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Xin chàoo,',
+                    'Xin chào,',
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.white60,

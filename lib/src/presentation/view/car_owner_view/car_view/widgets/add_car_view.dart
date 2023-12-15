@@ -57,6 +57,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   void initState() {
     super.initState();
     _loadManager(widget.userId);
+    print(widget.userId);
   }
 
   Future<Map<String, String>> _loadManager(String userId) async {
@@ -213,7 +214,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                           return 'Vui lòng biển số xe';
                                         }
                                         RegExp regex = RegExp(
-                                            r'^([1-9][1-9][A-Z][A-Z1-9]-\d{4,5})$');
+                                            r'^([1-9][1-9][A-Z]-\d{4,5})$');
 
                                         if (!regex
                                             .hasMatch(value.toUpperCase())) {

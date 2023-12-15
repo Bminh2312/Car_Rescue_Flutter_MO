@@ -243,8 +243,16 @@ class _WalletTransactionScreenState extends State<WalletTransactionScreen> {
                     },
                   )
                 : Center(
-                    child: Text('No transactions found'),
-                  ),
+                    child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset('assets/icons/transaction.png'),
+                      Text(
+                        'Không có giao dịch.',
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    ],
+                  )),
           ),
         ],
       ),

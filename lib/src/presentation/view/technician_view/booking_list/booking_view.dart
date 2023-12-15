@@ -35,26 +35,29 @@ class _BookingListViewState extends State<BookingListView> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // _loadData();
   }
 
-  Future<void> _loadData() async {
-    try {
-      final bookingsFromApi = await authService.fetchBookings(widget.userId);
-      await authService.getDestiForBookings(
-          bookingsFromApi, setState, addressesDesti, subAddressesDesti);
+  // Future<void> _loadData() async {
+  //   try {
+  //     final bookingsFromApi = await authService.fetchBookings(widget.userId);
 
-      await authService.getAddressesForBookings(
-          bookingsFromApi, setState, addressesDepart, subAddressesDepart);
-      setState(() {
-        bookings = bookingsFromApi;
+  //     // Use Future.wait to parallelize the asynchronous operations
+  //     await Future.wait([
+  //       authService.getDestiForBookings(
+  //           bookingsFromApi, setState, addressesDesti, subAddressesDesti),
+  //       authService.getAddressesForBookings(
+  //           bookingsFromApi, setState, addressesDepart, subAddressesDepart),
+  //     ]);
 
-        // Sort by dateNow initially
-      });
-    } catch (error) {
-      print('Error loading data: $error');
-    }
-  }
+  //     setState(() {
+  //       bookings = bookingsFromApi;
+  //       // Sort by dateNow initially
+  //     });
+  //   } catch (error) {
+  //     print('Error loading data: $error');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {

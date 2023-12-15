@@ -43,8 +43,10 @@ class BookingListBody extends StatefulWidget {
   _BookingListBodyState createState() => _BookingListBodyState();
 }
 
-class _BookingListBodyState extends State<BookingListBody> {
+class _BookingListBodyState extends State<BookingListBody>
+    with SingleTickerProviderStateMixin {
   String? accessToken = GetStorage().read<String>("accessToken");
+  TabController? _tabController;
   List<Booking> waitingBookings = [];
   List<Booking> inprogressBookings = [];
   List<Booking> assignedBookings = [];
@@ -58,23 +60,45 @@ class _BookingListBodyState extends State<BookingListBody> {
   bool isCanceledEmpty = false;
   bool isAssiginedEmpty = false;
   bool isWaitingEmpty = false;
+  Map<String, String> addressesDepart = {};
+  Map<String, String> subAddressesDepart = {};
+  Map<String, String> addressesDesti = {};
+  Map<String, String> subAddressesDesti = {};
   @override
   void initState() {
     super.initState();
-    separateBookings();
-    loadCompletedBookings();
-    loadCanceledBookings();
+    // separateBookings();
+    // loadCompletedBookings();
     loadAssignedBookings();
+    loadCanceledBookings();
+    // loadAssignedBookings();
+    // loadWaitingBookings();
+    _tabController = TabController(length: 4, vsync: this);
+    _tabController!.addListener(_handleTabSelection);
   }
 
-  // Future<void> fetchData() async {
-  //   try {
-  //     final List<Booking> data = await authService.fetchBookings(
-  //         widget.userId, '97757c05-1a15-4009-a156-e43095dddd81');
-  //   } catch (e) {
-  //     print('Error: $e');
-  //   }
-  // }
+  void _handleTabSelection() {
+    if (_tabController!.index == 0) {
+      // The first tab (index 0) is active, and the data hasn't been loaded yet
+      loadAssignedBookings();
+    } else if (_tabController!.index == 1) {
+      loadWaitingBookings();
+      // loadAssignedBookings();
+    } else if (_tabController!.index == 2) {
+      loadCompletedBookings();
+    } else if (_tabController!.index == 3) {
+      loadCanceledBookings();
+    }
+  }
+
+  @override
+  void dispose() {
+    print("Disposing TabController.");
+    _tabController?.dispose();
+    _tabController!.removeListener(_handleTabSelection);
+    super.dispose();
+  }
+
   Future<void> _fetchFeedbacks(
       Booking booking, Map<String, Map<String, dynamic>> apiFeedbacks) async {
     var feedbackForBooking = apiFeedbacks[booking.id];
@@ -130,41 +154,40 @@ class _BookingListBodyState extends State<BookingListBody> {
   void loadCompletedBookings() async {
     try {
       setState(() {
-        // This seems like a naming error. You might want to change this to canceledBookings.
         isDataLoaded = false;
       });
+
       final List<Booking> completedBookingsFromAPI =
-          await AuthService().fetchTechBookingByCompleted(widget.userId);
+          await authService.fetchTechBookingByCompleted(widget.userId);
 
       final apiFeedbacks =
           await authService.fetchTechFeedbackRatings(widget.userId);
+
+      // authService.getDestiForBookings(completedBookingsFromAPI, setState,
+      //     addressesDesti, subAddressesDesti);
+
+      await authService.getAddressesForBookings(completedBookingsFromAPI,
+          setState, addressesDepart, subAddressesDepart);
+
       completedBookingsFromAPI.sort((a, b) {
         if (a.createdAt == null) return 1;
         if (b.createdAt == null) return -1;
         return b.createdAt!.compareTo(a.createdAt!);
       });
-      List<Future> vehicleAndFeedbackTasks = [];
 
-      for (Booking booking in completedBookingsFromAPI) {
-        vehicleAndFeedbackTasks.add(_fetchFeedbacks(booking, apiFeedbacks));
-      }
-      // for (int i = 0; i < completedBookingsFromAPI.length; i++) {
-      //   final Map<String, dynamic> serviceData =
-      //       await fetchServiceData(completedBookingsFromAPI[i].id);
-      //   completedBookingsFromAPI[i].quantity = serviceData['quantity'];
-      //   completedBookingsFromAPI[i].total = serviceData['total'];
-      // }
-      await Future.wait(vehicleAndFeedbackTasks);
+      await Future.forEach(completedBookingsFromAPI, (Booking booking) async {
+        await _fetchFeedbacks(booking, apiFeedbacks);
+      });
 
       setState(() {
         completedBookings = completedBookingsFromAPI;
         isDataLoaded = true;
       });
+
       if (completedBookings.isEmpty) {
         isCompletedEmpty = true;
       }
     } catch (e) {
-      // Handle any exceptions that occur during the API request
       print('Error loading bookings: $e');
     }
   }
@@ -178,6 +201,8 @@ class _BookingListBodyState extends State<BookingListBody> {
       final List<Booking> assignedBookingsFromAPI =
           await AuthService().fetchTechBookingByAssigned(widget.userId);
 
+      authService.getAddressesForBookings(assignedBookingsFromAPI, setState,
+          addressesDepart, subAddressesDepart);
       final apiFeedbacks =
           await authService.fetchTechFeedbackRatings(widget.userId);
 
@@ -207,6 +232,41 @@ class _BookingListBodyState extends State<BookingListBody> {
     }
   }
 
+  void loadWaitingBookings() async {
+    setState(() {
+      // This seems like a naming error. You might want to change this to canceledBookings.
+      isDataLoaded = false;
+    });
+    try {
+      setState(() {
+        // This seems like a naming error. You might want to change this to canceledBookings.
+        isDataLoaded = false;
+      });
+      final List<Booking> waitingBookingsFromAPI =
+          await AuthService().fetchTechBookingByWaiting(widget.userId);
+      waitingBookingsFromAPI.sort((a, b) {
+        if (a.createdAt == null) return 1;
+        if (b.createdAt == null) return -1;
+        return b.createdAt!.compareTo(a.createdAt!);
+      });
+
+      authService.getAddressesForBookings(waitingBookingsFromAPI, setState,
+          addressesDepart, subAddressesDepart);
+      setState(() {
+        waitingBookings =
+            waitingBookingsFromAPI; // This seems like a naming error. You might want to change this to canceledBookings.
+        isDataLoaded = true;
+      });
+      if (waitingBookings.isEmpty) {
+        // This seems like a naming error. You might want to change this to canceledBookings.
+        isWaitingEmpty = true;
+      }
+    } catch (e) {
+      // Handle any exceptions that occur during the API request
+      print('Error loading bookings: $e');
+    }
+  }
+
   void loadCanceledBookings() async {
     setState(() {
       // This seems like a naming error. You might want to change this to canceledBookings.
@@ -219,6 +279,10 @@ class _BookingListBodyState extends State<BookingListBody> {
       });
       final List<Booking> canceledBookingsFromAPI =
           await AuthService().fetchTechBookingByCanceled(widget.userId);
+      authService.getDestiForBookings(
+          canceledBookingsFromAPI, setState, addressesDesti, subAddressesDesti);
+      authService.getAddressesForBookings(canceledBookingsFromAPI, setState,
+          addressesDepart, subAddressesDepart);
       canceledBookingsFromAPI.sort((a, b) {
         if (a.createdAt == null) return 1;
         if (b.createdAt == null) return -1;
@@ -280,6 +344,7 @@ class _BookingListBodyState extends State<BookingListBody> {
           children: [
             Container(
               child: TabBar(
+                controller: _tabController,
                 indicatorColor: FrontendConfigs.kPrimaryColor,
                 tabs: [
                   Tab(
@@ -329,6 +394,7 @@ class _BookingListBodyState extends State<BookingListBody> {
               child: Container(
                 color: FrontendConfigs.kBackgrColor,
                 child: TabBarView(
+                  controller: _tabController,
                   children: [
                     !isDataLoaded
                         ? LoadingState()
@@ -368,18 +434,6 @@ class _BookingListBodyState extends State<BookingListBody> {
 
         String formattedStartTime = DateFormat('dd/MM/yyyy | HH:mm')
             .format(booking.createdAt!.toUtc().add(Duration(hours: 14)));
-
-        // Future<Customer?> _loadCustomerInfo(String customerId) async {
-        //   Map<String, dynamic>? userProfile =
-        //       await authService.fetchCustomerInfo(booking.customerId);
-        //   print(userProfile);
-
-        //   if (userProfile != null) {
-        //     return Customer.fromJson(userProfile);
-        //   } else {
-        //     return null;
-        //   }
-        // }
 
         return Container(
           color: FrontendConfigs.kBackgrColor,
@@ -474,36 +528,36 @@ class _BookingListBodyState extends State<BookingListBody> {
                         padding: const EdgeInsets.symmetric(horizontal: 12.0),
                         child: RideSelectionWidget(
                           icon: 'assets/svg/pickup_icon.svg',
-                          title: widget.addressesDepart[booking.id] ??
+                          title: addressesDepart[booking.id] ??
                               '', // Use addresses parameter
-                          body: widget.subAddressesDepart[booking.id] ?? '',
+                          body: subAddressesDepart[booking.id] ?? '',
                           onPressed: () {},
                         ),
                       ),
-                      if (booking.rescueType == "Towing")
-                        const Padding(
-                          padding: EdgeInsets.only(left: 29),
-                          child: DottedLine(
-                            direction: Axis.vertical,
-                            lineLength: 30,
-                            lineThickness: 1.0,
-                            dashLength: 4.0,
-                            dashColor: Colors.black,
-                            dashRadius: 2.0,
-                            dashGapLength: 4.0,
-                            dashGapRadius: 0.0,
-                          ),
-                        ),
-                      if (booking.rescueType == "Towing")
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                          child: RideSelectionWidget(
-                            icon: 'assets/svg/location_icon.svg',
-                            title: widget.addressesDesti[booking.id] ?? '',
-                            body: widget.subAddressesDesti[booking.id] ?? '',
-                            onPressed: () {},
-                          ),
-                        ),
+                      // if (booking.rescueType == "Towing")
+                      //   const Padding(
+                      //     padding: EdgeInsets.only(left: 29),
+                      //     child: DottedLine(
+                      //       direction: Axis.vertical,
+                      //       lineLength: 30,
+                      //       lineThickness: 1.0,
+                      //       dashLength: 4.0,
+                      //       dashColor: Colors.black,
+                      //       dashRadius: 2.0,
+                      //       dashGapLength: 4.0,
+                      //       dashGapRadius: 0.0,
+                      //     ),
+                      //   ),
+                      // if (booking.rescueType == "Towing")
+                      //   Padding(
+                      //     padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      //     child: RideSelectionWidget(
+                      //       icon: 'assets/svg/location_icon.svg',
+                      //       title: widget.addressesDesti[booking.id] ?? '',
+                      //       body: widget.subAddressesDesti[booking.id] ?? '',
+                      //       onPressed: () {},
+                      //     ),
+                      //   ),
                       ButtonBar(
                         children: <Widget>[
                           TextButton(
@@ -515,12 +569,10 @@ class _BookingListBodyState extends State<BookingListBody> {
                                       userId: widget.userId,
                                       accountId: widget.accountId,
                                       booking: booking,
-                                      addressesDepart: widget.addressesDepart,
-                                      addressesDesti: widget.addressesDesti,
-                                      subAddressesDepart:
-                                          widget.subAddressesDepart,
-                                      subAddressesDesti:
-                                          widget.subAddressesDesti),
+                                      addressesDepart: addressesDepart,
+                                      addressesDesti: addressesDesti,
+                                      subAddressesDepart: subAddressesDepart,
+                                      subAddressesDesti: subAddressesDesti),
                                 ),
                               );
                             },

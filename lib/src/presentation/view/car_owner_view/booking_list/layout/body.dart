@@ -45,9 +45,12 @@ class _BookingListBodyState extends State<BookingListBody>
     with SingleTickerProviderStateMixin {
   List<Booking> inprogressBookings = [];
   List<Booking> assiginingBookings = [];
-
   List<Booking> assiginedBookings = [];
   List<Booking> waitingBookings = [];
+  Map<String, String> addressesDepart = {};
+  Map<String, String> subAddressesDepart = {};
+  Map<String, String> addressesDesti = {};
+  Map<String, String> subAddressesDesti = {};
   String addressDep = '';
   AuthService authService = AuthService();
   bool isDataLoaded = false;
@@ -108,34 +111,66 @@ class _BookingListBodyState extends State<BookingListBody>
   }
 
   Future<Map<String, dynamic>> fetchServiceData(String orderId) async {
-    final apiUrl =
-        'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
+    try {
+      final apiUrl =
+          'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
 
-    final response =
-        await http.get(Uri.parse(apiUrl), headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-      'Authorization': 'Bearer $accessToken'
-    });
+      final response =
+          await http.get(Uri.parse(apiUrl), headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseData = json.decode(response.body);
-      print(responseData);
-      if (responseData.containsKey('data') && responseData['data'] is List) {
-        final List<dynamic> data = responseData['data'];
-        print(data);
-        if (data.isNotEmpty) {
-          final Map<String, dynamic> orderData = data[0];
-          final int quantity = orderData['quantity'];
-          final int total = orderData['tOtal'];
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        print(responseData);
 
+        if (responseData.containsKey('data') && responseData['data'] is List) {
+          final List<dynamic> data = responseData['data'];
+          print(data);
+
+          if (data.isNotEmpty) {
+            final Map<String, dynamic> orderData = data[0];
+            final int quantity = orderData['quantity'];
+            final int total = orderData['tOtal'];
+
+            return {
+              'quantity': quantity,
+              'total': total,
+            };
+          } else {
+            // Handle the case where 'data' is empty
+            print('No data found for order id: $orderId');
+            return {
+              'quantity': 0,
+              'total': 0,
+            };
+          }
+        } else {
+          // Handle the case where 'data' is not a List
+          print('Invalid data format for order id: $orderId');
           return {
-            'quantity': quantity,
-            'total': total,
+            'quantity': 0,
+            'total': 0,
           };
         }
+      } else {
+        // Handle the case where the API response status code is not 200
+        print(
+            'Failed to load data from API. Status code: ${response.statusCode}');
+        return {
+          'quantity': 0,
+          'total': 0,
+        };
       }
+    } catch (e) {
+      // Handle any exceptions that occur during the API request
+      print('Error loading data from API: $e');
+      return {
+        'quantity': 0,
+        'total': 0,
+      };
     }
-    throw Exception('Failed to load data from API');
   }
 
   void loadAssigningBookings() async {
@@ -151,6 +186,11 @@ class _BookingListBodyState extends State<BookingListBody>
         if (b.createdAt == null) return -1;
         return b.createdAt!.compareTo(a.createdAt!);
       });
+
+      await authService.getAddressesForBookings(assigningBookingsFromAPI,
+          setState, addressesDepart, subAddressesDepart);
+      await authService.getDestiForBookings(assigningBookingsFromAPI, setState,
+          addressesDesti, subAddressesDesti);
       List<Future> vehicleTasks = [];
 
       for (Booking booking in assigningBookingsFromAPI) {
@@ -186,6 +226,10 @@ class _BookingListBodyState extends State<BookingListBody>
         if (b.createdAt == null) return -1;
         return b.createdAt!.compareTo(a.createdAt!);
       });
+      await authService.getAddressesForBookings(assignedBookingsFromAPI,
+          setState, addressesDepart, subAddressesDepart);
+      await authService.getDestiForBookings(
+          assignedBookingsFromAPI, setState, addressesDesti, subAddressesDesti);
       List<Future> vehicleTasks = [];
 
       for (Booking booking in assignedBookingsFromAPI) {
@@ -227,6 +271,10 @@ class _BookingListBodyState extends State<BookingListBody>
         if (b.startTime == null) return -1;
         return b.startTime!.compareTo(a.startTime!);
       });
+      await authService.getAddressesForBookings(inprogressBookingsFromAPI,
+          setState, addressesDepart, subAddressesDepart);
+      await authService.getDestiForBookings(inprogressBookingsFromAPI, setState,
+          addressesDesti, subAddressesDesti);
       List<Future> vehicleTasks = [];
 
       for (Booking booking in inprogressBookingsFromAPI) {
@@ -430,10 +478,9 @@ class _BookingListBodyState extends State<BookingListBody>
         itemCount: bookings.length,
         itemBuilder: (context, index) {
           final booking = bookings[index];
-          final int quantity = booking.quantity ?? 0;
-          final int total = booking.total ?? 0;
+
           String formattedStartTime = DateFormat('dd/MM/yyyy | HH:mm')
-              .format(booking.createdAt ?? DateTime.now());
+              .format(booking.createdAt!.toUtc().add(Duration(hours: 14)));
 
           return Container(
             color: FrontendConfigs.kBackgrColor,
@@ -527,9 +574,9 @@ class _BookingListBodyState extends State<BookingListBody>
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: RideSelectionWidget(
                             icon: 'assets/svg/pickup_icon.svg',
-                            title: widget.addressesDepart[booking.id] ??
+                            title: subAddressesDepart[booking.id] ??
                                 '', // Use addresses parameter
-                            body: widget.subAddressesDepart[booking.id] ?? '',
+
                             onPressed: () {},
                           ),
                         ),
@@ -550,8 +597,7 @@ class _BookingListBodyState extends State<BookingListBody>
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: RideSelectionWidget(
                             icon: 'assets/svg/location_icon.svg',
-                            title: widget.addressesDesti[booking.id] ?? '',
-                            body: widget.subAddressesDesti[booking.id] ?? '',
+                            title: subAddressesDesti[booking.id] ?? '',
                             onPressed: () {},
                           ),
                         ),
@@ -566,12 +612,10 @@ class _BookingListBodyState extends State<BookingListBody>
                                       userId: widget.userId,
                                       accountId: accountId,
                                       booking: booking,
-                                      addressesDepart: widget.addressesDepart,
-                                      addressesDesti: widget.addressesDesti,
-                                      subAddressesDepart:
-                                          widget.subAddressesDepart,
-                                      subAddressesDesti:
-                                          widget.subAddressesDesti,
+                                      addressesDepart: addressesDepart,
+                                      addressesDesti: addressesDesti,
+                                      subAddressesDepart: subAddressesDepart,
+                                      subAddressesDesti: subAddressesDesti,
                                       updateTabCallback: (int tabIndex) {
                                         _tabController?.index =
                                             tabIndex; // This will change the tab in `BookingListBody`.
@@ -620,8 +664,7 @@ class _BookingListBodyState extends State<BookingListBody>
           final booking = bookings[index];
 
           String formattedStartTime = DateFormat('dd/MM/yyyy | HH:mm')
-              .format(booking.createdAt ?? DateTime.now());
-
+              .format(booking.createdAt!.toUtc().add(Duration(hours: 14)));
           return Container(
             color: FrontendConfigs.kBackgrColor,
             child: Padding(
@@ -665,7 +708,11 @@ class _BookingListBodyState extends State<BookingListBody>
                           SizedBox(
                             height: 5,
                           ),
-                          Text(booking.rescueType),
+                          Text(
+                            booking.rescueType == 'Towing'
+                                ? "Kéo xe cứu hộ"
+                                : booking.rescueType,
+                          ),
                           SizedBox(
                             height: 5,
                           ),
@@ -712,9 +759,9 @@ class _BookingListBodyState extends State<BookingListBody>
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: RideSelectionWidget(
                             icon: 'assets/svg/pickup_icon.svg',
-                            title: widget.addressesDepart[booking.id] ??
+                            title: subAddressesDepart[booking.id] ??
                                 '', // Use addresses parameter
-                            body: widget.subAddressesDepart[booking.id] ?? '',
+
                             onPressed: () {},
                           ),
                         ),
@@ -735,8 +782,7 @@ class _BookingListBodyState extends State<BookingListBody>
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
                           child: RideSelectionWidget(
                             icon: 'assets/svg/location_icon.svg',
-                            title: widget.addressesDesti[booking.id] ?? '',
-                            body: widget.subAddressesDesti[booking.id] ?? '',
+                            title: subAddressesDesti[booking.id] ?? '',
                             onPressed: () {},
                           ),
                         ),
@@ -751,12 +797,10 @@ class _BookingListBodyState extends State<BookingListBody>
                                         userId: widget.userId,
                                         accountId: accountId,
                                         booking: booking,
-                                        addressesDepart: widget.addressesDepart,
-                                        addressesDesti: widget.addressesDesti,
-                                        subAddressesDepart:
-                                            widget.subAddressesDepart,
-                                        subAddressesDesti:
-                                            widget.subAddressesDesti,
+                                        addressesDepart: addressesDepart,
+                                        addressesDesti: addressesDesti,
+                                        subAddressesDepart: subAddressesDepart,
+                                        subAddressesDesti: subAddressesDesti,
                                         updateTabCallback: (int tabIndex) {
                                           _tabController?.index =
                                               tabIndex; // This will change the tab in `BookingListBody`.

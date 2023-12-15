@@ -44,6 +44,8 @@ class MapTechScreen extends StatefulWidget {
   _MapTechScreenState createState() => _MapTechScreenState();
 }
 
+final String apiKey = "AIzaSyAiyZLdDwpp0_dAOPNBMItItXixgLH9ABo";
+
 class _MapTechScreenState extends State<MapTechScreen> {
   GoogleMapController? mapController;
   LatLng? currentLocation;
@@ -198,7 +200,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
   }
 
   Future<void> _getEstimatedTravelTime() async {
-    final String apiKey = "AIzaSyAiyZLdDwpp0_dAOPNBMItItXixgLH9ABo";
+    // final String apiKey = "AIzaSyAiyZLdDwpp0_dAOPNBMItItXixgLH9ABo";
     final String apiUrl =
         "https://maps.googleapis.com/maps/api/directions/json";
 
@@ -264,7 +266,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
     // Fetch route coordinates
     PolylinePoints polylinePoints = PolylinePoints();
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      "AIzaSyAiyZLdDwpp0_dAOPNBMItItXixgLH9ABo",
+      "$apiKey",
       PointLatLng(
         currentLocation!.latitude,
         currentLocation!.longitude,
@@ -278,9 +280,9 @@ class _MapTechScreenState extends State<MapTechScreen> {
     if (currentLocation != null && _targetLocation != null) {
       double distance = calculateDistance(currentLocation!, _targetLocation!);
 
-      if (distance < 50) {
+      if (distance < 80) {
         // Stop the timer
-        myTimer?.cancel();
+        // myTimer?.cancel();
 
         print(
             "Technician is close to the target location. Stopping the timer.");
@@ -459,254 +461,225 @@ class _MapTechScreenState extends State<MapTechScreen> {
           },
         ),
       ),
-      body: Stack(children: [
-        (currentLocation != null && _targetLocation != null)
-            ? GoogleMap(
-                onMapCreated: (controller) {
-                  setState(() {
-                    mapController = controller;
-                  });
-                },
-                initialCameraPosition: CameraPosition(
-                  target: currentLocation ?? LatLng(0.0, 0.0),
-                  zoom: 15.0,
+      body: Stack(
+        children: [
+          (currentLocation != null && _targetLocation != null)
+              ? GoogleMap(
+                  onMapCreated: (controller) {
+                    setState(() {
+                      mapController = controller;
+                    });
+                  },
+                  initialCameraPosition: CameraPosition(
+                    target: currentLocation ?? LatLng(0.0, 0.0),
+                    zoom: 15.0,
+                  ),
+                  markers: {
+                    Marker(
+                      markerId: MarkerId("currentLocation"),
+                      position: currentLocation ?? LatLng(0.0, 0.0),
+                      icon: techIcon ?? BitmapDescriptor.defaultMarker,
+                      infoWindow: InfoWindow(title: "Vị trí của tôi"),
+                    ),
+                    Marker(
+                      markerId: MarkerId("targetLocation"),
+                      position: _targetLocation ?? LatLng(0.0, 0.0),
+                      icon: departureIcon ?? BitmapDescriptor.defaultMarker,
+                      infoWindow: InfoWindow(
+                        title: "Địa điểm cứu hộ",
+                      ),
+                    ),
+                    // Marker(
+                    //   markerId: MarkerId("technicianLocation"),
+                    //   position: technicianLocation!,
+                    //   icon: departureIcon ?? BitmapDescriptor.defaultMarker,
+                    //   infoWindow: InfoWindow(title: "Vị trí gặp nạn của khách"),
+                    // ),
+                  },
+                  polylines: {
+                    Polyline(
+                      polylineId: PolylineId("route"),
+                      color: Colors.blue,
+                      width: 3,
+                      points:
+                          routeCoordinates, // Use routeCoordinates instead of [technicianLocation!, _targetLocation!]
+                    ),
+                  },
+                )
+              : Center(
+                  child: CircularProgressIndicator(),
                 ),
-                markers: {
-                  Marker(
-                    markerId: MarkerId("currentLocation"),
-                    position: currentLocation ?? LatLng(0.0, 0.0),
-                    icon: techIcon ?? BitmapDescriptor.defaultMarker,
-                    infoWindow: InfoWindow(title: "Vị trí của tôi"),
+          DraggableScrollableSheet(
+            initialChildSize: 0.28,
+            minChildSize: 0.2,
+            maxChildSize: 0.9,
+            builder: (BuildContext context, ScrollController scrollController) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
                   ),
-                  Marker(
-                    markerId: MarkerId("targetLocation"),
-                    position: _targetLocation ?? LatLng(0.0, 0.0),
-                    icon: departureIcon ?? BitmapDescriptor.defaultMarker,
-                    infoWindow: InfoWindow(
-                      title: "Địa điểm cứu hộ",
-                    ),
-                  ),
-                  // Marker(
-                  //   markerId: MarkerId("technicianLocation"),
-                  //   position: technicianLocation!,
-                  //   icon: departureIcon ?? BitmapDescriptor.defaultMarker,
-                  //   infoWindow: InfoWindow(title: "Vị trí gặp nạn của khách"),
-                  // ),
-                },
-                polylines: {
-                  Polyline(
-                    polylineId: PolylineId("route"),
-                    color: Colors.blue,
-                    width: 3,
-                    points:
-                        routeCoordinates, // Use routeCoordinates instead of [technicianLocation!, _targetLocation!]
-                  ),
-                },
-              )
-            : Center(
-                child: CircularProgressIndicator(),
-              ),
-        DraggableScrollableSheet(
-          initialChildSize: 0.28,
-          minChildSize: 0.2,
-          maxChildSize: 0.9,
-          builder: (BuildContext context, ScrollController scrollController) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          child: Column(
-                            children: [
-                              CustomText(
-                                text: 'Khoảng cách',
-                                fontWeight: FontWeight.bold,
-                              ),
-                              CustomText(
-                                text: '$_distance',
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(
-                          height: 40,
-                          child: VerticalDivider(
-                            thickness: 1,
-                          ),
-                        ),
-                        Container(
-                          child: Column(
-                            children: [
-                              CustomText(
-                                text: 'Thời gian',
-                                fontWeight: FontWeight.bold,
-                              ),
-                              CustomText(
-                                text: '$_duration',
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Divider(
-                    height: 1,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CustomText(
-                          text: 'Thông tin khách hàng',
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CustomText(
-                              text: '${widget.cus.fullname}',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                            SizedBox(
-                              height: 4,
-                            ),
-                            CustomText(
-                              text: '${widget.car.manufacturer}',
-                              fontSize: 15,
-                            ),
-                            SizedBox(
-                              height: 4,
-                            ),
-                            Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            child: Column(
                               children: [
-                                Container(
-                                  padding: EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey.shade300),
-                                  child: Text(
-                                    '${widget.car.licensePlate}',
+                                CustomText(
+                                  text: 'Khoảng cách',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                CustomText(
+                                  text: '${_distance ?? 'Đang tính..'}',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 40,
+                            child: VerticalDivider(
+                              thickness: 1,
+                            ),
+                          ),
+                          Container(
+                            child: Column(
+                              children: [
+                                CustomText(
+                                  text: 'Thời gian',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                CustomText(
+                                  text: '${_duration ?? 'Đang tính..'}',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Divider(
+                      height: 1,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CustomText(
+                            text: 'Thông tin khách hàng',
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CustomText(
+                                text: '${widget.cus.fullname}',
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                              SizedBox(
+                                height: 4,
+                              ),
+                              CustomText(
+                                text: '${widget.car.manufacturer}',
+                                fontSize: 15,
+                              ),
+                              SizedBox(
+                                height: 4,
+                              ),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                        color: Colors.grey.shade300),
+                                    child: Text(
+                                      '${widget.car.licensePlate}',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: FrontendConfigs.kAuthColor),
+                                    ),
+                                  ),
+                                  Text(
+                                    ' | ${widget.model.model1 ?? ''} ',
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         color: FrontendConfigs.kAuthColor),
                                   ),
-                                ),
-                                Text(
-                                  ' | ${widget.model.model1 ?? ''} ',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: FrontendConfigs.kAuthColor),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundImage: NetworkImage(widget.car.image ??
-                              'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fcardefault.png?alt=media&token=8344e522-0e82-426f-93c9-6204a7e3a760'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: FrontendConfigs.kActiveColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                      ),
-                      onPressed: () {
-                        launchDialPad(widget.cus.phone);
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(CupertinoIcons.phone_arrow_down_left),
-                          SizedBox(width: 5),
-                          Text('Gọi khách hàng'),
+                                ],
+                              ),
+                            ],
+                          ),
+                          CircleAvatar(
+                            radius: 30,
+                            backgroundImage: NetworkImage(widget.car.image ??
+                                'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fcardefault.png?alt=media&token=8344e522-0e82-426f-93c9-6204a7e3a760'),
+                          ),
                         ],
                       ),
                     ),
-                  )
-                ],
-              ),
-            );
-          },
-        ),
-      ]),
-      
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 10),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: FrontendConfigs.kActiveColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                        onPressed: () {
+                          launchDialPad(widget.cus.phone);
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(CupertinoIcons.phone_arrow_down_left),
+                            SizedBox(width: 5),
+                            Text('Gọi khách hàng'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       floatingActionButton: _getFloatingActionButton(),
-      // floatingActionButton: Column(
-      //   mainAxisAlignment: MainAxisAlignment.end,
-      //   children: [
-      //     FloatingActionButton(
-      //       onPressed: () {
-      //         if (mapController != null && currentLocation != null) {
-      //           mapController!.animateCamera(
-      //             CameraUpdate.newLatLng(currentLocation!),
-      //           );
-      //         }
-      //       },
-      //       tooltip: 'Go to current location',
-      //       child: Icon(Icons.my_location),
-      //     ),
-      //     SizedBox(height: 16),
-      // FloatingActionButton(
-      //     onPressed: () {
-      //       if (mapController != null && technicianLocation != null) {
-      //         mapController!.animateCamera(
-      //           CameraUpdate.newLatLng(technicianLocation!),
-      //         );
-      //       }
-      //     },
-      //     tooltip: 'Show technician location',
-      //     child: Image.asset(
-      //       'assets/icons/mechanic.png',
-      //       height: 30,
-      //       width: 30,
-      //     )),
-      //   ],
-      // ),
     );
   }
 
   Widget _getFloatingActionButton() {
     return SpeedDialMenuButton(
       //if needed to close the menu after clicking sub-FAB
-
+      mainFABPosX: 1,
+      mainFABPosY: 230,
       //manually open or close menu
       updateSpeedDialStatus: (isShow) {
         //return any open or close change within the widget
@@ -714,7 +687,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
       //general init
       isMainFABMini: false,
       mainMenuFloatingActionButton: MainMenuFloatingActionButton(
-          mini: false,
+          mini: true,
           child: Icon(Icons.menu),
           onPressed: () {},
           closeMenuChild: Icon(Icons.close),

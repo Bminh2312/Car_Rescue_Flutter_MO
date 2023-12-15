@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:CarRescue/src/models/wallet.dart';
 import 'package:CarRescue/src/models/wallet_transaction.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
@@ -85,9 +87,7 @@ class _WalletBodyState extends State<WalletBody> {
         child: LoadingState(),
       );
     }
-    if (walletTransactions.length < 2) {
-      return LoadingState();
-    }
+
     return SafeArea(
       child: SingleChildScrollView(
         child: Padding(
@@ -145,38 +145,53 @@ class _WalletBodyState extends State<WalletBody> {
                   const SizedBox(
                     height: 7,
                   ),
-                  Container(
-                    color: Colors.white,
-                    height: 350,
-                    child: !isLoaded
-                        ? Center(
-                            child:
-                                CircularProgressIndicator()) // Loading indicator
-                        : ListView.builder(
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: 3,
-                            itemBuilder: (context, index) {
-                              final walletTrans = walletTransactions[
-                                  index % walletTransactions.length];
-                              return Container(
-                                padding: EdgeInsets.all(16),
-                                child: WalletDriverWidget(
-                                    name: '',
-                                    details: 'details',
-                                    type: walletTrans.type,
-                                    createdAt: DateFormat('dd-MM-yyyy | hh:mm')
-                                        .format(walletTrans.createdAt
-                                            .toUtc()
-                                            .add(Duration(hours: 14))),
-                                    description: walletTrans.description,
-                                    totalAmount: walletTrans.totalAmount,
-                                    status: walletTrans.status,
-                                    transactionAmount:
-                                        walletTrans.transactionAmount),
-                              );
-                            },
-                          ),
-                  ),
+                  Column(
+                    children: [
+                      Container(
+                        color: Colors.white,
+                        child: isLoaded
+                            ? (walletTransactions.isEmpty
+                                ? Center(
+                                    child: CustomText(
+                                        text:
+                                            'Hiện tại không có giao dịch nào'),
+                                  )
+                                : ListView.builder(
+                                    shrinkWrap:
+                                        true, // Allows the ListView to occupy minimum space
+                                    physics: NeverScrollableScrollPhysics(),
+                                    itemCount:
+                                        min(walletTransactions.length, 3),
+                                    itemBuilder: (context, index) {
+                                      final walletTrans = walletTransactions[
+                                          index % walletTransactions.length];
+                                      return Container(
+                                        padding: EdgeInsets.all(16),
+                                        child: WalletDriverWidget(
+                                          name: '',
+                                          details: 'details',
+                                          type: walletTrans.type,
+                                          createdAt:
+                                              DateFormat('dd-MM-yyyy | hh:mm')
+                                                  .format(
+                                            walletTrans.createdAt
+                                                .toUtc()
+                                                .add(Duration(hours: 14)),
+                                          ),
+                                          description: walletTrans.description,
+                                          totalAmount: walletTrans.totalAmount,
+                                          status: walletTrans.status,
+                                          transactionAmount:
+                                              walletTrans.transactionAmount,
+                                        ),
+                                      );
+                                    },
+                                  ))
+                            : Center(child: CircularProgressIndicator()),
+                      ),
+                      // Other widgets in the Column
+                    ],
+                  )
                 ],
               ),
               //
