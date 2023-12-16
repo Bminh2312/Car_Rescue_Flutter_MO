@@ -3,11 +3,9 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:CarRescue/src/models/manager.dart';
 import 'package:CarRescue/src/models/symptom.dart';
-import 'package:CarRescue/src/presentation/view/customer_view/service_details/widgets/service_select.dart';
-
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/change_rescue_type.dart';
-
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/map_tech_view.dart';
+import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/service_select.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/select_service.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_list/widgets/selection_location_widget.dart';

@@ -586,6 +586,7 @@ class HomeViewState extends State<HomeView> {
           _latLng = newLatLng;
         } else {
           _latLngDrop = newLatLng;
+          print("Where : $_latLngDrop");
         }
         _updateCameraPosition(newLatLng, type);
         if (_latLng != LatLng(0, 0) && _latLngDrop != LatLng(0, 0)) {

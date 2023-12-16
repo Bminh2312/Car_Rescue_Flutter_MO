@@ -4,7 +4,7 @@ class Environment {
   static const String API_URL_PLACES_NEW =
       "https://places.googleapis.com/v1/places:searchText";
 
-  static const String API_KEY_MAPS = "AIzaSyB1GPWHcGXG5TA-0RaxW8E_QM8P2_4RScc";
+  static const String API_KEY_MAPS = "AIzaSyBbcL4uCmi-FTii8UPJx8CnRhVgyv-1j-M";
 
   static const String API_KEY_PREDICTIONS =
       "AIzaSyBZmPE0cCErk-nZtza3mDsXwIKLhS2s8Jg";

@@ -42,12 +42,12 @@ class LoginResult {
 class ManagerData {
   final String managerID;
   final String deviceToken;
-  
+
   ManagerData({required this.managerID, required this.deviceToken});
 }
 
 // final String apiKey1 = 'AIzaSyAiyZLdDwpp0_dAOPNBMItItXixgLH9ABo';
-final String apiKey1 = 'AIzaSyB1GPWHcGXG5TA-0RaxW8E_QM8P2_4RScc';
+final String apiKey1 = 'AIzaSyBbcL4uCmi-FTii8UPJx8CnRhVgyv-1j-M';
 
 class AuthService {
   String? accessToken = GetStorage().read<String>("accessToken");
