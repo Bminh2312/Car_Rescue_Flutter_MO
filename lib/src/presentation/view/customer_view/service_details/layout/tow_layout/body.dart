@@ -910,10 +910,12 @@ class _TowBodyState extends State<TowBody> {
         selectedServiceCards.clear();
         selectedServiceCards.add(service);
         selectedService = service;
+        caculateTotal();
       });
     } else {
       setState(() {
         selectedService = null;
+        caculateTotal();
       });
     }
   }
