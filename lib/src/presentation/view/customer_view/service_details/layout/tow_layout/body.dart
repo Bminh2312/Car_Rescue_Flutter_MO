@@ -55,6 +55,7 @@ class _TowBodyState extends State<TowBody> {
   Customer customer = Customer.fromJson(GetStorage().read('customer') ?? {});
   CarCustomerProvider carCustomerProvider = CarCustomerProvider();
   CustomerCar? _car;
+  Service? selectedService;
   List<String> pickedImages = [];
   final List<Map<String, dynamic>> dropdownItems = [
     {"name": "Khu vực 1", "value": 1},
@@ -145,17 +146,16 @@ class _TowBodyState extends State<TowBody> {
     }
   }
 
-  void updateSelectedServices(Service service, bool isSelected) {
-    setState(() {
-      if (isSelected) {
-        selectedServiceCards.add(service);
-        caculateTotal();
-      } else {
-        selectedServiceCards.remove(service);
-        caculateTotal();
-      }
-    });
-  }
+  // void _onServiceCardChanged(Service service, bool isSelected) {
+  //   print("Current isSelected: $isSelected");
+  //   setState(() {
+  //     if (isSelected) {
+  //       selectedServiceCards.add(service);
+  //     } else {
+  //       selectedServiceCards.remove(service);
+  //     }
+  //   });
+  // }
 
   void caculateTotal() {
     double total = 300000;
@@ -182,9 +182,9 @@ class _TowBodyState extends State<TowBody> {
   }
 
   void createOrder() async {
-    if(selectedServiceCards.isEmpty){
-        notifier.showToast("Hãy chọn ít nhất một dịch vụ");
-      }
+    if (selectedServiceCards.isEmpty) {
+      notifier.showToast("Hãy chọn ít nhất một dịch vụ");
+    }
     if (_formKey.currentState!.validate() && selectedServiceCards.isNotEmpty) {
       setState(() {
         isLoading = true; // Bắt đầu hiển thị vòng quay khi bắt đầu gửi yêu cầu
@@ -780,6 +780,8 @@ class _TowBodyState extends State<TowBody> {
   }
 
   Widget buildServiceSelection(BuildContext context) {
+    final currencyFormat = NumberFormat('#,##0₫', 'vi_VN');
+
     return Container(
       height: double.infinity,
       child: Column(
@@ -795,17 +797,61 @@ class _TowBodyState extends State<TowBody> {
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return Center(child: Text('Không có dữ liệu.'));
                 } else {
-                  return ListView.builder(
-                    itemCount: snapshot.data!.length,
-                    itemBuilder: (context, index) {
-                      final service = snapshot.data![index];
-                      final isSelected = selectedServiceCards.contains(service);
-                      return ServiceCard(
-                        service: service,
-                        onSelected: (isSelected) {
-                          updateSelectedServices(service, isSelected);
+                  return StatefulBuilder(
+                    builder: (BuildContext context, StateSetter setState) {
+                      return ListView.builder(
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, index) {
+                          final service = snapshot.data![index];
+                          var isSelected = selectedService == service;
+                          return SingleChildScrollView(
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 3,
+                              ),
+                              margin: EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: isSelected
+                                    ? FrontendConfigs.kPrimaryColorCustomer
+                                    : Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color.fromARGB(64, 158, 158, 158)
+                                        .withOpacity(0.5),
+                                    spreadRadius: 1,
+                                    blurRadius: 1,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: CheckboxListTile(
+                                title: Text(
+                                  service.name,
+                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                subtitle: Text(
+                                  currencyFormat.format(service.price),
+                                  style: TextStyle(
+                                    color: FrontendConfigs.kAuthColor,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 17,
+                                  ),
+                                ),
+                                value: isSelected,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _onServiceCardChanged(service, value ?? false);
+                                  });
+                                },
+                              ),
+                            ),
+                          );
                         },
-                        isSelected: isSelected, rescueType: 'Towing',
                       );
                     },
                   );
@@ -815,32 +861,37 @@ class _TowBodyState extends State<TowBody> {
           ),
           Container(
             color: Colors.white,
-            padding: EdgeInsets.only(left: 20, right: 20, top: 25, bottom: 10),
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 25,
+              bottom: 10,
+            ),
             width: double.infinity,
             child: Column(
-              mainAxisSize: MainAxisSize
-                  .min, // Đặt cột để không chiếm quá nhiều không gian
+              mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(height: 20), // Khoảng cách giữa tổng cộng tiền và nút
+                SizedBox(height: 20),
                 SizedBox(
-                  width: double.infinity, // Đặt chiều rộng bằng với Container
-                  height: 50, // Đặt chiều cao cố định cho nút
+                  width: double.infinity,
+                  height: 50,
                   child: ElevatedButton(
                     child: Text(
                       'Tiếp tục',
                       style: TextStyle(fontSize: 18),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: FrontendConfigs
-                          .kIconColor, // Đảm bảo rằng màu này được định nghĩa trong FrontendConfigs
+                      backgroundColor: FrontendConfigs.kIconColor,
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(8), // Góc bo tròn cho nút
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     onPressed: () {
-                      print(selectedServiceCards.length);
-                      Navigator.pop(context);
+                      if (selectedService != null) {
+                        // Process the selected service
+                        print(selectedService!.name);
+                        Navigator.pop(context);
+                      }
                     },
                   ),
                 ),
@@ -851,6 +902,22 @@ class _TowBodyState extends State<TowBody> {
       ),
     );
   }
+
+  void _onServiceCardChanged(Service service, bool isSelected) {
+    print("Current isSelected: $isSelected");
+    if (isSelected) {
+      setState(() {
+        selectedServiceCards.clear();
+        selectedServiceCards.add(service);
+        selectedService = service;
+      });
+    } else {
+      setState(() {
+        selectedService = null;
+      });
+    }
+  }
+
   Widget _buildSectionTitle(String title) {
     return Padding(
         padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -862,7 +929,7 @@ class _TowBodyState extends State<TowBody> {
   }
 
   Widget _buildImageSection(List<String> imageUrls) {
-    final allImages = [...urlImages,...pickedImages];
+    final allImages = [...urlImages, ...pickedImages];
     print("Tong so anh:  ${allImages.length}");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -932,7 +999,6 @@ class _TowBodyState extends State<TowBody> {
                   ),
                 );
               }
-              
             },
           ),
         ),
@@ -999,7 +1065,7 @@ class _TowBodyState extends State<TowBody> {
         });
   }
 
-void _addImageFromGallery() async {
+  void _addImageFromGallery() async {
     final picker = ImagePicker();
     final XFile? pickedFile =
         await picker.pickImage(source: ImageSource.gallery);
@@ -1026,5 +1092,4 @@ void _addImageFromGallery() async {
       print('No image selected.');
     }
   }
-
 }
