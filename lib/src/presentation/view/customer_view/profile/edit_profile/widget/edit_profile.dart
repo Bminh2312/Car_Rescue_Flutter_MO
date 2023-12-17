@@ -244,9 +244,9 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                               return 'Số điện thoại phải bao gồm 10 số.';
                             }
 
-                            // Check if the input contains any alphabetic characters
-                            if (RegExp(r'[a-zA-Z]').hasMatch(value)) {
-                              return 'Số điện thoại không được chứa chữ cái.';
+                            // Check if the input contains only numeric characters
+                            if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                              return 'Số điện thoại chỉ được chứa các chữ số.';
                             }
 
                             return null;

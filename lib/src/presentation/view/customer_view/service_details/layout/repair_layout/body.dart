@@ -482,7 +482,7 @@ class _RepairBodyState extends State<RepairBody> {
                 height: 10,
               ),
               Container(
-                  height: MediaQuery.of(context).size.height * 0.1,
+                  height: MediaQuery.of(context).size.height * 0.15,
                   child: SymptomSelector(onSymptomSelected: onSymptomSelected)),
               SizedBox(height: 10),
               if (selectedServiceCards.isNotEmpty)

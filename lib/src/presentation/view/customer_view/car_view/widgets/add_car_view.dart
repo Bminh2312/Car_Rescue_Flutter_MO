@@ -63,10 +63,11 @@ class _AddCarScreenState extends State<AddCarScreen> {
       _notify.showToast("Vui lòng chọn ảnh xe.");
     }
     if (_formKey.currentState!.validate() && vehicleImage != null) {
+      _formKey.currentState!.save();
       var uuid = Uuid();
       String randomId = uuid.v4();
       _showAlertDialog(context);
-      _formKey.currentState!.save();
+
       setState(() {
         _isLoading = true;
       });

@@ -297,8 +297,8 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                       }
 
                       // Check if the input contains any alphabetic characters
-                      if (RegExp(r'[a-zA-Z]').hasMatch(value)) {
-                        return 'Số điện thoại không được chứa chữ cái.';
+                      if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                        return 'Số điện thoại chỉ được chứa các chữ số.';
                       }
 
                       return null;

@@ -102,7 +102,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     });
   }
 
-  Future<void> updateProfile({
+  Future<bool> updateProfile({
     required String userId,
     required String accountId,
     required String name,
@@ -166,15 +166,18 @@ class _EditProfileBodyState extends State<EditProfileBody> {
         _area = area;
       });
       print(_downloadURL);
+
       // Display a success message to the user
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Cập nhật thông tin thành công')),
       );
+      return true;
     } else {
       _isUpdating = false;
       print('Request failed with status: ${response.statusCode}');
       print('Response body: ${response.body}');
     }
+    return false;
   }
 
   Future<void> _pickImage() async {
@@ -311,8 +314,8 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                             }
 
                             // Check if the input contains any alphabetic characters
-                            if (RegExp(r'[a-zA-Z]').hasMatch(value)) {
-                              return 'Số điện thoại không được chứa chữ cái.';
+                            if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                              return 'Số điện thoại chỉ được chứa các chữ số.';
                             }
 
                             return null;
@@ -459,7 +462,8 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                     _selectedGenderString ?? '';
                                 String formattedBirthdate =
                                     DateFormat('yyyy-MM-dd').format(_birthday);
-                                await updateProfile(
+
+                                bool isSuccess = await updateProfile(
                                     area: _area ?? 0,
                                     status: _status!,
                                     userId: widget.userId,
@@ -471,9 +475,16 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                     sex: selectedGender,
                                     downloadURL: downloadURL,
                                     updateAt: updatedAtString);
+                                if (isSuccess) {
+                                  setState(() {
+                                    _isUpdating = false;
+                                    Navigator.pop(context, true);
+                                  });
+                                }
                               }
-
-                              Navigator.pop(context, true);
+                              setState(() {
+                                _isUpdating = false;
+                              });
                             },
                             child: Text('Lưu thông tin'),
                           ),

@@ -807,7 +807,7 @@ class AuthService {
     String street = '';
     String neighborhood = '';
     String admin1 = '';
-    
+
     for (var component in addressComponents) {
       if (component['types'].contains('point_of_interest')) {
         pointOfInterest = component['long_name'];
@@ -1070,6 +1070,8 @@ class AuthService {
       Uri.parse(apiUrl),
       headers: {
         "Content-Type": "application/json",
+        'Authorization': 'Bearer $accessToken',
+
         // Add other headers if needed, like authorization headers
       },
       body: json.encode({
@@ -1845,7 +1847,7 @@ class AuthService {
 
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonResponse = json.decode(response.body);
-
+        print(jsonResponse);
         Map<String, dynamic> data = jsonResponse['data'];
         Map<String, dynamic> accountData = data['account'];
 
