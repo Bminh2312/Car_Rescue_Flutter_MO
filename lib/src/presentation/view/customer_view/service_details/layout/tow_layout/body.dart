@@ -863,10 +863,6 @@ class _TowBodyState extends State<TowBody> {
                             ),
                           );
                         },
-
-                        isSelected: isSelected,
-                        rescueType: 'Towing',
-
                       );
                     },
                   );
