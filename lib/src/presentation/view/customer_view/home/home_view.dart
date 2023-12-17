@@ -274,6 +274,7 @@ class HomeViewState extends State<HomeView> {
     _isMounted = false;
     _pickUpController.dispose();
     _dropLocationController.dispose();
+    _pc.close();
     super.dispose();
     // Cancel sự kiện async trong dispose
     _positionStreamSubscription?.cancel();
@@ -323,7 +324,7 @@ class HomeViewState extends State<HomeView> {
             ),
           SlidingUpPanel(
             controller: _pc,
-            minHeight: widget.rescueType == 'Fixing' ? 200 : 300,
+            minHeight: widget.rescueType == 'Fixing' ? 200 : 350,
             maxHeight: widget.rescueType == 'Fixing' ? 250 : 400,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(12),
@@ -433,7 +434,7 @@ class HomeViewState extends State<HomeView> {
                         if (snapshot.hasData) {
                           final predictions = snapshot.data!.predictions;
                           if (predictions.isNotEmpty) {
-                            return Expanded(
+                            return Expanded(   
                               child: Card(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -603,6 +604,7 @@ class HomeViewState extends State<HomeView> {
           _latLng = newLatLng;
         } else {
           _latLngDrop = newLatLng;
+          print("Where : $_latLngDrop");
         }
         _updateCameraPosition(newLatLng, type);
         if (_latLng != LatLng(0, 0) && _latLngDrop != LatLng(0, 0)) {
