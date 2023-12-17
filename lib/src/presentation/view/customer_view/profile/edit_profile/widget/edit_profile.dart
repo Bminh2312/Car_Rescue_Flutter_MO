@@ -207,6 +207,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                         ),
                         SizedBox(height: 10),
                         TextFormField(
+                          keyboardType: TextInputType.name,
                           controller: _nameController,
                           decoration: InputDecoration(
                             labelText: 'Tên đầy đủ',
@@ -217,11 +218,18 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                             if (value == null || value.isEmpty) {
                               return 'Hãy nhập họ tên đầy đủ';
                             }
+
+                            // Check if the input contains any numeric characters
+                            if (RegExp(r'[0-9]').hasMatch(value)) {
+                              return 'Tên không được chứa số';
+                            }
+
                             return null;
                           },
                         ),
                         SizedBox(height: 10),
                         TextFormField(
+                          keyboardType: TextInputType.phone,
                           controller: _phoneController,
                           decoration: InputDecoration(
                             labelText: 'Số điện thoại',
@@ -235,12 +243,18 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                             if (value.length != 10) {
                               return 'Số điện thoại phải bao gồm 10 số.';
                             }
-                            // You can add more phone number validation here if needed.
+
+                            // Check if the input contains only numeric characters
+                            if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                              return 'Số điện thoại chỉ được chứa các chữ số.';
+                            }
+
                             return null;
                           },
                         ),
                         SizedBox(height: 10),
                         TextFormField(
+                          keyboardType: TextInputType.streetAddress,
                           controller: _addressController,
                           decoration: InputDecoration(
                             labelText: 'Địa chỉ',

@@ -90,12 +90,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   List<Service> selectedServiceCards = [];
   late List<String> selectedServices;
   int totalPrice = 0;
-  int _quantity = 1;
   int totalQuantity = 0;
   int totalAmount = 0;
-
-  bool _isExpanded = false;
-
   final ScrollController _scrollController = ScrollController();
   double _savedScrollPosition = 0.0;
   Timer? myTimer;
@@ -773,7 +769,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               }
 
               // Otherwise, show an add button
-              else if (widget.booking.status.toUpperCase() == 'ASSIGNED') {
+              else if (widget.booking.status.toUpperCase() == 'ASSIGNED' ||
+                  widget.booking.status.toUpperCase() == 'INPROGRESS') {
                 return Padding(
                   padding: EdgeInsets.only(right: 16.0),
                   child: InkWell(
@@ -1070,10 +1067,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   Widget _buildOrderItemSection() {
     return Column(
       children: [
-        Expanded(
+        Container(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: ListView.builder(
+              shrinkWrap: true,
               key: PageStorageKey<String>('page'),
               physics: ClampingScrollPhysics(),
               itemCount: orderDetails.length,
@@ -1110,247 +1108,264 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
             final formattedTotal = formatter.format(total);
             _orderId = orderId;
-            return Stack(
-              children: [
-                widget.booking.status != "COMPLETED" &&
-                        widget.booking.status != "CANCELLED"
-                    ? Dismissible(
-                        key: dismissibleKey, // Use a unique key
-                        direction: DismissDirection.endToStart,
-                        confirmDismiss: (direction) async {
-                          return await _showConfirmationDialog(context);
-                        },
-                        onDismissed: (direction) async {
-                          await _deleteOrderDetail(orderId);
-                          // Optionally, you can add a snackbar or handle UI updates after deletion
-                        },
-                        background: Container(
-                          alignment: AlignmentDirectional.centerEnd,
-                          color: Colors.red,
-                          child: Padding(
-                            padding: EdgeInsets.only(right: 16),
-                            child: Icon(Icons.delete, color: Colors.white),
-                          ),
-                        ),
-
-                        child: Column(
-                          children: [
-                            _buildItemRow(
-                              '$name (Số lượng: $quantity) ',
-                              Text(
-                                '$formattedTotal',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final bool isWideScreen = constraints.maxWidth > 600;
+                return Stack(
+                  children: [
+                    widget.booking.status != "COMPLETED" &&
+                            widget.booking.status != "CANCELLED"
+                        ? Dismissible(
+                            key: dismissibleKey, // Use a unique key
+                            direction: DismissDirection.endToStart,
+                            confirmDismiss: (direction) async {
+                              return await _showConfirmationDialog(context);
+                            },
+                            onDismissed: (direction) async {
+                              await _deleteOrderDetail(orderId);
+                              // Optionally, you can add a snackbar or handle UI updates after deletion
+                            },
+                            background: Container(
+                              alignment: AlignmentDirectional.centerEnd,
+                              color: Colors.red,
+                              child: Padding(
+                                padding: EdgeInsets.only(right: 16),
+                                child: Icon(Icons.delete, color: Colors.white),
                               ),
-                              isLoading: localIsLoading,
                             ),
-                            widget.booking.status.toUpperCase() !=
-                                        'COMPLETED' &&
-                                    widget.booking.status.toUpperCase() !=
-                                        'CANCELLED'
-                                ? Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Row(
+
+                            child: Column(
+                              children: [
+                                _buildItemRow(
+                                  '$name (Số lượng: $quantity) ',
+                                  Text(
+                                    '$formattedTotal',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  isLoading: localIsLoading,
+                                ),
+                                widget.booking.status.toUpperCase() !=
+                                            'COMPLETED' &&
+                                        widget.booking.status.toUpperCase() !=
+                                            'CANCELLED' &&
+                                        widget.booking.status.toUpperCase() !=
+                                            'WAITING'
+                                    ? Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          IconButton(
-                                            icon: Icon(Icons.remove),
-                                            onPressed: () async {
-                                              if (quantity > 1) {
-                                                setState(() {
-                                                  localIsLoading = true;
-                                                });
-                                                await _updateOrderDetails(
-                                                  orderDetail,
-                                                  quantity - 1,
-                                                  price,
-                                                  (loading) {
+                                          Row(
+                                            children: [
+                                              IconButton(
+                                                icon: Icon(Icons.remove),
+                                                onPressed: () async {
+                                                  if (quantity > 1) {
                                                     setState(() {
-                                                      localIsLoading = loading;
+                                                      localIsLoading = true;
                                                     });
-                                                  },
-                                                );
-                                                await _delayedLoadPayment();
-                                              }
-                                            },
-                                          ),
-                                          SizedBox(
-                                            width: 10,
-                                          ),
-                                          SizedBox(
-                                            width: 50,
-                                            height: 32,
-                                            child: TextFormField(
-                                              textAlign: TextAlign.center,
-                                              decoration: InputDecoration(
-                                                border: OutlineInputBorder(),
-                                              ),
-                                              controller: quantityController,
-                                              onChanged: (value) {
-                                                quantity =
-                                                    int.tryParse(value) ?? 0;
-                                              },
-                                              onEditingComplete: () async {
-                                                setState(() {
-                                                  localIsLoading = true;
-                                                });
-                                                await _updateOrderDetails(
-                                                  orderDetail,
-                                                  quantity,
-                                                  price,
-                                                  (loading) {
-                                                    setState(() {
-                                                      localIsLoading = loading;
-                                                    });
-                                                  },
-                                                );
-                                                await _delayedLoadPayment();
-                                              },
-                                            ),
-                                          ),
-                                          SizedBox(
-                                            width: 10,
-                                          ),
-                                          IconButton(
-                                            icon: Icon(Icons.add),
-                                            onPressed: () async {
-                                              setState(() {
-                                                localIsLoading = true;
-                                              });
-                                              await _updateOrderDetails(
-                                                orderDetail,
-                                                quantity + 1,
-                                                price,
-                                                (loading) {
-                                                  setState(() {
-                                                    localIsLoading = loading;
-                                                  });
+                                                    await _updateOrderDetails(
+                                                      orderDetail,
+                                                      quantity - 1,
+                                                      price,
+                                                      (loading) {
+                                                        setState(() {
+                                                          localIsLoading =
+                                                              loading;
+                                                        });
+                                                      },
+                                                    );
+                                                    await _delayedLoadPayment();
+                                                  }
                                                 },
-                                              );
-                                              await _delayedLoadPayment();
-                                            },
+                                              ),
+                                              SizedBox(
+                                                width: 10,
+                                              ),
+                                              SizedBox(
+                                                width: 50,
+                                                height: 32,
+                                                child: TextFormField(
+                                                  textAlign: TextAlign.center,
+                                                  decoration: InputDecoration(
+                                                    border:
+                                                        OutlineInputBorder(),
+                                                  ),
+                                                  controller:
+                                                      quantityController,
+                                                  onChanged: (value) {
+                                                    quantity =
+                                                        int.tryParse(value) ??
+                                                            0;
+                                                  },
+                                                  onEditingComplete: () async {
+                                                    setState(() {
+                                                      localIsLoading = true;
+                                                    });
+                                                    await _updateOrderDetails(
+                                                      orderDetail,
+                                                      quantity,
+                                                      price,
+                                                      (loading) {
+                                                        setState(() {
+                                                          localIsLoading =
+                                                              loading;
+                                                        });
+                                                      },
+                                                    );
+                                                    await _delayedLoadPayment();
+                                                  },
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: 10,
+                                              ),
+                                              IconButton(
+                                                icon: Icon(Icons.add),
+                                                onPressed: () async {
+                                                  setState(() {
+                                                    localIsLoading = true;
+                                                  });
+                                                  await _updateOrderDetails(
+                                                    orderDetail,
+                                                    quantity + 1,
+                                                    price,
+                                                    (loading) {
+                                                      setState(() {
+                                                        localIsLoading =
+                                                            loading;
+                                                      });
+                                                    },
+                                                  );
+                                                  await _delayedLoadPayment();
+                                                },
+                                              ),
+                                            ],
                                           ),
                                         ],
-                                      ),
-                                    ],
-                                  )
-                                : SizedBox.shrink()
-                          ],
-                        ),
-                      )
-                    : Column(
-                        children: [
-                          _buildItemRow(
-                            '$name (Số lượng: $quantity) ',
-                            Text(
-                              '$formattedTotal',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                                      )
+                                    : SizedBox.shrink()
+                              ],
                             ),
-                            isLoading: localIsLoading,
-                          ),
-                          widget.booking.status.toUpperCase() != 'COMPLETED' &&
-                                  widget.booking.status.toUpperCase() !=
-                                      'CANCELLED'
-                              ? Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
+                          )
+                        : Column(
+                            children: [
+                              _buildItemRow(
+                                '$name (Số lượng: $quantity) ',
+                                Text(
+                                  '$formattedTotal',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                isLoading: localIsLoading,
+                              ),
+                              widget.booking.status.toUpperCase() !=
+                                          'COMPLETED' &&
+                                      widget.booking.status.toUpperCase() !=
+                                          'CANCELLED'
+                                  ? Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        IconButton(
-                                          icon: Icon(Icons.remove),
-                                          onPressed: () async {
-                                            if (quantity > 1) {
-                                              setState(() {
-                                                localIsLoading = true;
-                                              });
-                                              await _updateOrderDetails(
-                                                orderDetail,
-                                                quantity - 1,
-                                                price,
-                                                (loading) {
+                                        Row(
+                                          children: [
+                                            IconButton(
+                                              icon: Icon(Icons.remove),
+                                              onPressed: () async {
+                                                if (quantity > 1) {
                                                   setState(() {
-                                                    localIsLoading = loading;
+                                                    localIsLoading = true;
                                                   });
-                                                },
-                                              );
-                                              await _delayedLoadPayment();
-                                            }
-                                          },
-                                        ),
-                                        SizedBox(
-                                          width: 10,
-                                        ),
-                                        SizedBox(
-                                          width: 50,
-                                          height: 32,
-                                          child: TextFormField(
-                                            textAlign: TextAlign.center,
-                                            decoration: InputDecoration(
-                                              border: OutlineInputBorder(),
-                                            ),
-                                            controller: quantityController,
-                                            onChanged: (value) {
-                                              quantity =
-                                                  int.tryParse(value) ?? 0;
-                                            },
-                                            onEditingComplete: () async {
-                                              setState(() {
-                                                localIsLoading = true;
-                                              });
-                                              await _updateOrderDetails(
-                                                orderDetail,
-                                                quantity,
-                                                price,
-                                                (loading) {
-                                                  setState(() {
-                                                    localIsLoading = loading;
-                                                  });
-                                                },
-                                              );
-                                              await _delayedLoadPayment();
-                                            },
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          width: 10,
-                                        ),
-                                        IconButton(
-                                          icon: Icon(Icons.add),
-                                          onPressed: () async {
-                                            setState(() {
-                                              localIsLoading = true;
-                                            });
-                                            await _updateOrderDetails(
-                                              orderDetail,
-                                              quantity + 1,
-                                              price,
-                                              (loading) {
-                                                setState(() {
-                                                  localIsLoading = loading;
-                                                });
+                                                  await _updateOrderDetails(
+                                                    orderDetail,
+                                                    quantity - 1,
+                                                    price,
+                                                    (loading) {
+                                                      setState(() {
+                                                        localIsLoading =
+                                                            loading;
+                                                      });
+                                                    },
+                                                  );
+                                                  await _delayedLoadPayment();
+                                                }
                                               },
-                                            );
-                                            await _delayedLoadPayment();
-                                          },
+                                            ),
+                                            SizedBox(
+                                              width: 10,
+                                            ),
+                                            SizedBox(
+                                              width: 50,
+                                              height: 32,
+                                              child: TextFormField(
+                                                textAlign: TextAlign.center,
+                                                decoration: InputDecoration(
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                                controller: quantityController,
+                                                onChanged: (value) {
+                                                  quantity =
+                                                      int.tryParse(value) ?? 0;
+                                                },
+                                                onEditingComplete: () async {
+                                                  setState(() {
+                                                    localIsLoading = true;
+                                                  });
+                                                  await _updateOrderDetails(
+                                                    orderDetail,
+                                                    quantity,
+                                                    price,
+                                                    (loading) {
+                                                      setState(() {
+                                                        localIsLoading =
+                                                            loading;
+                                                      });
+                                                    },
+                                                  );
+                                                  await _delayedLoadPayment();
+                                                },
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              width: 10,
+                                            ),
+                                            IconButton(
+                                              icon: Icon(Icons.add),
+                                              onPressed: () async {
+                                                setState(() {
+                                                  localIsLoading = true;
+                                                });
+                                                await _updateOrderDetails(
+                                                  orderDetail,
+                                                  quantity + 1,
+                                                  price,
+                                                  (loading) {
+                                                    setState(() {
+                                                      localIsLoading = loading;
+                                                    });
+                                                  },
+                                                );
+                                                await _delayedLoadPayment();
+                                              },
+                                            ),
+                                          ],
                                         ),
                                       ],
-                                    ),
-                                  ],
-                                )
-                              : SizedBox.shrink()
-                        ],
+                                    )
+                                  : SizedBox.shrink()
+                            ],
+                          ),
+                    if (localIsLoading)
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withOpacity(0.5),
+                          child: Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
                       ),
-                if (localIsLoading)
-                  Positioned.fill(
-                    child: Container(
-                      color: Colors.black.withOpacity(0.5),
-                      child: Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                  ),
-              ],
+                  ],
+                );
+              },
             );
           } else {
             return Text('Invalid data format');
@@ -1364,22 +1379,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     );
   }
 
-  // Widget _buildItemRow(String title, Widget value, {bool _isLoading = false}) {
-  //   return Column(
-  //     children: [
-  //       Row(
-  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //         children: [
-  //           ListTile(
-  //             title: Text(title),
-  //             subtitle: value,
-  //           ),
-  //         ],
-  //       ),
-  //       isLoading ? CircularProgressIndicator() : SizedBox.shrink(),
-  //     ],
-  //   );
-  // }
   Future<bool> _showConfirmationDialog(BuildContext context) async {
     return await showDialog(
       context: context,
@@ -1554,7 +1553,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _buildSectionTitle("Khách hàng"),
-                          widget.booking.status != 'ASSIGNED'
+                          widget.booking.status == 'ASSIGNED' &&
+                                  widget.booking.status == 'INPROGRESS'
                               ? InkWell(
                                   onTap: () {
                                     Navigator.pushReplacement(
@@ -1612,7 +1612,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         _buildSectionTitle('Đơn hàng'),
                         Flexible(
                           child: BookingStatus(
-                            status: widget.booking.status,
+                            status: _currentBooking!.status,
                             fontSize: 14,
                           ),
                         ),
@@ -1697,17 +1697,16 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
               // Image
 
-              if (widget.booking.status.toUpperCase() == 'ASSIGNED')
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.white,
-                  child: Column(
-                    children: [
-                      _buildImageSection(_imageUrls),
-                    ],
-                  ),
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    _buildImageSection(_imageUrls),
+                  ],
                 ),
+              ),
 
               // _buildImageSection(imageUrls!),
 
@@ -1722,7 +1721,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   children: [
                     SizedBox(height: 8.0),
                     _buildSectionTitle("Ghi chú của kĩ thuật viên"),
-                    if (widget.booking.status == "ASSIGNED")
+                    if (widget.booking.status == "ASSIGNED" ||
+                        widget.booking.status == "INPROGRESS")
                       _buildNoteRow("Nhập nội dung ghi chú", _formKey),
                     _buildInfoRow(
                         "Nội dung ghi chú",
@@ -1807,43 +1807,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       ],
                     ),
                     Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                CustomText(
-                                  text: 'Phí dịch vụ',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                SizedBox(
-                                  width: 7,
-                                ),
-                                Tooltip(
-                                  triggerMode: TooltipTriggerMode.tap,
-                                  message:
-                                      'Phí dịch vụ mặc định được tính 300.000đ mỗi đơn hàng\n\nTổng cộng = Phí dịch vụ + (Đơn giá x Khoảng cách) ',
-                                  textStyle: TextStyle(color: Colors.white),
-                                  padding: EdgeInsets.all(8),
-                                  margin: EdgeInsets.all(5),
-                                  waitDuration: Duration(seconds: 1),
-                                  showDuration: Duration(seconds: 7),
-                                  child: Icon(Icons.info),
-                                ),
-                              ],
-                            ),
-                            CustomText(
-                              text: '300.000đ',
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ],
-                        ),
-                      ],
+                      children: [],
                     ),
-                    Container(height: 350, child: _buildOrderItemSection()),
+                    Container(child: _buildOrderItemSection()),
                   ],
                 ),
               ),
@@ -1882,7 +1848,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         bottomNavigationBar: Container(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             if (widget.booking.status != "COMPLETED" &&
-                widget.booking.status != "CANCELLED")
+                widget.booking.status != "CANCELLED" &&
+                widget.booking.status != "WAITING")
               Container(
                 color: Colors.white,
                 child: Row(
@@ -1894,25 +1861,30 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       padding:
                           EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           List<Service> selectedServices = selectedServiceCards
                               .where((service) =>
                                   selectedServiceCards.contains(service))
                               .toList();
                           Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ServiceSelectionScreen(
-                                  userId: widget.userId,
-                                  accountId: widget.accountId,
-                                  selectedServices: selectedServices,
-                                  booking: widget.booking,
-                                  addressesDepart: widget.addressesDepart,
-                                  subAddressesDepart: widget.subAddressesDepart,
-                                  addressesDesti: widget.addressesDesti,
-                                  subAddressesDesti: widget.subAddressesDesti,
-                                ),
-                              ));
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ServiceSelectionScreen(
+                                      userId: widget.userId,
+                                      accountId: widget.accountId,
+                                      selectedServices: selectedServices,
+                                      booking: widget.booking,
+                                      addressesDepart: widget.addressesDepart,
+                                      subAddressesDepart:
+                                          widget.subAddressesDepart,
+                                      addressesDesti: widget.addressesDesti,
+                                      subAddressesDesti:
+                                          widget.subAddressesDesti,
+                                    ),
+                                  ))
+                              .then(
+                                  (value) => {_loadBooking(widget.booking.id)});
                         },
                         child: Container(
                           padding:
@@ -2001,7 +1973,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
             ),
             if (widget.booking.status == "INPROGRESS") _slider(false),
             if (widget.booking.status == "ASSIGNED" ||
-                widget.booking.status == "WAITING")
+                widget.booking.status == "INPROGRESS")
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 color: Colors.white,

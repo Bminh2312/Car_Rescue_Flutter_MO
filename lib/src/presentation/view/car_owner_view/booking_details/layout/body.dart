@@ -67,7 +67,11 @@ class BookingDetailsBody extends StatefulWidget {
 }
 
 class _BookingDetailsBodyState extends State<BookingDetailsBody> {
+  //flag
   bool _isLoading = false;
+  bool checkUpdate = false;
+  bool _showDeleteIcon = false;
+
   AuthService authService = AuthService();
   CustomerInfo? customerInfo;
   Vehicle? vehicleInfo;
@@ -84,7 +88,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   num totalQuantity = 0;
   num totalAmount = 0;
   int total = 0;
-  bool checkUpdate = false;
+
   List<Service> selectedServiceCards = [];
   late List<String> selectedServices;
   NotifyMessage notifyMessage = NotifyMessage();
@@ -573,7 +577,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         manufacturer: vehicleInfo?.manufacturer ?? '',
                         type: vehicleInfo?.type ?? '',
                         licensePlate: vehicleInfo?.licensePlate ?? '',
-                        image: vehicleInfo?.image ?? '',
+                        image: vehicleInfo?.image ??
+                            'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fcardefault.png?alt=media&token=8344e522-0e82-426f-93c9-6204a7e3a760',
                       ),
                     ],
                   ),
@@ -673,16 +678,15 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           )),
-                      if (widget.booking.status.toUpperCase() == 'COMPLETED')
-                        if (widget.booking.status.toUpperCase() == 'CANCELLED')
-                          _buildInfoRow(
-                              "Lí do hủy đơn",
-                              Text(
-                                  widget.booking.cancellationReason ??
-                                      'Không Cung Cấp Lí Do',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15))),
+                      if (widget.booking.status.toUpperCase() == 'CANCELLED')
+                        _buildInfoRow(
+                            "Lí do hủy đơn",
+                            Text(
+                                widget.booking.cancellationReason ??
+                                    'Không Cung Cấp Lí Do',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15))),
                       if (widget.booking.status.toUpperCase() == 'COMPLETED')
                         _buildInfoRow(
                           'Đánh giá',
@@ -719,44 +723,42 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 ),
 
                 // Image
-
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.white,
-                  child: Column(
-                    children: [
-                      _buildImageSection(_imageUrls),
-                    ],
-                    // _buildInfoRow(
-                    //     "Ghi chú NV",
-                    //     Text(widget.booking.staffNote ?? '',
-                    //         style: TextStyle(fontWeight: FontWeight.bold))),
+                if (widget.booking.status == 'ASSIGNED' ||
+                    widget.booking.status == 'INPROGRESS')
+                  Container(
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.white,
+                    child: Column(
+                      children: [
+                        _buildImageSection(_imageUrls),
+                      ],
+                    ),
                   ),
-                ),
-                // _buildInfoRow("Lí do huỷ đơn", booking.cancellationReason),
 
                 // Timing
-                Container(
-                  margin: EdgeInsets.symmetric(vertical: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.white,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: 8.0),
-                      _buildSectionTitle("Ghi chú của nhân viên"),
-                      if (widget.booking.status != 'COMPLETED' &&
-                          widget.booking.status != 'CANCELLED')
-                        _buildNoteRow('Nhập nội dung ghi chú', _formKey),
-                      _buildInfoRow(
-                          "Nội dung",
-                          Text('${_currentBooking!.staffNote ?? 'Không có'}',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                      SizedBox(height: 8.0),
-                    ],
+                if (widget.booking.status == 'ASSIGNED' ||
+                    widget.booking.status == 'INPROGRESS')
+                  Container(
+                    margin: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 8.0),
+                        _buildSectionTitle("Ghi chú của nhân viên"),
+                        if (widget.booking.status != 'COMPLETED' &&
+                            widget.booking.status != 'CANCELLED')
+                          _buildNoteRow('Nhập nội dung ghi chú', _formKey),
+                        _buildInfoRow(
+                            "Nội dung",
+                            Text('${_currentBooking!.staffNote ?? 'Không có'}',
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        SizedBox(height: 8.0),
+                      ],
+                    ),
                   ),
-                ),
                 Container(
                   margin: EdgeInsets.symmetric(vertical: 4),
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -883,14 +885,9 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 mainAxisSize: MainAxisSize
                     .min, // Quan trọng để đảm bảo Column không chiếm toàn bộ không gian
                 children: [
-                  if (widget.booking.status != 'COMPLETED' &&
-                      widget.booking.status != 'CANCELLED')
+                  if (widget.booking.status == 'INPROGRESS')
                     GestureDetector(
                       onTap: () {
-                        List<Service> selectedServices = selectedServiceCards
-                            .where((service) =>
-                                selectedServiceCards.contains(service))
-                            .toList();
                         Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -899,14 +896,13 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                 quantity: _quantity ?? 0,
                                 userId: widget.userId,
                                 accountId: widget.accountId,
-                                selectedServices: selectedServices,
                                 booking: widget.booking,
                                 addressesDepart: widget.addressesDepart,
                                 subAddressesDepart: widget.subAddressesDepart,
                                 addressesDesti: widget.addressesDesti,
                                 subAddressesDesti: widget.subAddressesDesti,
                               ),
-                            )).then((value) => _loadPayment(widget.booking.id));
+                            )).then((value) => reloadData());
                       },
                       child: Container(
                         padding:
@@ -958,67 +954,71 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       ],
                     ),
                   ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  if (widget.booking.status != 'COMPLETED' &&
-                      widget.booking.status != 'CANCELLED' &&
-                      widget.booking.status != 'INPROGRESS' &&
-                      widget.booking.status != 'ASSIGNING')
-                    Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          SizedBox(width: 24.0),
-                          AppButton(
-                              onPressed: () async {
-                                setState(() {
-                                  _isLoading = true;
-                                });
-                                if (_formKey.currentState!.validate() &&
-                                    pickedImages.isNotEmpty) {
-                                  await uploadImage();
-                                  await updateOrder(widget.booking.id,
-                                      techNoteController.text, _updateImage);
-                                  // await _loadImageOrders(widget.booking.id);
-                                  await _loadVehicleInfo(
-                                      widget.booking.vehicleId ?? '');
-                                  // await _loadBooking(widget.booking.id);
+                  // if (widget.booking.status == 'INPROGRESS' ||
+                  //     widget.booking.status == 'ASSIGNED')
+                  //   Column(
+                  //     children: [
+                  //       SizedBox(
+                  //         height: 10,
+                  //       ),
+                  //       Center(
+                  //         child: Row(
+                  //           mainAxisAlignment: MainAxisAlignment.center,
+                  //           children: <Widget>[
+                  //             SizedBox(width: 24.0),
+                  //             AppButton(
+                  //                 onPressed: () async {
+                  //                   setState(() {
+                  //                     _isLoading = true;
+                  //                   });
+                  //                   if (_formKey.currentState!.validate() &&
+                  //                       pickedImages.isNotEmpty) {
+                  //                     await uploadImage();
+                  //                     await updateOrderForCarOwner(
+                  //                         widget.booking.id,
+                  //                         techNoteController.text,
+                  //                         _updateImage);
+                  //                     // await _loadImageOrders(widget.booking.id);
+                  //                     await _loadVehicleInfo(
+                  //                         widget.booking.vehicleId ?? '');
+                  //                     // await _loadBooking(widget.booking.id);
 
-                                  await _loadImageOrders(widget.booking.id);
-                                  Booking updatedBooking = await authService
-                                      .fetchBookingById(widget.booking.id);
-                                  setState(() {
-                                    _currentBooking = updatedBooking;
-                                    techNoteController.clear();
-                                    _loadCustomerInfo(
-                                        widget.booking.customerId);
-                                  });
-                                  if (_imageUrls.isNotEmpty) {
-                                  } else {
-                                    print("Image empty");
-                                    setState(() {
-                                      _isLoading = false;
-                                    });
-                                  }
-                                } else {
-                                  print("Note or pickedImages empty");
-                                  notifyMessage
-                                      .showToast("Cần có ảnh và ghi chú");
-                                  setState(() {
-                                    _isLoading = false;
-                                  });
-                                }
-                              },
-                              btnLabel: checkUpdate
-                                  ? "Đang gửi về hệ thống"
-                                  : "Hoàn thiện đơn hàng"),
-                        ],
-                      ),
-                    ),
-                  SizedBox(
-                    height: 10,
-                  ),
+                  //                     await _loadImageOrders(widget.booking.id);
+                  //                     Booking updatedBooking = await authService
+                  //                         .fetchBookingById(widget.booking.id);
+                  //                     setState(() {
+                  //                       _currentBooking = updatedBooking;
+                  //                       techNoteController.clear();
+                  //                       _loadCustomerInfo(
+                  //                           widget.booking.customerId);
+                  //                     });
+                  //                     if (_imageUrls.isNotEmpty) {
+                  //                     } else {
+                  //                       print("Image empty");
+                  //                       setState(() {
+                  //                         _isLoading = false;
+                  //                       });
+                  //                     }
+                  //                   } else {
+                  //                     print("Note or pickedImages empty");
+                  //                     notifyMessage
+                  //                         .showToast("Cần có ảnh và ghi chú");
+                  //                     setState(() {
+                  //                       _isLoading = false;
+                  //                     });
+                  //                   }
+                  //                 },
+                  //                 btnLabel: checkUpdate
+                  //                     ? "Đang gửi về hệ thống"
+                  //                     : "Hoàn thiện đơn hàng"),
+                  //           ],
+                  //         ),
+                  //       ),
+                  //       SizedBox(
+                  //         height: 10,
+                  //       ),
+                  //     ],
+                  //   ),
                   if (widget.booking.status == 'ASSIGNED')
                     Container(
                       width: double.infinity,
@@ -1233,20 +1233,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                               ),
                             ),
                           );
-                          // Navigator.push(
-                          //   context,
-                          //   MaterialPageRoute(
-                          //     builder: (context) => BookingCompletedScreen(
-                          //       widget.userId,
-                          //       widget.accountId,
-                          //       _currentBooking!,
-                          //       widget.addressesDepart,
-                          //       widget.subAddressesDepart,
-                          //       widget.addressesDesti,
-                          //       widget.subAddressesDesti,
-                          //     ),
-                          //   ),
-                          // );
                         },
                         label: const Text(
                           "Kết thúc",
@@ -1261,6 +1247,11 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 ])));
   }
 
+  void reloadData() {
+    _loadPayment(widget.booking.id);
+    _buildOrderItemSection();
+  }
+
   Widget _buildSectionTitle(String title) {
     return Padding(
         padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -1273,7 +1264,21 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
   Widget _buildImageSection(List<String> imageUrls) {
     final allImages = [...imageUrls, ...pickedImages];
-    print("Tong so anh:  ${allImages.length}");
+    void _deleteImage(int index) {
+      setState(() {
+        if (index < pickedImages.length) {
+          // If the image is from pickedImages list, remove it
+          pickedImages.removeAt(index);
+        } else {
+          // If the image is from imageUrls list, adjust the index
+          int adjustedIndex = index - pickedImages.length;
+          if (adjustedIndex < imageUrls.length) {
+            imageUrls.removeAt(adjustedIndex);
+          }
+        }
+      });
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1282,13 +1287,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           height: 200.0,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: 10, // fixed to 5 slots for images
+            itemCount: allImages.length + 4, // Add one for the 'Add' button
             itemBuilder: (context, index) {
-              // If there's an image at this index, show it
               if (index < allImages.length) {
                 ImageProvider imageProvider;
-
-                // Check if the image is an asset or a picked image
 
                 if (allImages[index].startsWith('http')) {
                   imageProvider = NetworkImage(allImages[index]);
@@ -1298,24 +1300,44 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   imageProvider = FileImage(File(allImages[index]));
                 }
 
-                // imageProvider = FileImage(File(allImages[index]));
-
                 return Padding(
                   padding: EdgeInsets.only(right: 16.0),
-                  child: InkWell(
-                    onTap: () {
-                      _openImageDialog(context, index, allImages);
-                    },
-                    child: Container(
-                      width: 200.0,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: imageProvider,
-                          fit: BoxFit.cover,
+                  child: Stack(
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          _openImageDialog(context, index, allImages);
+                        },
+                        child: Container(
+                          width: 200.0,
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: imageProvider,
+                              fit: BoxFit.cover,
+                            ),
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(12.0),
                       ),
-                    ),
+                      Positioned(
+                        top: 5.0,
+                        right: 5.0,
+                        child: InkWell(
+                          onTap: () {
+                            _deleteImage(index);
+                          },
+                          child: CircleAvatar(
+                            backgroundColor: Colors.red,
+                            radius: 12.0,
+                            child: Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                              size: 16.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 );
               }
@@ -1538,136 +1560,117 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               children: [
                 widget.booking.status.toUpperCase() != 'COMPLETED' &&
                         widget.booking.status.toUpperCase() != 'CANCELLED'
-                    ? Dismissible(
-                        key: dismissibleKey, // Use a unique key
-                        direction: DismissDirection.endToStart,
-                        confirmDismiss: (direction) async {
-                          return await _showConfirmationDialog(context);
-                        },
-                        onDismissed: (direction) async {
-                          await _deleteOrderDetail(orderId);
-                          // Optionally, you can add a snackbar or handle UI updates after deletion
-                        },
-                        background: Container(
-                          alignment: AlignmentDirectional.centerEnd,
-                          color: Colors.red,
-                          child: Padding(
-                            padding: EdgeInsets.only(right: 16),
-                            child: Icon(Icons.delete, color: Colors.white),
+                    ? Column(
+                        children: [
+                          _buildItemRow(
+                            '$name (Đơn giá/km) ',
+                            Text(
+                              '$formattedTotal',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            isLoading: localIsLoading,
                           ),
-                        ),
-                        child: Column(
-                          children: [
-                            _buildItemRow(
-                              '$name (Đơn giá/km) ',
-                              Text(
-                                '$formattedTotal',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              isLoading: localIsLoading,
+                          _buildItemRow(
+                            'Khoảng cách',
+                            Text(
+                              '$quantity km',
+                              style: TextStyle(fontWeight: FontWeight.bold),
                             ),
-                            _buildItemRow(
-                              'Khoảng cách',
-                              Text(
-                                '$quantity km',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              isLoading: localIsLoading,
-                            ),
-                            // widget.booking.status.toUpperCase() !=
-                            //             'COMPLETED' &&
-                            //         widget.booking.status.toUpperCase() !=
-                            //             'CANCELLED'
-                            //     ? Row(
-                            //         mainAxisAlignment:
-                            //             MainAxisAlignment.spaceBetween,
-                            //         children: [
-                            //           Row(
-                            //             children: [
-                            //               IconButton(
-                            //                 icon: Icon(Icons.remove),
-                            //                 onPressed: () async {
-                            //                   if (quantity > 1) {
-                            //                     setState(() {
-                            //                       localIsLoading = true;
-                            //                     });
-                            //                     await _updateOrderDetails(
-                            //                       orderDetail,
-                            //                       quantity - 1,
-                            //                       price,
-                            //                       (loading) {
-                            //                         setState(() {
-                            //                           localIsLoading = loading;
-                            //                         });
-                            //                       },
-                            //                     );
-                            //                     await _delayedLoadPayment();
-                            //                   }
-                            //                 },
-                            //               ),
-                            //               SizedBox(
-                            //                 width: 10,
-                            //               ),
-                            //               SizedBox(
-                            //                 width: 50,
-                            //                 height: 32,
-                            //                 child: TextFormField(
-                            //                   textAlign: TextAlign.center,
-                            //                   decoration: InputDecoration(
-                            //                     border: OutlineInputBorder(),
-                            //                   ),
-                            //                   controller: quantityController,
-                            //                   onChanged: (value) {
-                            //                     quantity =
-                            //                         int.tryParse(value) ?? 0;
-                            //                   },
-                            //                   onEditingComplete: () async {
-                            //                     setState(() {
-                            //                       localIsLoading = true;
-                            //                     });
-                            //                     await _updateOrderDetails(
-                            //                       orderDetail,
-                            //                       quantity,
-                            //                       price,
-                            //                       (loading) {
-                            //                         setState(() {
-                            //                           localIsLoading = loading;
-                            //                         });
-                            //                       },
-                            //                     );
-                            //                     await _delayedLoadPayment();
-                            //                   },
-                            //                 ),
-                            //               ),
-                            //               SizedBox(
-                            //                 width: 10,
-                            //               ),
-                            //               IconButton(
-                            //                 icon: Icon(Icons.add),
-                            //                 onPressed: () async {
-                            //                   setState(() {
-                            //                     localIsLoading = true;
-                            //                   });
-                            //                   await _updateOrderDetails(
-                            //                     orderDetail,
-                            //                     quantity + 1,
-                            //                     price,
-                            //                     (loading) {
-                            //                       setState(() {
-                            //                         localIsLoading = loading;
-                            //                       });
-                            //                     },
-                            //                   );
-                            //                   await _delayedLoadPayment();
-                            //                 },
-                            //               ),
-                            //             ],
-                            //           ),
-                            //         ],
-                            //       )
-                            //     : SizedBox.shrink()
-                          ],
-                        ),
+                            isLoading: localIsLoading,
+                          ),
+                          // widget.booking.status.toUpperCase() !=
+                          //             'COMPLETED' &&
+                          //         widget.booking.status.toUpperCase() !=
+                          //             'CANCELLED'
+                          //     ? Row(
+                          //         mainAxisAlignment:
+                          //             MainAxisAlignment.spaceBetween,
+                          //         children: [
+                          //           Row(
+                          //             children: [
+                          //               IconButton(
+                          //                 icon: Icon(Icons.remove),
+                          //                 onPressed: () async {
+                          //                   if (quantity > 1) {
+                          //                     setState(() {
+                          //                       localIsLoading = true;
+                          //                     });
+                          //                     await _updateOrderDetails(
+                          //                       orderDetail,
+                          //                       quantity - 1,
+                          //                       price,
+                          //                       (loading) {
+                          //                         setState(() {
+                          //                           localIsLoading = loading;
+                          //                         });
+                          //                       },
+                          //                     );
+                          //                     await _delayedLoadPayment();
+                          //                   }
+                          //                 },
+                          //               ),
+                          //               SizedBox(
+                          //                 width: 10,
+                          //               ),
+                          //               SizedBox(
+                          //                 width: 50,
+                          //                 height: 32,
+                          //                 child: TextFormField(
+                          //                   textAlign: TextAlign.center,
+                          //                   decoration: InputDecoration(
+                          //                     border: OutlineInputBorder(),
+                          //                   ),
+                          //                   controller: quantityController,
+                          //                   onChanged: (value) {
+                          //                     quantity =
+                          //                         int.tryParse(value) ?? 0;
+                          //                   },
+                          //                   onEditingComplete: () async {
+                          //                     setState(() {
+                          //                       localIsLoading = true;
+                          //                     });
+                          //                     await _updateOrderDetails(
+                          //                       orderDetail,
+                          //                       quantity,
+                          //                       price,
+                          //                       (loading) {
+                          //                         setState(() {
+                          //                           localIsLoading = loading;
+                          //                         });
+                          //                       },
+                          //                     );
+                          //                     await _delayedLoadPayment();
+                          //                   },
+                          //                 ),
+                          //               ),
+                          //               SizedBox(
+                          //                 width: 10,
+                          //               ),
+                          //               IconButton(
+                          //                 icon: Icon(Icons.add),
+                          //                 onPressed: () async {
+                          //                   setState(() {
+                          //                     localIsLoading = true;
+                          //                   });
+                          //                   await _updateOrderDetails(
+                          //                     orderDetail,
+                          //                     quantity + 1,
+                          //                     price,
+                          //                     (loading) {
+                          //                       setState(() {
+                          //                         localIsLoading = loading;
+                          //                       });
+                          //                     },
+                          //                   );
+                          //                   await _delayedLoadPayment();
+                          //                 },
+                          //               ),
+                          //             ],
+                          //           ),
+                          //         ],
+                          //       )
+                          //     : SizedBox.shrink()
+                        ],
                       )
                     : Column(
                         children: [

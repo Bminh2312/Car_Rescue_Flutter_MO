@@ -60,9 +60,24 @@ class _RepairBodyState extends State<RepairBody> {
   List<String> pickedImages = [];
   List<String> _updateImage = [];
   final List<Map<String, dynamic>> dropdownItems = [
-    {"name": "Khu vực 1", "value": 1},
-    {"name": "Khu vực 2", "value": 2},
-    {"name": "Khu vực 3", "value": 3},
+    {
+      "name": "Khu vực 1",
+      "value": 1,
+      'description':
+          'Bao gồm:\nCủ Chi\nGò Vấp\nQuận 12\nHóc Môn\nQuận Tân Bình\nQuận Tân Phú'
+    },
+    {
+      "name": "Khu vực 2",
+      "value": 2,
+      'description':
+          'Bao gồm:\nQuận 1\nQuận 3\nQuận 4\nQuận Bình Thạnh\nThành Phố Thủ Đức'
+    },
+    {
+      "name": "Khu vực 3",
+      "value": 3,
+      'description':
+          'Bao gồm:\nQuận 5\nQuận 6\nQuận 7\nQuận 8\nQuận 10\nQuận 11\nBình Chánh\nNhà Bè\nCần Giờ'
+    },
     // Thêm các quận khác nếu cần
   ];
   List<Symptom> _symptoms = [];
@@ -257,20 +272,17 @@ class _RepairBodyState extends State<RepairBody> {
           notify.showToast("Tạo đơn thành công");
         } else if (status == 500) {
           notify.showToast("External error");
-          
         } else if (status == 201) {
           notify.showToast("Hết kĩ thuật viên");
-          
         } else {
           notify.showToast("Lỗi đơn hàng");
-          
         }
       } catch (e) {
         // Xử lý khi có lỗi khi gửi đơn hàng
         print('Lỗi khi tạo đơn hàng: $e');
         setState(() {
-            _updateImage.clear();
-          });
+          _updateImage.clear();
+        });
         // Ví dụ: Hiển thị thông báo lỗi cho người dùng
       } finally {
         // Kết thúc quá trình gửi đơn hàng (thành công hoặc thất bại), tắt vòng quay
@@ -299,6 +311,11 @@ class _RepairBodyState extends State<RepairBody> {
       default:
         return 'assets/images/money.png'; // Default image
     }
+  }
+
+  String? generateTooltipMessage(Map<String, dynamic> item) {
+    // Explicitly annotate the return type as String?
+    return '${item['description']}';
   }
 
   @override
@@ -383,36 +400,40 @@ class _RepairBodyState extends State<RepairBody> {
                 height: 10,
               ),
               _buildSectionTitle('Khu vực hỗ trợ gần bạn'),
+              CustomText(
+                  text: 'Nhấn giữ để xem chi tiết khu vực', fontSize: 14),
               Column(
                 children: [
                   Wrap(
-                    spacing: 32.0, // Horizontal space between chips.
-                    runSpacing: 8.0, // Vertical space between lines.
+                    spacing: 25.0,
+                    runSpacing: 8.0,
                     children: dropdownItems.map((item) {
-                      return ChoiceChip(
-                        labelPadding: EdgeInsets.symmetric(
-                          horizontal: 20.0,
-                        ), // Add padding inside the chip.
-                        label: Text(
-                          item["name"],
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16, // Increase the font size.
+                      return Tooltip(
+                        message: generateTooltipMessage(
+                            item), // Set your tooltip message here.
+                        child: ChoiceChip(
+                          labelPadding: EdgeInsets.symmetric(
+                            horizontal: 15.0,
                           ),
+                          label: Text(
+                            item["name"],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          selected: selectedDropdownItem == item,
+                          onSelected: (bool selected) {
+                            setState(() {
+                              if (selected) {
+                                selectedDropdownItem = item;
+                              }
+                            });
+                          },
+                          selectedColor: FrontendConfigs.kActiveColor,
+                          backgroundColor: FrontendConfigs.kIconColor,
+                          shape: StadiumBorder(),
                         ),
-                        selected: selectedDropdownItem == item,
-                        onSelected: (bool selected) {
-                          setState(() {
-                            if (selected) {
-                              selectedDropdownItem = item;
-                            }
-                          });
-                        },
-                        selectedColor: FrontendConfigs
-                            .kActiveColor, // Optional: Changes the color when selected.
-                        backgroundColor: FrontendConfigs.kIconColor,
-                        shape:
-                            StadiumBorder(), // Optional: Creates a stadium-shaped border.
                       );
                     }).toList(),
                   ),
@@ -423,15 +444,15 @@ class _RepairBodyState extends State<RepairBody> {
                 height: 10,
               ),
               Container(
-                  margin: EdgeInsets.symmetric(vertical: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.white,
-                  child: Column(
-                    children: [
-                      _buildImageSection(pickedImages),
-                    ],
-                  ),
+                margin: EdgeInsets.symmetric(vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    _buildImageSection(pickedImages),
+                  ],
                 ),
+              ),
               if (urlImages.isNotEmpty)
                 Container(
                   height: 100, // Điều chỉnh chiều cao tùy ý
@@ -461,7 +482,7 @@ class _RepairBodyState extends State<RepairBody> {
                 height: 10,
               ),
               Container(
-                  height: MediaQuery.of(context).size.height * 0.1,
+                  height: MediaQuery.of(context).size.height * 0.15,
                   child: SymptomSelector(onSymptomSelected: onSymptomSelected)),
               SizedBox(height: 10),
               if (selectedServiceCards.isNotEmpty)
@@ -568,8 +589,7 @@ class _RepairBodyState extends State<RepairBody> {
                                 BorderRadius.circular(8), // Góc bo tròn cho nút
                           ),
                         ),
-                        onPressed: () async{
-                          
+                        onPressed: () async {
                           await createOrder();
                         },
                       ),
@@ -595,7 +615,7 @@ class _RepairBodyState extends State<RepairBody> {
   }
 
   Widget _buildImageSection(List<String> imageUrls) {
-    final allImages = [..._updateImage,...pickedImages];
+    final allImages = [..._updateImage, ...pickedImages];
     print("Tong so anh:  ${allImages.length}");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -665,7 +685,6 @@ class _RepairBodyState extends State<RepairBody> {
                   ),
                 );
               }
-              
             },
           ),
         ),
@@ -732,7 +751,7 @@ class _RepairBodyState extends State<RepairBody> {
         });
   }
 
-void _addImageFromGallery() async {
+  void _addImageFromGallery() async {
     final picker = ImagePicker();
     final XFile? pickedFile =
         await picker.pickImage(source: ImageSource.gallery);
@@ -759,5 +778,4 @@ void _addImageFromGallery() async {
       print('No image selected.');
     }
   }
-
 }

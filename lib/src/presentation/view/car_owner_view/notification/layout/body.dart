@@ -48,6 +48,7 @@ class _NotificationListState extends State<NotificationList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       body: RefreshIndicator(
         onRefresh: _handleRefresh,
         child: Column(

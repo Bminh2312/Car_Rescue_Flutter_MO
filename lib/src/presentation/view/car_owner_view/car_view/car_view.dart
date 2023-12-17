@@ -67,41 +67,62 @@ class _CarListViewState extends State<CarListView> {
   void initState() {
     super.initState();
     fetchCarOwnerCar(widget.userId).then((data) {
-      
-      final carList = (data['data'] as List<dynamic>)
-          .map((carData) => Vehicle(
-              id: carData['id'],
-              manufacturer: carData['manufacturer'],
-              licensePlate: carData['licensePlate'],
-              status: carData['status'],
-              vinNumber: carData['vinNumber'],
-              type: carData['type'],
-              color: carData['color'],
-              manufacturingYear: carData['manufacturingYear'],
-              carRegistrationFont: carData['carRegistrationFont'],
-              carRegistrationBack: carData['carRegistrationBack'],
-              image: carData['image']))
-          .toList();
+      try {
+        if (data['data'] is List<dynamic>) {
+          final carList = (data['data'] as List<dynamic>)
+              .map((carData) => Vehicle(
+                    id: carData['id'],
+                    manufacturer: carData['manufacturer'],
+                    licensePlate: carData['licensePlate'],
+                    status: carData['status'],
+                    vinNumber: carData['vinNumber'],
+                    type: carData['type'],
+                    color: carData['color'],
+                    manufacturingYear: carData['manufacturingYear'],
+                    carRegistrationFont: carData['carRegistrationFont'],
+                    carRegistrationBack: carData['carRegistrationBack'],
+                    image: carData['image'],
+                  ))
+              .toList();
 
-      // Sort the list to prioritize vehicles with status 'ACTIVE', 'ASSIGNED', and then 'WAITING_APPROVAL'
-      carList.sort((a, b) {
-        const statusPriority = {
-          'WAITING_APPROVAL': 1,
-          'ACTIVE': 2,
-          'ASSIGNED': 3
-          // other statuses implicitly have lower priority
-        };
+          // Sort the list to prioritize vehicles with status 'ACTIVE', 'ASSIGNED', and then 'WAITING_APPROVAL'
+          carList.sort((a, b) {
+            const statusPriority = {
+              'WAITING_APPROVAL': 1,
+              'ACTIVE': 2,
+              'ASSIGNED': 3
+              // other statuses implicitly have lower priority
+            };
 
-        int priorityA = statusPriority[a.status] ?? 4;
-        int priorityB = statusPriority[b.status] ?? 4;
+            int priorityA = statusPriority[a.status] ?? 4;
+            int priorityB = statusPriority[b.status] ?? 4;
 
-        return priorityA.compareTo(priorityB);
-      });
+            return priorityA.compareTo(priorityB);
+          });
 
-      setState(() {
-        carData = carList;
-        isLoading = false;
-      });
+          setState(() {
+            carData = carList;
+            isLoading = false;
+          });
+        } else {
+          // Handle the case when data['data'] is null or not a List<dynamic>
+          // You may want to set a default value for carData or show an error message
+          // depending on your application logic.
+          setState(() {
+            carData =
+                []; // Set a default value or handle it according to your requirements.
+            isLoading = false;
+          });
+        }
+      } catch (e) {
+        // Handle exceptions that might occur during data processing
+        print('Error processing car owner data: $e');
+        setState(() {
+          carData =
+              []; // Set a default value or handle it according to your requirements.
+          isLoading = false;
+        });
+      }
     });
   }
 
@@ -154,7 +175,7 @@ class _CarListViewState extends State<CarListView> {
   @override
   Widget build(BuildContext context) {
     List<Vehicle> filteredCars = searchCars(carData, searchQuery);
-
+    print(filteredCars);
     // Apply sorting when the user selects "Sort by Name"
     if (selectedSortingOption == SortingOption.byName) {
       filteredCars = sortCarsByName(filteredCars, isAscending);
@@ -163,9 +184,7 @@ class _CarListViewState extends State<CarListView> {
       filteredCars = sortCarsByStatus(filteredCars, selectedStatus);
     }
 
-    return 
-    isLoading ? LoadingState() :
-    Scaffold(
+    return Scaffold(
       appBar: AppBar(
         centerTitle: true,
         leading: IconButton(

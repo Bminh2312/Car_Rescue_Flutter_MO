@@ -28,7 +28,9 @@ class LoginResult {
   final String? avatar;
   final String role;
   final String accessToken;
+  final String deviceToken;
   LoginResult({
+    required this.deviceToken,
     required this.userId,
     required this.accountId,
     required this.fullname,
@@ -75,6 +77,7 @@ class AuthService {
           final technician = data['data']['technician'];
           final role = data['data']['role'];
           final accessToken = data['data']['accessToken'];
+          final deviceToken = data['data']['deviceToken'];
           if (technician != null) {
             final userId = technician['id'];
             final accountId = technician['accountId'];
@@ -91,6 +94,7 @@ class AuthService {
             }
 
             return LoginResult(
+                deviceToken: deviceToken,
                 userId: userId,
                 accountId: accountId,
                 fullname: fullname,
@@ -225,6 +229,7 @@ class AuthService {
           final rescueVehicleOwner = data['data']['rescueVehicleOwner'];
           final role = data['data']['role'];
           final accessToken = data['data']['accessToken'];
+          final deviceToken = data['data']['deviceToken'];
           if (rescueVehicleOwner != null) {
             final rescueVehicleOwnerId = rescueVehicleOwner['id'];
             final accountId = rescueVehicleOwner['accountId'];
@@ -233,6 +238,7 @@ class AuthService {
             // Fetch user profile information using the user ID
 
             return LoginResult(
+                deviceToken: deviceToken,
                 userId: rescueVehicleOwnerId,
                 accountId: accountId,
                 fullname: fullname,
@@ -358,13 +364,13 @@ class AuthService {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
         // If 'data' key exists and it's not null
-        if (jsonData.containsKey('data') && jsonData['data'] != null) {
+        if (!jsonData.containsKey('data') || jsonData['data'] == null) {
+          return []; // Return an empty list if 'data' key is missing or null
+        } else {
           List<dynamic> bookingsData = jsonData['data'];
           return bookingsData
               .map((booking) => Booking.fromJson(booking))
               .toList();
-        } else {
-          throw Exception('Invalid data format in response.');
         }
       } else {
         throw Exception('Failed to load bookings');
@@ -387,13 +393,13 @@ class AuthService {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
         // If 'data' key exists and it's not null
-        if (jsonData.containsKey('data') && jsonData['data'] != null) {
+        if (!jsonData.containsKey('data') || jsonData['data'] == null) {
+          return []; // Return an empty list if 'data' key is missing or null
+        } else {
           List<dynamic> bookingsData = jsonData['data'];
           return bookingsData
               .map((booking) => Booking.fromJson(booking))
               .toList();
-        } else {
-          throw Exception('Invalid data format in response.');
         }
       } else {
         throw Exception('Failed to load bookings');
@@ -440,10 +446,10 @@ class AuthService {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer $accessToken'
       });
-
+      print(response.statusCode);
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
-
+        print(jsonData);
         // If 'data' key exists and it's not null
         if (!jsonData.containsKey('data') || jsonData['data'] == null) {
           return []; // Return an empty list if 'data' key is missing or null
@@ -532,14 +538,13 @@ class AuthService {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
         // If 'data' key exists and it's not null
-        if (jsonData.containsKey('data') && jsonData['data'] != null) {
+        if (!jsonData.containsKey('data') || jsonData['data'] == null) {
+          return []; // Return an empty list if 'data' key is missing or null
+        } else {
           List<dynamic> bookingsData = jsonData['data'];
-
           return bookingsData
               .map((booking) => Booking.fromJson(booking))
               .toList();
-        } else {
-          throw Exception('Invalid data format in response.');
         }
       } else {
         throw Exception('Failed to load bookings');
@@ -562,14 +567,42 @@ class AuthService {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
         // If 'data' key exists and it's not null
-        if (jsonData.containsKey('data') && jsonData['data'] != null) {
+        if (!jsonData.containsKey('data') || jsonData['data'] == null) {
+          return []; // Return an empty list if 'data' key is missing or null
+        } else {
           List<dynamic> bookingsData = jsonData['data'];
-
           return bookingsData
               .map((booking) => Booking.fromJson(booking))
               .toList();
+        }
+      } else {
+        throw Exception('Failed to load bookings');
+      }
+    } catch (e) {
+      throw Exception('Error fetching bookings: $e');
+    }
+  }
+
+  Future<List<Booking>> fetchTechBookingByWaiting(String userId) async {
+    try {
+      final apiUrl = Uri.parse(
+          'https://rescuecapstoneapi.azurewebsites.net/api/Order/GetAllOrderWaitingOfTech?id=$userId');
+      final response = await http.get(apiUrl, headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      });
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        // If 'data' key exists and it's not null
+        if (!jsonData.containsKey('data') || jsonData['data'] == null) {
+          return []; // Return an empty list if 'data' key is missing or null
         } else {
-          throw Exception('Invalid data format in response.');
+          List<dynamic> bookingsData = jsonData['data'];
+          return bookingsData
+              .map((booking) => Booking.fromJson(booking))
+              .toList();
         }
       } else {
         throw Exception('Failed to load bookings');
@@ -712,9 +745,9 @@ class AuthService {
 
       final responseDeparture = await http.get(Uri.parse(urlDeparture));
       print(responseDeparture.statusCode);
+      print('Response body: ${responseDeparture.body}');
       if (responseDeparture.statusCode != 200) {
         print('Geocoding API error: ${responseDeparture.statusCode}');
-        print('Response body: ${responseDeparture.body}');
       } else {
         var jsonResponseDeparture = json.decode(responseDeparture.body);
         if (jsonResponseDeparture['status'] == 'OK' &&
@@ -871,7 +904,7 @@ class AuthService {
       Map<String, String> subAddresses) async {
     var results =
         await Future.wait(bookings.map((booking) => getAddressInfo(booking)));
-
+    print("a: $results");
     // Update the state once with all the results.
     setState(() {
       for (var result in results) {
@@ -1038,6 +1071,8 @@ class AuthService {
       Uri.parse(apiUrl),
       headers: {
         "Content-Type": "application/json",
+        'Authorization': 'Bearer $accessToken',
+
         // Add other headers if needed, like authorization headers
       },
       body: json.encode({
@@ -1798,7 +1833,7 @@ class AuthService {
 
   Future<Map<String, String>> getAreaOfRVO(String rvoId) async {
     final String apiUrl =
-        'https://rescuecapstoneapi.azurewebsites.net/api/Manager/GetOfArea?id=$rvoId';
+        'https://rescuecapstoneapi.azurewebsites.net/api/Manager/GetManagerOfRVO?id=$rvoId';
 
     try {
       final response = await http.get(
@@ -1813,7 +1848,7 @@ class AuthService {
 
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonResponse = json.decode(response.body);
-
+        print(jsonResponse);
         Map<String, dynamic> data = jsonResponse['data'];
         Map<String, dynamic> accountData = data['account'];
 
@@ -1829,12 +1864,12 @@ class AuthService {
       } else {
         print('Error: ${response.statusCode}');
         // Handle non-200 status code when fetching notifications
-        throw Exception('Failed to fetch notifications');
+        throw Exception('Failed to get manager');
       }
     } catch (e) {
-      print('Error fetching notifications: $e');
+      print('Error fetching get manager: $e');
       // Handle other errors that may occur during the HTTP request
-      throw Exception('Failed to fetch notifications');
+      throw Exception('Failed to get manager');
     }
   }
 }

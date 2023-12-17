@@ -13,22 +13,19 @@ class WalletStatisticsCard extends StatefulWidget {
   final List<WalletTransaction> walletTrans;
   final Wallet wallet;
   final Function onSuccessfulWithdrawal;
+  final String userId;
   const WalletStatisticsCard(
       {super.key,
       required this.walletTrans,
       required this.wallet,
-      required this.onSuccessfulWithdrawal});
+      required this.onSuccessfulWithdrawal, required this.userId});
   @override
   State<WalletStatisticsCard> createState() => _WalletStatisticsCardState();
 }
 
 class _WalletStatisticsCardState extends State<WalletStatisticsCard> {
   List<BankingInfo> bankings = [];
-  final _formKey = GlobalKey<FormState>();
-  String? _dropdownError;
-  String? _phoneNumber;
-  String? _accountName;
-  int? _amount;
+
   String? radioGroupValue;
   @override
   void initState() {
@@ -53,316 +50,6 @@ class _WalletStatisticsCardState extends State<WalletStatisticsCard> {
       print('Error loading banking info: $e');
     }
   }
-
-  // void _showWithdrawForm(Wallet wallet) {
-  //   String? selectedBanking; // Variable to hold the selected booking name
-
-  //   showModalBottomSheet(
-  //     context: context,
-  //     isScrollControlled: true,
-  //     builder: (BuildContext bc) {
-  //       double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-  //       bool isKeyboardOpen = keyboardHeight > 0;
-  //       String? _dropdownError;
-  //       void validateDropdown() {
-  //         if (selectedBanking == null || selectedBanking!.isEmpty) {
-  //           _dropdownError = 'Please select a bank';
-  //         } else {
-  //           _dropdownError = null;
-  //         }
-  //       }
-
-  //       return StatefulBuilder(
-  //         // Using StatefulBuilder
-  //         builder: (BuildContext context, StateSetter setModalState) {
-  //           return AnimatedContainer(
-  //             duration: Duration(
-  //                 milliseconds:
-  //                     300), // Smooth transition when keyboard opens/closes
-  //             padding: EdgeInsets.only(
-  //               bottom: keyboardHeight, // Add padding equal to keyboard height
-  //             ),
-  //             height: isKeyboardOpen
-  //                 ? MediaQuery.of(context)
-  //                     .size
-  //                     .height // Full screen height when keyboard is open
-  //                 : null, // Default height when keyboard is closed
-  //             child: SingleChildScrollView(
-  //               child: Container(
-  //                 padding: EdgeInsets.all(16),
-  //                 color: FrontendConfigs.kBackgrColor,
-  //                 child: Form(
-  //                   key: _formKey,
-  //                   child: Column(
-  //                     crossAxisAlignment: CrossAxisAlignment.start,
-  //                     children: <Widget>[
-  //                       CustomText(
-  //                         text: 'Phương thức thanh toán',
-  //                         fontWeight: FontWeight.bold,
-  //                       ),
-  //                       SizedBox(
-  //                         height: 10,
-  //                       ),
-  //                       Container(
-  //                         height: 60,
-  //                         decoration: BoxDecoration(
-  //                           border: Border.all(
-  //                             color: radioGroupValue == 'Ngân hàng'
-  //                                 ? FrontendConfigs.kPrimaryColor
-  //                                 : Color.fromARGB(0, 158, 158, 158),
-  //                             width: 2,
-  //                           ),
-  //                           borderRadius: BorderRadius.circular(4),
-  //                         ),
-  //                         child: ListTile(
-  //                           title: Row(
-  //                             children: [
-  //                               Icon(CupertinoIcons.creditcard, size: 25),
-  //                               SizedBox(
-  //                                 width: 12,
-  //                               ),
-  //                               CustomText(text: 'Ngân hàng', fontSize: 18),
-  //                             ],
-  //                           ),
-  //                           leading: Radio<String>(
-  //                             activeColor: FrontendConfigs.kPrimaryColor,
-  //                             value: 'Ngân hàng',
-  //                             groupValue: radioGroupValue,
-  //                             onChanged: (String? value) {
-  //                               setModalState(() {
-  //                                 radioGroupValue = value!;
-  //                               });
-  //                             },
-  //                           ),
-  //                         ),
-  //                       ),
-  //                       SizedBox(
-  //                         height: 10,
-  //                       ),
-  //                       // Option B
-  //                       Container(
-  //                         height: 60,
-  //                         decoration: BoxDecoration(
-  //                           border: Border.all(
-  //                             color: radioGroupValue == 'Momo'
-  //                                 ? FrontendConfigs.kPrimaryColor
-  //                                 : Color.fromARGB(0, 158, 158, 158),
-  //                             width: 2,
-  //                           ),
-  //                           borderRadius: BorderRadius.circular(4),
-  //                         ),
-  //                         child: ListTile(
-  //                           title: Row(
-  //                             children: [
-  //                               Image.asset(
-  //                                 'assets/images/momo.png',
-  //                                 width: 26,
-  //                               ),
-  //                               SizedBox(
-  //                                 width: 10,
-  //                               ),
-  //                               CustomText(
-  //                                 text: 'Momo',
-  //                                 fontSize: 18,
-  //                               ),
-  //                             ],
-  //                           ),
-  //                           leading: Radio<String>(
-  //                             activeColor: FrontendConfigs.kPrimaryColor,
-  //                             value: 'Momo',
-  //                             groupValue: radioGroupValue,
-  //                             onChanged: (String? value) {
-  //                               setModalState(() {
-  //                                 radioGroupValue = value!;
-  //                               });
-  //                             },
-  //                           ),
-  //                         ),
-  //                       ),
-  //                       SizedBox(
-  //                         height: 10,
-  //                       ),
-  //                       if (radioGroupValue == 'Ngân hàng')
-  //                         CustomText(
-  //                           text: 'Tên ngân hàng',
-  //                           fontWeight: FontWeight.bold,
-  //                         ),
-  //                       if (radioGroupValue == 'Momo')
-  //                         CustomText(
-  //                           text: 'Số điện thoại',
-  //                           fontWeight: FontWeight.bold,
-  //                         ),
-  //                       SizedBox(
-  //                         height: 10,
-  //                       ),
-  //                       if (radioGroupValue == 'Ngân hàng')
-  //                         // DropdownButton to list booking names
-  //                         DropdownButton<String>(
-  //                           onChanged: (newValue) {
-  //                             setModalState(() {
-  //                               selectedBanking = newValue;
-  //                               validateDropdown(); // Validate the dropdown selection
-  //                               _dropdownError =
-  //                                   null; // Clear error message on new selection
-  //                             });
-  //                           },
-  //                           underline: Container(),
-  //                           value: selectedBanking,
-  //                           hint: Text("Chọn ngân hàng"),
-  //                           items: bankings
-  //                               .map<DropdownMenuItem<String>>((banking) {
-  //                             return DropdownMenuItem<String>(
-  //                               value: banking.shortName,
-  //                               child: Row(
-  //                                 children: [
-  //                                   Image.network(banking.logo, width: 70),
-  //                                   Text(banking.shortName),
-  //                                 ],
-  //                               ),
-  //                             );
-  //                           }).toList(),
-  //                         ),
-  //                       if (_dropdownError != null)
-  //                         Text(
-  //                           _dropdownError!,
-  //                           style: TextStyle(color: Colors.red),
-  //                         ),
-  //                       if (radioGroupValue == 'Momo')
-  //                         TextFormField(
-  //                           onSaved: (value) => _phoneNumber = value,
-  //                           validator: (value) {
-  //                             if (value == null || value.isEmpty) {
-  //                               return 'Hãy nhập số điện thoại';
-  //                             }
-  //                             // Additional phone number validation logic here
-  //                             return null;
-  //                           },
-  //                           decoration: InputDecoration(
-  //                             border: OutlineInputBorder(),
-  //                             labelText: 'Nhập số điện thoại',
-  //                           ),
-  //                           style: TextStyle(fontSize: 16, color: Colors.black),
-  //                           cursorColor: FrontendConfigs.kPrimaryColor,
-  //                         ),
-  //                       SizedBox(
-  //                         height: 10,
-  //                       ),
-  //                       if (radioGroupValue == 'Momo' ||
-  //                           radioGroupValue == 'Ngân hàng')
-  //                         CustomText(
-  //                           text: 'Tên tài khoản',
-  //                           fontWeight: FontWeight.bold,
-  //                         ),
-  //                       SizedBox(
-  //                         height: 10,
-  //                       ),
-  //                       if (radioGroupValue == 'Momo' ||
-  //                           radioGroupValue == 'Ngân hàng')
-  //                         TextFormField(
-  //                           onSaved: (value) => _accountName = value,
-  //                           validator: (value) {
-  //                             if (value == null || value.isEmpty) {
-  //                               return 'Nhập tên tài khoản';
-  //                             }
-  //                             // Additional validation logic here
-  //                             return null;
-  //                           },
-  //                           decoration: InputDecoration(
-  //                             border: OutlineInputBorder(),
-  //                             labelText: 'Nhập tên tài khoản',
-  //                           ),
-  //                           style: TextStyle(fontSize: 16, color: Colors.black),
-  //                           cursorColor: FrontendConfigs.kPrimaryColor,
-  //                         ),
-  //                       SizedBox(
-  //                         height: 10,
-  //                       ),
-  //                       if (radioGroupValue == 'Momo' ||
-  //                           radioGroupValue == 'Ngân hàng')
-  //                         CustomText(
-  //                           text: 'Số tiền',
-  //                           fontWeight: FontWeight.bold,
-  //                         ),
-  //                       SizedBox(
-  //                         height: 10,
-  //                       ),
-  //                       if (radioGroupValue == 'Momo' ||
-  //                           radioGroupValue == 'Ngân hàng')
-  //                         TextFormField(
-  //                           onSaved: (value) {
-  //                             if (value != null && value.isNotEmpty) {
-  //                               _amount = int.tryParse(
-  //                                   value); // Convert the string to a double
-  //                             }
-  //                           },
-  //                           validator: (value) {
-  //                             if (value == null || value.isEmpty) {
-  //                               return 'Nhập số tiền';
-  //                             }
-  //                             if (double.tryParse(value) == null) {
-  //                               return 'Please enter a valid number'; // Check if the value is a valid number
-  //                             }
-  //                             // Additional validation logic here
-  //                             return null;
-  //                           },
-  //                           decoration: InputDecoration(
-  //                             border: OutlineInputBorder(),
-  //                             labelText: 'Nhập số tiền cần rút',
-  //                           ),
-  //                           keyboardType: TextInputType
-  //                               .number, // Ensure numeric keyboard for amount input
-  //                           style: TextStyle(fontSize: 16, color: Colors.black),
-  //                           cursorColor: FrontendConfigs.kPrimaryColor,
-  //                         ),
-
-  //                       if (radioGroupValue == 'Momo' ||
-  //                           radioGroupValue == 'Ngân hàng')
-  //                         Container(
-  //                             width: double.infinity,
-  //                             child: ElevatedButton(
-  //                                 style: ElevatedButton.styleFrom(
-  //                                     backgroundColor:
-  //                                         FrontendConfigs.kActiveColor),
-  //                                 onPressed: () async {
-  //                                   if (_formKey.currentState!.validate() &&
-  //                                       _dropdownError == null) {
-  //                                     _formKey.currentState!
-  //                                         .save(); // Save the form field values
-  //                                     try {
-  //                                       await createWithdrawRequest(
-  //                                         walletId: widget.wallet.id,
-  //                                         accountInfo: radioGroupValue == 'Momo'
-  //                                             ? _phoneNumber!
-  //                                             : _accountName!,
-  //                                         bank: radioGroupValue == 'Momo'
-  //                                             ? 'Momo'
-  //                                             : selectedBanking!, // Set bank based on radioGroupValue
-  //                                         amount: _amount!,
-  //                                       );
-  //                                       widget.onSuccessfulWithdrawal();
-  //                                       Navigator.pop(context);
-  //                                       _showSuccessDialog();
-  //                                       // Handle successful submission, e.g., show confirmation message
-  //                                     } catch (e) {
-  //                                       // Handle unsuccessful submission, e.g., show error message
-  //                                       print(e);
-  //                                     }
-  //                                   }
-  //                                 },
-  //                                 child: Text('Rút tiền'))),
-
-  //                       // ... other widgets if any
-  //                     ],
-  //                   ),
-  //                 ),
-  //               ),
-  //             ),
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -416,7 +103,7 @@ class _WalletStatisticsCardState extends State<WalletStatisticsCard> {
                       context,
                       MaterialPageRoute(
                           builder: (context) =>
-                              WithdrawFormScreen(wallet: widget.wallet)),
+                              WithdrawFormScreen(wallet: widget.wallet, userId: widget.userId)),
                     );
 
 // Check the result here
@@ -457,7 +144,7 @@ class _WalletStatisticsCardState extends State<WalletStatisticsCard> {
         ),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Text('No wallet transactions available'),
+          child: Text('Không có giao dịch nào'),
         ),
       );
     }

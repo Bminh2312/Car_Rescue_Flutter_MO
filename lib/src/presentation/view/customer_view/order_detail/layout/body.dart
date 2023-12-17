@@ -644,6 +644,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) => MapScreen(
+                                                  tech: technicianInfo,
                                                   cus: customer,
                                                   booking: order,
                                                   techImg:
@@ -1099,42 +1100,43 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
   Widget _buildOrderItemSection(String type) {
     return Column(
       children: [
-        Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    CustomText(
-                      text: 'Phí dịch vụ',
-                      fontSize: 16,
-                    ),
-                    SizedBox(
-                      width: 7,
-                    ),
-                    Tooltip(
-                      triggerMode: TooltipTriggerMode.tap,
-                      message:
-                          'Phí dịch vụ mặc định được tính 300.000đ mỗi đơn hàng\n\nTổng cộng = Phí dịch vụ + (Đơn giá x Khoảng cách) ',
-                      textStyle: TextStyle(color: Colors.white),
-                      padding: EdgeInsets.all(8),
-                      margin: EdgeInsets.all(5),
-                      waitDuration: Duration(seconds: 1),
-                      showDuration: Duration(seconds: 7),
-                      child: Icon(Icons.info),
-                    ),
-                  ],
-                ),
-                CustomText(
-                  text: '300.000đ',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ],
-            ),
-          ],
-        ),
+        if (type == 'Towing')
+          Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      CustomText(
+                        text: 'Phí dịch vụ',
+                        fontSize: 16,
+                      ),
+                      SizedBox(
+                        width: 7,
+                      ),
+                      Tooltip(
+                        triggerMode: TooltipTriggerMode.tap,
+                        message:
+                            'Phí dịch vụ mặc định được tính 300.000đ mỗi đơn hàng\n\nTổng cộng = Phí dịch vụ + (Đơn giá x Khoảng cách) ',
+                        textStyle: TextStyle(color: Colors.white),
+                        padding: EdgeInsets.all(8),
+                        margin: EdgeInsets.all(5),
+                        waitDuration: Duration(seconds: 1),
+                        showDuration: Duration(seconds: 7),
+                        child: Icon(Icons.info),
+                      ),
+                    ],
+                  ),
+                  CustomText(
+                    text: '300.000đ',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ],
+              ),
+            ],
+          ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: orderDetails.map((orderDetail) {
@@ -1153,7 +1155,7 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                   print("Total:$totalAmount");
                   final formatter =
                       NumberFormat.currency(symbol: '₫', locale: 'vi_VN');
-                  final formattedTotal = formatter.format(total);
+                  final formattedTotal = formatter.format(price);
                   if (widget.techId != null) {
                     prices.add(price);
                   }

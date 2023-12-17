@@ -58,9 +58,24 @@ class _TowBodyState extends State<TowBody> {
   Service? selectedService;
   List<String> pickedImages = [];
   final List<Map<String, dynamic>> dropdownItems = [
-    {"name": "Khu vực 1", "value": 1},
-    {"name": "Khu vực 2", "value": 2},
-    {"name": "Khu vực 3", "value": 3},
+    {
+      "name": "Khu vực 1",
+      "value": 1,
+      'description':
+          'Bao gồm:\nCủ Chi\nGò Vấp\nQuận 12\nHóc Môn\nQuận Tân Bình\nQuận Tân Phú'
+    },
+    {
+      "name": "Khu vực 2",
+      "value": 2,
+      'description':
+          'Bao gồm:\nQuận 1\nQuận 3\nQuận 4\nQuận Bình Thạnh\nThành Phố Thủ Đức'
+    },
+    {
+      "name": "Khu vực 3",
+      "value": 3,
+      'description':
+          'Bao gồm:\nQuận 5\nQuận 6\nQuận 7\nQuận 8\nQuận 10\nQuận 11\nBình Chánh\nNhà Bè\nCần Giờ'
+    },
     // Thêm các quận khác nếu cần
   ];
   bool isImageLoading = false;
@@ -272,6 +287,11 @@ class _TowBodyState extends State<TowBody> {
     }
   }
 
+  String? generateTooltipMessage(Map<String, dynamic> item) {
+    // Explicitly annotate the return type as String?
+    return '${item['description']}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -385,25 +405,6 @@ class _TowBodyState extends State<TowBody> {
                               ),
                             ],
                           ),
-                          // Column(
-                          //   children: [
-                          //     IconButton(
-                          //         onPressed: () {},
-                          //         icon: SvgPicture.asset(
-                          //             'assets/svg/edit_icon.svg')),
-                          //     Container(
-                          //       height: 10,
-                          //     ),
-                          //     // SizedBox(
-                          //     //   height: 20,
-                          //     //   child: CustomText(
-                          //     //     text: widget.amount,
-                          //     //     fontSize: 16,
-                          //     //     fontWeight: FontWeight.w600,
-                          //     //   ),
-                          //     // ),
-                          //   ],
-                          // ),
                         ],
                       ),
                     ),
@@ -412,39 +413,49 @@ class _TowBodyState extends State<TowBody> {
                   height: 10,
                 ),
                 CustomText(
-                    text: 'Khu vực hỗ trợ gần bạn',
+                    text: 'Khu vực hỗ trợ gần bạn ',
                     fontWeight: FontWeight.bold,
                     fontSize: 18),
+
+                const SizedBox(
+                  height: 8,
+                ),
+
+                CustomText(
+                    text: 'Nhấn giữ để xem chi tiết khu vực', fontSize: 14),
+
                 Column(
                   children: [
                     Wrap(
-                      spacing: 32.0, // Horizontal space between chips.
-                      runSpacing: 8.0, // Vertical space between lines.
+                      spacing: 25.0,
+                      runSpacing: 8.0,
                       children: dropdownItems.map((item) {
-                        return ChoiceChip(
-                          labelPadding: EdgeInsets.symmetric(
-                            horizontal: 20.0,
-                          ), // Add padding inside the chip.
-                          label: Text(
-                            item["name"],
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16, // Increase the font size.
+                        return Tooltip(
+                          message: generateTooltipMessage(
+                              item), // Set your tooltip message here.
+                          child: ChoiceChip(
+                            labelPadding: EdgeInsets.symmetric(
+                              horizontal: 15.0,
                             ),
+                            label: Text(
+                              item["name"],
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            selected: selectedDropdownItem == item,
+                            onSelected: (bool selected) {
+                              setState(() {
+                                if (selected) {
+                                  selectedDropdownItem = item;
+                                }
+                              });
+                            },
+                            selectedColor: FrontendConfigs.kActiveColor,
+                            backgroundColor: FrontendConfigs.kIconColor,
+                            shape: StadiumBorder(),
                           ),
-                          selected: selectedDropdownItem == item,
-                          onSelected: (bool selected) {
-                            setState(() {
-                              if (selected) {
-                                selectedDropdownItem = item;
-                              }
-                            });
-                          },
-                          selectedColor: FrontendConfigs
-                              .kActiveColor, // Optional: Changes the color when selected.
-                          backgroundColor: FrontendConfigs.kIconColor,
-                          shape:
-                              StadiumBorder(), // Optional: Creates a stadium-shaped border.
                         );
                       }).toList(),
                     ),
@@ -852,6 +863,10 @@ class _TowBodyState extends State<TowBody> {
                             ),
                           );
                         },
+
+                        isSelected: isSelected,
+                        rescueType: 'Towing',
+
                       );
                     },
                   );
@@ -902,6 +917,7 @@ class _TowBodyState extends State<TowBody> {
       ),
     );
   }
+
 
   void _onServiceCardChanged(Service service, bool isSelected) {
     print("Current isSelected: $isSelected");

@@ -33,6 +33,7 @@ class _ProfileBodyState extends State<ProfileBody> {
       'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431';
   AuthService authService = AuthService();
   Map<String, dynamic>? userProfileData;
+  int? _area;
   @override
   void initState() {
     super.initState();
@@ -49,16 +50,18 @@ class _ProfileBodyState extends State<ProfileBody> {
         print('User Profile: $userProfile');
         // Extract the 'data' map from the response
         final Map<String, dynamic> data = userProfile['data'];
-
+        print('User Profile: $data');
         // Extract 'fullname' and 'phone' values from the 'data' map
         final String fullName = data['fullname'];
         final String phone = data['phone'];
         final String avatar = data['avatar'];
+        final int area = data['area'];
         // Update the state with the extracted values or 'N/A' if they are null
         setState(() {
           userName = fullName;
           phoneNumber = phone;
           avatarTech = avatar;
+          _area = area;
         });
       } else {
         // Handle the case where the userProfile is null
@@ -66,6 +69,7 @@ class _ProfileBodyState extends State<ProfileBody> {
         setState(() {
           userName = 'N/A';
           phoneNumber = 'N/A';
+          _area = 0;
         });
       }
     } catch (e) {
@@ -93,6 +97,7 @@ class _ProfileBodyState extends State<ProfileBody> {
                   children: [
                     CircleAvatar(
                       backgroundColor: Color.fromARGB(0, 158, 158, 158),
+                      foregroundColor: Color.fromARGB(0, 158, 158, 158),
                       radius: 64,
                       backgroundImage: NetworkImage(
                           avatarTech), // Use 'backgroundImage' to set the image
@@ -112,7 +117,15 @@ class _ProfileBodyState extends State<ProfileBody> {
                       text: phoneNumber,
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
-                    )
+                    ),
+                    SizedBox(
+                      height: 8,
+                    ),
+                    CustomText(
+                      text: "Khu vực ${_area.toString()}",
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ],
                 ),
               ],

@@ -62,7 +62,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
       status: 'status');
   DateTime? selectedDate;
   int completedBookings = 0;
-  double averageRating = 4.7;
+  double averageRating = 0;
   RescueVehicleOwner? _owner;
   Wallet? _wallet;
   List<WalletTransaction> walletTransactions = [];
@@ -71,7 +71,6 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   String? deviceToken;
   int unreadNotificationCount = 0;
-
   final ShakeAnimationController _shakeAnimationController =
       ShakeAnimationController();
   @override
@@ -99,13 +98,17 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
             notification.title,
             notification.body,
             NotificationDetails(
-                android: AndroidNotificationDetails(channel.id, channel.name,
-                    channelDescription: channel.description,
-                    color: Colors.blue,
-                    playSound: true,
-                    icon: '@drawable/ic_launcher',
-                    largeIcon:
-                        DrawableResourceAndroidBitmap('@drawable/logo1'))));
+                android: AndroidNotificationDetails(
+              channel.id,
+              channel.name,
+              channelDescription: channel.description,
+              color: Colors.blue,
+              playSound: true,
+              icon: '@drawable/ic_launcher',
+              largeIcon: DrawableResourceAndroidBitmap('@drawable/logo1'),
+              styleInformation:
+                  BigTextStyleInformation(notification.body ?? ''),
+            )));
       }
       handleIncomingNotification(message);
       print('Received message: ${message.notification?.body}');
@@ -307,7 +310,10 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => WithdrawFormScreen(wallet: _wallet!)),
+                  builder: (context) => WithdrawFormScreen(
+                        wallet: _wallet!,
+                        userId: widget.userId,
+                      )),
             );
           },
           child: Column(
@@ -438,8 +444,9 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
           ),
         ),
         Container(
-          height: 400,
           child: ListView.builder(
+            shrinkWrap: true,
+            padding: EdgeInsets.all(16),
             physics: NeverScrollableScrollPhysics(),
             itemCount: filteredShifts.length,
             itemBuilder: (context, index) {
@@ -649,6 +656,13 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
                   );
                 },
               ),
+              // QuickAccessButton(
+              //   label: 'Lịch',
+              //   icon: Icons.calendar_today,
+              //   onPressed: () {
+              //     showNotification();
+              //   },
+              // ),
             ],
           ),
         ],
@@ -676,7 +690,8 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
           color: Colors.blue,
           playSound: true,
           icon: '@drawable/ic_launcher',
-          largeIcon: DrawableResourceAndroidBitmap('@drawable/download'),
+          largeIcon: DrawableResourceAndroidBitmap('@drawable/logo1'),
+          styleInformation: BigTextStyleInformation(notification.body ?? ''),
         ),
       ),
     );

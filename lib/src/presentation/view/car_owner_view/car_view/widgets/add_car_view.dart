@@ -57,6 +57,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   void initState() {
     super.initState();
     _loadManager(widget.userId);
+    print(widget.userId);
   }
 
   Future<Map<String, String>> _loadManager(String userId) async {
@@ -213,7 +214,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                           return 'Vui lòng biển số xe';
                                         }
                                         RegExp regex = RegExp(
-                                            r'^([1-9][1-9][A-Z][A-Z1-9]-\d{4,5})$');
+                                            r'^([1-9][1-9][A-Z]-\d{4,5})$');
 
                                         if (!regex
                                             .hasMatch(value.toUpperCase())) {
@@ -547,10 +548,12 @@ class _AddCarScreenState extends State<AddCarScreen> {
     );
   }
 
-  Widget _buildAvatarField(
-      {required File? imageFile,
-      required ValueChanged<File?> onImageChange,
-      required Key key}) {
+  Widget _buildAvatarField({
+    required File? imageFile,
+    required ValueChanged<File?> onImageChange,
+    required Key key,
+    String validationMessage = 'Ảnh bắt buộc',
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -570,9 +573,12 @@ class _AddCarScreenState extends State<AddCarScreen> {
                 40, -40), // Set the offset to move the text up by 10 pixels
             child: imageFile == null
                 ? Text(
-                    'Hình ảnh xe',
+                    validationMessage,
+                    style: TextStyle(color: Colors.red),
                   )
-                : SizedBox.shrink(),
+                : Text(
+                    'Ảnh bắt buộc',
+                  ),
           ) // Displaying a mandatory text in red when image is not uploaded
       ],
     );

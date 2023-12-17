@@ -59,7 +59,8 @@ class HomeViewState extends State<HomeView> {
   bool isPickingPickupLocation = false;
   late Future<List<LocationInfo>> predictions;
   late Future<PlacesAutocompleteResponse> predictionsPlaces;
-
+  String? _errorDistance;
+  double? distanceKm;
   // bool _showPlaceDirection = false;
   static const CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(10.762622, 106.660172),
@@ -358,6 +359,7 @@ class HomeViewState extends State<HomeView> {
                         } else {
                           if (snapshot.hasData) {
                             double distance = _distance / 1000;
+                            distanceKm = distance;
                             formattedDistance = distance.toStringAsFixed(1);
                             return Column(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -530,21 +532,36 @@ class HomeViewState extends State<HomeView> {
                       _dropLocationController.text.isNotEmpty)
                     AppButton(
                       onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) => OrderView(
-                                    latLngPick: _latLng,
-                                    addressPick: _pickUpController.text,
-                                    serviceType: widget.rescueType,
-                                    latLngDrop: _latLngDrop,
-                                    addressDrop: _dropLocationController.text,
-                                    distance: formattedDistance,
-                                    carId: widget.carId,
-                                  )),
-                        );
+                        if (distanceKm! <= 100) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (context) => OrderView(
+                                      latLngPick: _latLng,
+                                      addressPick: _pickUpController.text,
+                                      serviceType: widget.rescueType,
+                                      latLngDrop: _latLngDrop,
+                                      addressDrop: _dropLocationController.text,
+                                      distance: formattedDistance,
+                                      carId: widget.carId,
+                                    )),
+                          );
+                        } else {
+                          setState(() {
+                            _errorDistance =
+                                'Hiện tại, chúng tôi chỉ phục vụ trong phạm vi khu vực TPHCM (~ <100KM)';
+                          });
+                        }
                       },
                       btnLabel: "Xác nhận địa điểm",
                     ),
+                  SizedBox(
+                    height: 5,
+                  ),
+                  CustomText(
+                    text: _errorDistance ?? '',
+                    fontSize: 15,
+                    color: Colors.red,
+                  )
                 ],
               ),
             ),

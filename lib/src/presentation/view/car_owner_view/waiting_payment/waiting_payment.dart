@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:CarRescue/main.dart';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/models/payment.dart';
@@ -10,6 +11,7 @@ import 'package:CarRescue/src/presentation/view/technician_view/bottom_nav_bar/b
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:lottie/lottie.dart';
 import 'package:intl/intl.dart';
@@ -49,7 +51,22 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
   Payment? _payment;
   Booking? booking;
   String? accessToken = GetStorage().read<String>("accessToken");
+  String? deviceToken = GetStorage().read<String>("deviceToken");
   final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
+
+  void showNotification() {
+    flutterLocalNotificationsPlugin.show(
+        0,
+        "Thông báo đơn hàng ",
+        "Số tiền đơn ${(_payment!.amount * 0.7).toStringAsFixed(2)}",
+        NotificationDetails(
+            android: AndroidNotificationDetails(channel.id, channel.name,
+                channelDescription: channel.description,
+                importance: Importance.high,
+                color: Colors.blue,
+                playSound: true,
+                icon: '@mipmap/ic_launcher')));
+  }
 
   void calculateTotals() {
     int totalQuantity = 0;
@@ -75,10 +92,11 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/OrderDetail/GetDetailsOfOrder?id=$orderId';
 
-    final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $accessToken'
-        });
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
@@ -102,10 +120,11 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
     final apiUrl =
         'https://rescuecapstoneapi.azurewebsites.net/api/Service/Get?id=$serviceId';
 
-    final response = await http.get(Uri.parse(apiUrl),headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $accessToken'
-        });
+    final response =
+        await http.get(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
@@ -222,6 +241,18 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final originalAmount = _payment?.amount ?? 0;
+    final discountedAmount = originalAmount * 0.7;
+
+    final currencyFormatOriginal = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '₫',
+    ).format(originalAmount);
+
+    final currencyFormatDiscounted = NumberFormat.currency(
+      locale: 'vi_VN',
+      symbol: '₫',
+    ).format(discountedAmount);
     return Scaffold(
       backgroundColor: FrontendConfigs.kIconColor,
       body: Column(
@@ -406,7 +437,15 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                       Booking updatedBooking = await AuthService()
                           .fetchBookingById(widget.booking.id);
                       AuthService().completedOrder(widget.booking.id, true);
-                      // Update the local state with the fetched booking details
+                      // showNotification();
+                      AuthService().sendNotification(
+                          deviceId: deviceToken!,
+                          isAndroidDevice: true,
+                          title: 'Thông báo từ hệ thống',
+                          body:
+                              'Số tiền ${currencyFormatDiscounted} từ đơn hàng ${widget.booking.id} đã được cộng vào ví của bạn.',
+                          target: widget.userId,
+                          orderId: '');
                       setState(() {
                         booking = updatedBooking;
                       });

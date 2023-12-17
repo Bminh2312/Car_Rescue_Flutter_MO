@@ -153,10 +153,9 @@ class _BookingCompletedScreenState extends State<BookingCompletedScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 0.0),
                       child: RideSelectionWidget(
                         icon: 'assets/svg/pickup_icon.svg',
-                        title: widget.addressesDepart[widget.booking.id] ??
+                        title: widget.subAddressesDepart[widget.booking.id] ??
                             '', // Use addresses parameter
-                        body:
-                            widget.subAddressesDepart[widget.booking.id] ?? '',
+
                         onPressed: () {},
                       ),
                     ),
@@ -165,8 +164,8 @@ class _BookingCompletedScreenState extends State<BookingCompletedScreen> {
                       padding: const EdgeInsets.only(right: 0),
                       child: RideSelectionWidget(
                         icon: 'assets/svg/location_icon.svg',
-                        title: widget.addressesDesti[widget.booking.id] ?? '',
-                        body: widget.subAddressesDesti[widget.booking.id] ?? '',
+                        title:
+                            widget.subAddressesDesti[widget.booking.id] ?? '',
                         onPressed: () {},
                       ),
                     ),

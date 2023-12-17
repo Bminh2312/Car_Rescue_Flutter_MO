@@ -51,6 +51,8 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   String? _selectedGenderString;
   File? _profileImage;
   String? _downloadURL;
+  int? _area;
+  String? _status;
   String? accessToken = GetStorage().read<String>("accessToken");
 // Chuyển đổi sang đối tượng DateTime
   String updatedAtString = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -75,11 +77,14 @@ class _EditProfileBodyState extends State<EditProfileBody> {
 
     if (userProfile != null) {
       final Map<String, dynamic> data = userProfile['data'];
+      print(data);
       setState(() {
         _nameController.text = data['fullname'] ?? '';
         _phoneController.text = data['phone'] ?? '';
         _addressController.text = data['address'] ?? '';
         _downloadURL = data['avatar'];
+        _status = data['status'];
+        _area = data['area'];
         // Retrieve and set the gender from the profile data
         final String? genderString = data['sex'];
         if (genderString != null) {
@@ -97,7 +102,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     });
   }
 
-  Future<void> updateProfile({
+  Future<bool> updateProfile({
     required String userId,
     required String accountId,
     required String name,
@@ -106,6 +111,8 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     required String birthdate,
     required String sex,
     required String updateAt,
+    required int area,
+    required String status,
     String? downloadURL, // Optional avatar URL parameter
   }) async {
     final Map<String, dynamic> requestBody = {
@@ -118,6 +125,8 @@ class _EditProfileBodyState extends State<EditProfileBody> {
       'birthdate': birthdate,
       'avatar': downloadURL ?? _downloadURL,
       'updateAt': updateAt,
+      'status': status,
+      'area': area
     };
 
     final response = await http.put(
@@ -131,16 +140,16 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     );
 
     print(response.statusCode);
-    final List userData = [
-      userId,
-      accountId,
-      name,
-      phone,
-      address,
-      sex,
-      downloadURL ?? _downloadURL
-    ];
-    print(userData);
+    // final List userData = [
+    //   userId,
+    //   accountId,
+    //   name,
+    //   phone,
+    //   address,
+    //   sex,
+    //   downloadURL ?? _downloadURL
+    // ];
+    // print(userData);
 
     if (response.statusCode == 200) {
       // Update the state with the updated profile data
@@ -153,17 +162,22 @@ class _EditProfileBodyState extends State<EditProfileBody> {
         _downloadURL = downloadURL;
         _isUpdating = false;
         updatedAtString = updateAt;
+        _status = status;
+        _area = area;
       });
       print(_downloadURL);
+
       // Display a success message to the user
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Cập nhật thông tin thành công')),
       );
+      return true;
     } else {
       _isUpdating = false;
       print('Request failed with status: ${response.statusCode}');
       print('Response body: ${response.body}');
     }
+    return false;
   }
 
   Future<void> _pickImage() async {
@@ -262,6 +276,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                         ),
                         SizedBox(height: 10),
                         TextFormField(
+                          keyboardType: TextInputType.name,
                           controller: _nameController,
                           decoration: InputDecoration(
                             labelText: 'Tên đầy đủ',
@@ -272,11 +287,18 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                             if (value == null || value.isEmpty) {
                               return 'Hãy nhập họ tên đầy đủ';
                             }
+
+                            // Check if the input contains any numeric characters
+                            if (RegExp(r'[0-9]').hasMatch(value)) {
+                              return 'Tên không được chứa số';
+                            }
+
                             return null;
                           },
                         ),
                         SizedBox(height: 10),
                         TextFormField(
+                          keyboardType: TextInputType.phone,
                           controller: _phoneController,
                           decoration: InputDecoration(
                             labelText: 'Số điện thoại',
@@ -290,7 +312,12 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                             if (value.length != 10) {
                               return 'Số điện thoại phải bao gồm 10 số.';
                             }
-                            // You can add more phone number validation here if needed.
+
+                            // Check if the input contains any alphabetic characters
+                            if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                              return 'Số điện thoại chỉ được chứa các chữ số.';
+                            }
+
                             return null;
                           },
                         ),
@@ -362,7 +389,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                               DateTime? selectedDate = await showDatePicker(
                                 context: context,
                                 initialDate: _birthday,
-                                firstDate: DateTime(1900),
+                                firstDate: DateTime(1000),
                                 lastDate: DateTime.now(),
                               );
                               if (selectedDate != null &&
@@ -435,7 +462,10 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                     _selectedGenderString ?? '';
                                 String formattedBirthdate =
                                     DateFormat('yyyy-MM-dd').format(_birthday);
-                                await updateProfile(
+
+                                bool isSuccess = await updateProfile(
+                                    area: _area ?? 0,
+                                    status: _status!,
                                     userId: widget.userId,
                                     accountId: widget.accountId,
                                     name: _nameController.text,
@@ -445,9 +475,16 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                     sex: selectedGender,
                                     downloadURL: downloadURL,
                                     updateAt: updatedAtString);
+                                if (isSuccess) {
+                                  setState(() {
+                                    _isUpdating = false;
+                                    Navigator.pop(context, true);
+                                  });
+                                }
                               }
-
-                              Navigator.pop(context, true);
+                              setState(() {
+                                _isUpdating = false;
+                              });
                             },
                             child: Text('Lưu thông tin'),
                           ),

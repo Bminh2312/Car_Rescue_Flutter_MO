@@ -25,6 +25,7 @@ class _ProfileBodyState extends State<ProfileBody> {
   bool isSecondSelected = false;
 
   bool isThirdSelected = false;
+  int? _area;
   String userName = '';
   String phoneNumber = '';
   String avatar =
@@ -49,16 +50,18 @@ class _ProfileBodyState extends State<ProfileBody> {
         print('User Profile: $userProfile');
         // Extract the 'data' map from the response
         final Map<String, dynamic> data = userProfile['data'];
-
+        print(data);
         // Extract 'fullname' and 'phone' values from the 'data' map
         final String fullName = data['fullname'];
         final String phone = data['phone'];
         final String avatarURL = data['avatar'];
+        final int area = data['area'];
         // Update the state with the extracted values or 'N/A' if they are null
         setState(() {
           userName = fullName;
           phoneNumber = phone;
           avatar = avatarURL;
+          _area = area;
         });
       } else {
         // Handle the case where the userProfile is null
@@ -112,7 +115,15 @@ class _ProfileBodyState extends State<ProfileBody> {
                       text: phoneNumber,
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
-                    )
+                    ),
+                    SizedBox(
+                      height: 8,
+                    ),
+                    CustomText(
+                      text: "Khu vực ${_area.toString()}",
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ],
                 ),
               ],
