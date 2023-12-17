@@ -14,8 +14,9 @@ import 'package:intl/intl.dart'; // Import the intl package
 
 class WithdrawFormScreen extends StatefulWidget {
   final Wallet wallet;
-
-  WithdrawFormScreen({Key? key, required this.wallet}) : super(key: key);
+  final String userId;
+  WithdrawFormScreen({Key? key, required this.wallet, required this.userId})
+      : super(key: key);
 
   @override
   _WithdrawFormScreenState createState() => _WithdrawFormScreenState();
@@ -34,9 +35,30 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
   List<BankingInfo> bankings =
       []; // Make sure to fetch or pass this data as required
   TextEditingController _amountController = TextEditingController();
+  String? _managerId;
+  String? _deviceToken;
   final NumberFormat numberFormat = NumberFormat("#,##0");
+
+  Future<Map<String, String>> _loadManager(String userId) async {
+    try {
+      final managerData = await AuthService().getAreaOfRVO(userId);
+      setState(() {
+        _managerId = managerData['managerId'];
+        _deviceToken = managerData['deviceToken'];
+      });
+      print('Manager ID: $_managerId');
+      print('Device Token: $_deviceToken');
+      return managerData;
+    } catch (e) {
+      // Handle any errors that might occur during the loading process
+      print('Error loading manager: $e');
+      throw e; // Rethrow the exception if needed
+    }
+  }
+
   void handleSubmit() {
     final formState = _formKey.currentState;
+
     if (formState!.validate()) {
       formState.save(); // Ensure that other form fields are saved
 
@@ -55,19 +77,26 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
       );
 
       AuthService().sendNotification(
-          deviceId:
-              'eGwrKYghm6vuhnwlMicYsE:APA91bFR9eNQAPggKuJ1S7fweiTyIWHY8WNhnyFB2ZinOHG0euRkJsLghyCLuRTTEs0qER3ss8OkFlNqoIRArs0XqpCtow9q5PFY2-1HeRc8vCmhlZJqmBHhLA1aErqX2kOGKCg2f8AV',
+          deviceId: _deviceToken!,
           isAndroidDevice: true,
           title: 'Thông báo từ chủ xe cứu hộ',
           body: 'Có một đơn rút tiền cần được kiểm duyệt',
-          target: '4a30e2d2-149a-4442-817c-9e73ee4e4477',
+          target: _managerId!,
           orderId: '');
     }
+  }
+
+  String? _validateBankingSelection(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Chọn một ngân hàng';
+    }
+    return null;
   }
 
   @override
   void initState() {
     super.initState();
+    _loadManager(widget.userId);
     loadBankingInfo();
     _amountController.addListener(_formatAmount);
   }
@@ -85,6 +114,12 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
     String text = _amountController.text;
     text = text.replaceAll(',', ''); // Remove existing commas
     final numericValue = int.tryParse(text) ?? 0;
+
+    // Kiểm tra xem số tiền có nằm trong khoảng từ 10,000 đến 100,000,000 không
+    if (numericValue < 10000 || numericValue > 100000000) {
+      // Hiển thị thông báo lỗi hoặc thực hiện xử lý phù hợp ở đây
+      return;
+    }
 
     final formattedValue = NumberFormat("#,###", "en_US").format(numericValue);
     if (formattedValue != _amountController.text) {
@@ -178,15 +213,27 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
     }
   }
 
-  String? _validateAmount(String? value) {
+  String? _validateAndFormatAmount(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Nhập số tiền';
+      return 'Nhập số tiền cần rút';
     }
 
-    final numericValue = int.tryParse(value.replaceAll(',', ''));
+    String text = value;
+    text = text.replaceAll(',', ''); // Remove existing commas
+    final numericValue = int.tryParse(text) ?? 0;
 
-    if (numericValue == null || numericValue <= 0) {
-      return 'Số tiền không hợp lệ';
+    // Kiểm tra xem số tiền có nằm trong khoảng từ 10,000 đến 100,000,000 không
+    if (numericValue < 10000 || numericValue > 100000000) {
+      return 'Số tiền cần rút phải nằm trong khoảng từ 10,000 đến 100,000,000';
+    }
+
+    final formattedValue = NumberFormat("#,###", "en_US").format(numericValue);
+    if (formattedValue != value) {
+      // Nếu giá trị đã được định dạng, cập nhật giá trị trong TextFormField
+      _amountController.value = TextEditingValue(
+        text: formattedValue,
+        selection: TextSelection.collapsed(offset: formattedValue.length),
+      );
     }
 
     return null;
@@ -308,37 +355,57 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                         height: 10,
                       ),
                       if (radioGroupValue == 'Ngân hàng')
-                        // DropdownButton to list booking names
-                        DropdownButton<String>(
-                          onChanged: (newValue) {
-                            setState(() {
-                              _selectedBanking = newValue;
-                              // Validate the dropdown selection
-                              _dropdownError =
-                                  null; // Clear error message on new selection
-                            });
-                          },
-                          underline: Container(),
-                          value: _selectedBanking,
-                          hint: Text("Chọn ngân hàng"),
-                          items:
-                              bankings.map<DropdownMenuItem<String>>((banking) {
-                            return DropdownMenuItem<String>(
-                              value: banking.shortName,
-                              child: Row(
-                                children: [
-                                  Image.network(banking.logo, width: 70),
-                                  Text(banking.shortName),
-                                ],
-                              ),
-                            );
-                          }).toList(),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors
+                                  .black, // Specify your border color here
+                              width: 1.0, // Specify your border width here
+                            ),
+                            borderRadius: BorderRadius.circular(
+                                5.0), // Specify your border radius here
+                          ),
+                          child: DropdownButton<String>(
+                            onChanged: (newValue) {
+                              setState(() {
+                                _selectedBanking = newValue;
+                                _dropdownError = null;
+                              });
+                            },
+                            underline:
+                                Container(), // Remove the default underline
+                            value: _selectedBanking,
+                            hint: Text("Chọn ngân hàng"),
+                            items: bankings
+                                .map<DropdownMenuItem<String>>((banking) {
+                              return DropdownMenuItem<String>(
+                                value: banking.shortName,
+                                child: Row(
+                                  children: [
+                                    Image.network(banking.logo, width: 70),
+                                    Text(banking.shortName),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
                         ),
-                      if (_dropdownError != null)
-                        Text(
-                          _dropdownError!,
-                          style: TextStyle(color: Colors.red),
+
+                      if (_dropdownError != null &&
+                          radioGroupValue == 'Ngân hàng')
+                        Column(
+                          children: [
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              _dropdownError!,
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ],
                         ),
+
                       if (radioGroupValue == 'Momo')
                         TextFormField(
                           onSaved: (value) => _phoneNumber = value,
@@ -346,21 +413,28 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                             if (value == null || value.isEmpty) {
                               return 'Hãy nhập số điện thoại';
                             }
-                            // Additional phone number validation logic here
+
+                            // Kiểm tra xem giá trị có phải là số và có đúng 10 chữ số không
+                            if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
+                              return 'Số điện thoại phải có 10 chữ số';
+                            }
+
+                            // Các kiểm tra bổ sung khác có thể được thêm vào ở đây
+
                             return null;
                           },
                           decoration: InputDecoration(
                             hintText: 'Nhập số điện thoại',
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                  color: FrontendConfigs.kActiveColor,
-                                  width:
-                                      2.0), // Change the color and width to fit your needs
+                                color: Colors.blue,
+                                width: 2.0,
+                              ),
                             ),
                             border: OutlineInputBorder(),
                           ),
                           style: TextStyle(fontSize: 16, color: Colors.black),
-                          cursorColor: FrontendConfigs.kActiveColor,
+                          cursorColor: Colors.blue,
                         ),
                       SizedBox(
                         height: 10,
@@ -396,6 +470,9 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                           style: TextStyle(fontSize: 16, color: Colors.black),
                           cursorColor: FrontendConfigs.kActiveColor,
                         ),
+                      SizedBox(
+                        height: 10,
+                      ),
                       if (radioGroupValue == 'Momo' ||
                           radioGroupValue == 'Ngân hàng')
                         CustomText(
@@ -447,8 +524,7 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                           controller: _amountController,
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(
-                                10), // Limit the length if needed
+                            LengthLimitingTextInputFormatter(10),
                           ],
                           onSaved: (value) {
                             final numericValue = int.tryParse(value ?? '0');
@@ -457,7 +533,7 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                                   numericValue; // Store the numeric value as an int
                             });
                           },
-                          validator: _validateAmount,
+                          validator: _validateAndFormatAmount,
                           decoration: InputDecoration(
                             hintText: 'Nhập số tiền cần rút',
                             border: OutlineInputBorder(),
@@ -472,8 +548,6 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                           style: TextStyle(fontSize: 16, color: Colors.black),
                           cursorColor: Colors.blue,
                         )
-
-                      // ... other widgets if any
                     ],
                   ),
                 ),
@@ -488,6 +562,13 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                     style: ElevatedButton.styleFrom(
                         backgroundColor: FrontendConfigs.kActiveColor),
                     onPressed: () async {
+                      if (_selectedBanking == null &&
+                          radioGroupValue == 'Ngân hàng') {
+                        setState(() {
+                          _dropdownError = 'Hãy chọn ngân hàng';
+                        });
+                        return;
+                      }
                       if (_formKey.currentState!.validate() &&
                           _dropdownError == null) {
                         _formKey.currentState!
@@ -496,7 +577,6 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                           handleSubmit();
 
                           Navigator.pop(context, 'success');
-
                           _showSuccessDialog();
                           // Handle successful submission, e.g., show confirmation message
                         } catch (e) {

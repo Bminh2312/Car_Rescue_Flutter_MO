@@ -807,7 +807,7 @@ class AuthService {
     String street = '';
     String neighborhood = '';
     String admin1 = '';
-
+    
     for (var component in addressComponents) {
       if (component['types'].contains('point_of_interest')) {
         pointOfInterest = component['long_name'];

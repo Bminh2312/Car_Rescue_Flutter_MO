@@ -548,10 +548,12 @@ class _AddCarScreenState extends State<AddCarScreen> {
     );
   }
 
-  Widget _buildAvatarField(
-      {required File? imageFile,
-      required ValueChanged<File?> onImageChange,
-      required Key key}) {
+  Widget _buildAvatarField({
+    required File? imageFile,
+    required ValueChanged<File?> onImageChange,
+    required Key key,
+    String validationMessage = 'Ảnh bắt buộc',
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -571,9 +573,12 @@ class _AddCarScreenState extends State<AddCarScreen> {
                 40, -40), // Set the offset to move the text up by 10 pixels
             child: imageFile == null
                 ? Text(
-                    'Hình ảnh xe',
+                    validationMessage,
+                    style: TextStyle(color: Colors.red),
                   )
-                : SizedBox.shrink(),
+                : Text(
+                    'Ảnh bắt buộc',
+                  ),
           ) // Displaying a mandatory text in red when image is not uploaded
       ],
     );

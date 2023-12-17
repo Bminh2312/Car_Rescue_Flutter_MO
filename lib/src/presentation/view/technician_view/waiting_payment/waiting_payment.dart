@@ -387,7 +387,7 @@ class _WaitingForPaymentScreenState extends State<WaitingForPaymentScreen> {
                           isAndroidDevice: true,
                           title: 'Thông báo từ kĩ thuật viên',
                           body:
-                              'Kĩ thuật viên ${widget.tech.fullname} đã nhận số tiền ${currencyFormat} cho đơn hàng ${widget.booking.id}',
+                              'Kĩ thuật viên ${widget.tech.fullname} đã nhận số tiền $currencyFormat cho đơn hàng ${widget.booking.id}',
                           target: widget.managerId,
                           orderId: widget.booking.id);
                       setState(() {

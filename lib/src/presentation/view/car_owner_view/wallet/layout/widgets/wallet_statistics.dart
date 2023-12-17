@@ -13,22 +13,19 @@ class WalletStatisticsCard extends StatefulWidget {
   final List<WalletTransaction> walletTrans;
   final Wallet wallet;
   final Function onSuccessfulWithdrawal;
+  final String userId;
   const WalletStatisticsCard(
       {super.key,
       required this.walletTrans,
       required this.wallet,
-      required this.onSuccessfulWithdrawal});
+      required this.onSuccessfulWithdrawal, required this.userId});
   @override
   State<WalletStatisticsCard> createState() => _WalletStatisticsCardState();
 }
 
 class _WalletStatisticsCardState extends State<WalletStatisticsCard> {
   List<BankingInfo> bankings = [];
-  final _formKey = GlobalKey<FormState>();
-  String? _dropdownError;
-  String? _phoneNumber;
-  String? _accountName;
-  int? _amount;
+
   String? radioGroupValue;
   @override
   void initState() {
@@ -106,7 +103,7 @@ class _WalletStatisticsCardState extends State<WalletStatisticsCard> {
                       context,
                       MaterialPageRoute(
                           builder: (context) =>
-                              WithdrawFormScreen(wallet: widget.wallet)),
+                              WithdrawFormScreen(wallet: widget.wallet, userId: widget.userId)),
                     );
 
 // Check the result here

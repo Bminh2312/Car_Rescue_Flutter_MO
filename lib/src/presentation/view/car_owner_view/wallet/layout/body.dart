@@ -106,6 +106,7 @@ class _WalletBodyState extends State<WalletBody> {
                 height: 18,
               ),
               WalletStatisticsCard(
+                userId: widget.userId,
                 walletTrans: walletTransactions,
                 wallet: _wallet!,
                 onSuccessfulWithdrawal: reloadData,

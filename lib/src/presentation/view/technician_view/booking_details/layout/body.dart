@@ -92,12 +92,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   List<Service> selectedServiceCards = [];
   late List<String> selectedServices;
   int totalPrice = 0;
-  int _quantity = 1;
   int totalQuantity = 0;
   int totalAmount = 0;
-
-  bool _isExpanded = false;
-
   final ScrollController _scrollController = ScrollController();
   double _savedScrollPosition = 0.0;
   Timer? myTimer;
@@ -1559,7 +1555,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _buildSectionTitle("Khách hàng"),
-                          widget.booking.status != 'ASSIGNED'
+                          widget.booking.status == 'ASSIGNED' &&
+                                  widget.booking.status == 'INPROGRESS'
                               ? InkWell(
                                   onTap: () {
                                     Navigator.pushReplacement(
@@ -1617,7 +1614,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         _buildSectionTitle('Đơn hàng'),
                         Flexible(
                           child: BookingStatus(
-                            status: widget.booking.status,
+                            status: _currentBooking!.status,
                             fontSize: 14,
                           ),
                         ),
@@ -1866,25 +1863,30 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                       padding:
                           EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           List<Service> selectedServices = selectedServiceCards
                               .where((service) =>
                                   selectedServiceCards.contains(service))
                               .toList();
                           Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ServiceSelectionScreen(
-                                  userId: widget.userId,
-                                  accountId: widget.accountId,
-                                  selectedServices: selectedServices,
-                                  booking: widget.booking,
-                                  addressesDepart: widget.addressesDepart,
-                                  subAddressesDepart: widget.subAddressesDepart,
-                                  addressesDesti: widget.addressesDesti,
-                                  subAddressesDesti: widget.subAddressesDesti,
-                                ),
-                              ));
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ServiceSelectionScreen(
+                                      userId: widget.userId,
+                                      accountId: widget.accountId,
+                                      selectedServices: selectedServices,
+                                      booking: widget.booking,
+                                      addressesDepart: widget.addressesDepart,
+                                      subAddressesDepart:
+                                          widget.subAddressesDepart,
+                                      addressesDesti: widget.addressesDesti,
+                                      subAddressesDesti:
+                                          widget.subAddressesDesti,
+                                    ),
+                                  ))
+                              .then(
+                                  (value) => {_loadBooking(widget.booking.id)});
                         },
                         child: Container(
                           padding:

@@ -47,7 +47,8 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   String? _selectedGenderString;
   File? _profileImage;
   String? _downloadURL;
-
+  int? _area;
+  String? _status;
 // Chuyển đổi sang đối tượng DateTime
   String updatedAtString = DateFormat('yyyy-MM-dd').format(DateTime.now());
   final ImagePicker imagePicker = ImagePicker();
@@ -73,6 +74,8 @@ class _EditProfileBodyState extends State<EditProfileBody> {
         _phoneController.text = data['phone'] ?? '';
         _addressController.text = data['address'] ?? '';
         _downloadURL = data['avatar'];
+        _status = data['status'];
+        _area = data['area'];
         // Retrieve and set the gender from the profile data
         final String? genderString = data['sex'];
         if (genderString != null) {
@@ -96,6 +99,8 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     required String birthdate,
     required String sex,
     required String updateAt,
+    required int area,
+    required String status,
     String? downloadURL, // Optional avatar URL parameter
   }) async {
     final Map<String, dynamic> requestBody = {
@@ -108,6 +113,8 @@ class _EditProfileBodyState extends State<EditProfileBody> {
       'birthdate': birthdate,
       'avatar': downloadURL ?? _downloadURL,
       'updateAt': updateAt,
+      'status': status,
+      'area': area
     };
 
     final response = await http.put(
@@ -143,6 +150,8 @@ class _EditProfileBodyState extends State<EditProfileBody> {
         _downloadURL = downloadURL;
         _isUpdating = false;
         updatedAtString = updateAt;
+        _status = status;
+        _area = area;
       });
       print(_downloadURL);
       // Display a success message to the user
@@ -215,6 +224,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                         ),
                       ),
                       CircleAvatar(
+                        backgroundColor: Color.fromARGB(0, 158, 158, 158),
                         radius: 60,
                         backgroundImage: _profileImage != null
                             ? FileImage(_profileImage!)
@@ -249,6 +259,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                   ),
                   SizedBox(height: 10),
                   TextFormField(
+                    keyboardType: TextInputType.name,
                     controller: _nameController,
                     decoration: InputDecoration(
                       labelText: 'Tên đầy đủ',
@@ -259,11 +270,18 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                       if (value == null || value.isEmpty) {
                         return 'Hãy nhập họ tên đầy đủ';
                       }
+
+                      // Check if the input contains any numeric characters
+                      if (RegExp(r'[0-9]').hasMatch(value)) {
+                        return 'Tên không được chứa số';
+                      }
+
                       return null;
                     },
                   ),
                   SizedBox(height: 10),
                   TextFormField(
+                    keyboardType: TextInputType.phone,
                     controller: _phoneController,
                     decoration: InputDecoration(
                       labelText: 'Số điện thoại',
@@ -277,12 +295,18 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                       if (value.length != 10) {
                         return 'Số điện thoại phải bao gồm 10 số.';
                       }
-                      // You can add more phone number validation here if needed.
+
+                      // Check if the input contains any alphabetic characters
+                      if (RegExp(r'[a-zA-Z]').hasMatch(value)) {
+                        return 'Số điện thoại không được chứa chữ cái.';
+                      }
+
                       return null;
                     },
                   ),
                   SizedBox(height: 10),
                   TextFormField(
+                    keyboardType: TextInputType.streetAddress,
                     controller: _addressController,
                     decoration: InputDecoration(
                       labelText: 'Địa chỉ',
@@ -394,10 +418,10 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                           foregroundColor:
                               MaterialStatePropertyAll(Colors.white)),
                       onPressed: () async {
-                        setState(() {
-                          _isUpdating = true;
-                        });
                         if (_formKey.currentState!.validate()) {
+                          setState(() {
+                            _isUpdating = true;
+                          });
                           String? downloadURL;
                           if (_profileImage != null && _profileImageChanged) {
                             downloadURL =
@@ -406,16 +430,19 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                             if (downloadURL == null) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                    content: Text(
-                                        'Failed to upload profile image. Please try again.')),
+                                    content:
+                                        Text('Cập nhật không thành công.')),
                               );
                               return; // Exit the function, don't proceed to updateProfile
                             }
                           }
+
                           String selectedGender = _selectedGenderString ?? '';
                           String formattedBirthdate =
                               DateFormat('yyyy-MM-dd').format(_birthday);
                           await updateProfile(
+                              area: _area ?? 0,
+                              status: _status!,
                               userId: widget.userId,
                               accountId: widget.accountId,
                               name: _nameController.text,
@@ -425,9 +452,9 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                               sex: selectedGender,
                               downloadURL: downloadURL,
                               updateAt: updatedAtString);
-                        }
 
-                        Navigator.pop(context, true);
+                          Navigator.pop(context, true);
+                        }
                       },
                       child: Text('Lưu thông tin'),
                     ),

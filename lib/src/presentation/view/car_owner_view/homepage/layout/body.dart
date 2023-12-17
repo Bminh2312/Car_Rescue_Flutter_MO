@@ -310,7 +310,10 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => WithdrawFormScreen(wallet: _wallet!)),
+                  builder: (context) => WithdrawFormScreen(
+                        wallet: _wallet!,
+                        userId: widget.userId,
+                      )),
             );
           },
           child: Column(

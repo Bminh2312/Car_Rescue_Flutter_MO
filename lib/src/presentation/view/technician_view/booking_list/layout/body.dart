@@ -528,36 +528,12 @@ class _BookingListBodyState extends State<BookingListBody>
                         padding: const EdgeInsets.symmetric(horizontal: 12.0),
                         child: RideSelectionWidget(
                           icon: 'assets/svg/pickup_icon.svg',
-                          title: addressesDepart[booking.id] ??
+                          title: subAddressesDepart[booking.id] ??
                               '', // Use addresses parameter
-                          body: subAddressesDepart[booking.id] ?? '',
+
                           onPressed: () {},
                         ),
                       ),
-                      // if (booking.rescueType == "Towing")
-                      //   const Padding(
-                      //     padding: EdgeInsets.only(left: 29),
-                      //     child: DottedLine(
-                      //       direction: Axis.vertical,
-                      //       lineLength: 30,
-                      //       lineThickness: 1.0,
-                      //       dashLength: 4.0,
-                      //       dashColor: Colors.black,
-                      //       dashRadius: 2.0,
-                      //       dashGapLength: 4.0,
-                      //       dashGapRadius: 0.0,
-                      //     ),
-                      //   ),
-                      // if (booking.rescueType == "Towing")
-                      //   Padding(
-                      //     padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      //     child: RideSelectionWidget(
-                      //       icon: 'assets/svg/location_icon.svg',
-                      //       title: widget.addressesDesti[booking.id] ?? '',
-                      //       body: widget.subAddressesDesti[booking.id] ?? '',
-                      //       onPressed: () {},
-                      //     ),
-                      //   ),
                       ButtonBar(
                         children: <Widget>[
                           TextButton(
