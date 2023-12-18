@@ -363,12 +363,22 @@ class HomeViewState extends State<HomeView> {
                             return Column(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                Column(
                                   children: [
-                                    CustomText(text: 'Khoảng cách'),
-                                    CustomText(text: '${formattedDistance} Km')
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        CustomText(text: 'Khoảng cách'),
+                                        CustomText(
+                                            text: '${formattedDistance} Km'),
+                                      ],
+                                    ),
+                                    CustomText(
+                                      text: _errorDistance ?? '',
+                                      fontSize: 15,
+                                      color: Colors.red,
+                                    ),
                                   ],
                                 ),
                                 Divider(
@@ -556,11 +566,6 @@ class HomeViewState extends State<HomeView> {
                   SizedBox(
                     height: 5,
                   ),
-                  CustomText(
-                    text: _errorDistance ?? '',
-                    fontSize: 15,
-                    color: Colors.red,
-                  )
                 ],
               ),
             ),

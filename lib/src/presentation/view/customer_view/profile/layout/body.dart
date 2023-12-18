@@ -160,8 +160,8 @@ class _ProfileBodyState extends State<ProfileBody> {
               title: "",
               name: 'Trung tâm hỗ trợ',
               onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => WebsocketDemo()));
+                // Navigator.push(context,
+                //     MaterialPageRoute(builder: (context) => WebsocketDemo()));
               },
             ),
             const SizedBox(

@@ -1059,8 +1059,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         icon: SvgPicture.asset("assets/svg/cancel_icon.svg"),
                       ),
                     ),
-                  if (widget.booking.status == 'INPROGRESS' &&
-                      widget.booking.status != 'ASSIGNING')
+                  if (widget.booking.status == 'INPROGRESS')
                     Center(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
