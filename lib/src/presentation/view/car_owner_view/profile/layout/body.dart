@@ -66,10 +66,6 @@ class _ProfileBodyState extends State<ProfileBody> {
       } else {
         // Handle the case where the userProfile is null
         // Set default values for userName and phoneNumber
-        setState(() {
-          userName = 'N/A';
-          phoneNumber = 'N/A';
-        });
       }
     } catch (e) {
       // Handle any exceptions that occur during the API request

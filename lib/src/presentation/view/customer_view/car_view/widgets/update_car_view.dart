@@ -4,6 +4,7 @@ import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/car_model.dart';
 import 'package:CarRescue/src/models/customer_car.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
+import 'package:CarRescue/src/presentation/elements/car_brand.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
@@ -53,11 +54,12 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
   bool _isValidate = false;
   List<CarModel> carModelList = [];
   CarModel? carModel;
+  List<CarBrand> _brands = [];
   // Create a Map to associate car types (model1) with modelIds
   Map<String, String> modelNameToId = {};
   String? accessToken = GetStorage().read<String>("accessToken");
   // Initialize _selectedType with an empty string or a default value
-
+  String? _selectedBrand;
   String _selectedModelId = '';
   final titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
   final inputDecoration = InputDecoration(
@@ -252,6 +254,27 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
     super.initState();
     fetchModel();
     _loadCarModel(widget.car!.modelId!);
+    fetchVehicleBrands().then((brands) {
+      setState(() {
+        _brands = brands;
+      });
+    });
+  }
+
+  Future<List<CarBrand>> fetchVehicleBrands() async {
+    const String apiUrl =
+        'https://carapi.app/api/makes'; // Replace with actual API URL
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      Map<String, dynamic> responseBody = json.decode(response.body);
+      List<dynamic> brandsJson =
+          responseBody['data']; // Access the 'data' field
+
+      return brandsJson.map((json) => CarBrand.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load vehicle brands');
+    }
   }
 
   @override
@@ -306,24 +329,32 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
                                       },
                                     ),
                                     SizedBox(height: 12),
-                                    TextFormField(
-                                      initialValue: widget.car?.manufacturer,
-                                      decoration: inputDecoration.copyWith(
-                                        icon: Icon(Icons.drive_eta),
-                                        labelText: 'Hãng xe',
-                                      ),
+                                    DropdownButtonFormField<String>(
+                                      value: widget.car!.manufacturer,
                                       validator: (value) {
-                                        if (value == null ||
-                                            value.trim().isEmpty) {
-                                          return 'Vui lòng nhập hãng xe';
+                                        if (value == null || value.isEmpty) {
+                                          print(value);
+                                          return 'Vui lòng chọn hãng xe';
                                         }
-                                        _isValidate = true;
                                         return null;
                                       },
-                                      onSaved: (value) {
-                                        _manufacturer = value!;
+                                      onChanged: (newValue) {
+                                        setState(() {
+                                          _manufacturer = newValue!;
+                                        });
                                       },
-                                    ),
+                                      items: _brands
+                                          .map<DropdownMenuItem<String>>(
+                                              (CarBrand brand) {
+                                        return DropdownMenuItem<String>(
+                                          value: brand.name,
+                                          child: Text(brand.name),
+                                        );
+                                      }).toList(),
+                                      decoration: InputDecoration(
+                                        labelText: 'Chọn hãng xe',
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -426,9 +457,14 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      print(value);
                                       return 'Vui lòng nhập màu sắc';
                                     }
+
+                                    // Check if the input contains any numeric characters
+                                    if (RegExp(r'[0-9]').hasMatch(value)) {
+                                      return 'Màu sắc không được chứa số';
+                                    }
+
                                     return null;
                                   },
                                   onSaved: (value) {

@@ -1487,6 +1487,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 hintText: 'Nhập nội dung ghi chú',
                 border: OutlineInputBorder(),
               ),
+              maxLines: 3,
+              maxLength: 1000, // Set the maximum length to 1000 characters
               onTap: () {
                 // Clear the hint text when the user taps on the text field
                 setState(() {
@@ -1494,7 +1496,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 });
               },
               validator: (value) {
-                if (value?.isEmpty ?? '' == value) {
+                if (value!.isEmpty) {
                   return 'Hãy ghi chú';
                 }
                 return null;

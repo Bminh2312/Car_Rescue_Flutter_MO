@@ -261,21 +261,14 @@ class _RepairBodyState extends State<RepairBody> {
             ),
             (route) => false, // Loại bỏ tất cả các màn hình khỏi ngăn xếp
           );
-          AuthService().sendNotification(
-              deviceId:
-                  'eGwrKYghm6vuhnwlMicYsE:APA91bFR9eNQAPggKuJ1S7fweiTyIWHY8WNhnyFB2ZinOHG0euRkJsLghyCLuRTTEs0qER3ss8OkFlNqoIRArs0XqpCtow9q5PFY2-1HeRc8vCmhlZJqmBHhLA1aErqX2kOGKCg2f8AV',
-              isAndroidDevice: true,
-              title: 'Thông báo từ khách hàng',
-              body: 'Có một đơn hàng sửa chữa tại chỗ đã được gởi đến hệ thống',
-              target: '4a30e2d2-149a-4442-817c-9e73ee4e4477',
-              orderId: '');
+
           notify.showToast("Tạo đơn thành công");
         } else if (status == 500) {
-          notify.showToast("External error");
+          notify.showErrorToast("External error");
         } else if (status == 201) {
-          notify.showToast("Hết kĩ thuật viên");
+          notify.showErrorToast("Hết kĩ thuật viên");
         } else {
-          notify.showToast("Lỗi đơn hàng");
+          notify.showErrorToast("Lỗi đơn hàng");
         }
       } catch (e) {
         // Xử lý khi có lỗi khi gửi đơn hàng

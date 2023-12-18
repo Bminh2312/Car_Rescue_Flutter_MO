@@ -78,66 +78,31 @@ class CarCard extends StatelessWidget {
                 ),
                 SizedBox(height: 16),
                 Center(
-                  child: vehicle.status.toUpperCase() == 'ACTIVE'
-                      ? TextButton(
-                          onPressed: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => HomeView(
-                            //       vehicle: vehicle,
-                            //     ),
-                            //   ),
-                            // );
-                          },
-                          child: Text(
-                            'Chọn',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
-                          ),
-                          style: TextButton.styleFrom(
-                            backgroundColor: FrontendConfigs.kIconColor,
-                            minimumSize: Size(double.infinity, 48),
-                          ),
-                        )
-                      : vehicle.status.toUpperCase() == 'WAITING_APPROVAL'
-                          ? TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => UpdateCarScreen(
-                                      userId: userId,
-                                      accountId: accountId,
-                                      vehicle: vehicle,
-                                    ),
+                    child: vehicle.status.toUpperCase() == 'WAITING_APPROVAL'
+                        ? TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => UpdateCarScreen(
+                                    userId: userId,
+                                    accountId: accountId,
+                                    vehicle: vehicle,
                                   ),
-                                );
-                              },
-                              child: Text(
-                                'Cập nhật',
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 18),
-                              ),
-                              style: TextButton.styleFrom(
-                                backgroundColor: FrontendConfigs.kIconColor,
-                                minimumSize: Size(double.infinity, 48),
-                              ),
-                            )
-                          : IgnorePointer(
-                              ignoring: true,
-                              child: TextButton(
-                                onPressed: () {},
-                                child: Text(
-                                  'Chọn',
-                                  style: TextStyle(color: Colors.white),
                                 ),
-                                style: TextButton.styleFrom(
-                                  backgroundColor: Colors.grey,
-                                  minimumSize: Size(double.infinity, 48),
-                                ),
-                              ),
+                              );
+                            },
+                            child: Text(
+                              'Cập nhật',
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 18),
                             ),
-                )
+                            style: TextButton.styleFrom(
+                              backgroundColor: FrontendConfigs.kIconColor,
+                              minimumSize: Size(double.infinity, 48),
+                            ),
+                          )
+                        : Container())
               ],
             ),
           ),

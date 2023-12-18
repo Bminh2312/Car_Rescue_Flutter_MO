@@ -1,4 +1,5 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
@@ -42,6 +43,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _birthdayController = TextEditingController();
+  NotifyMessage notify = NotifyMessage();
   String phoneError = ''; // New
   String? accountId;
   String? _selectedGenderString;
@@ -90,7 +92,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     }
   }
 
-  Future<void> updateProfile({
+  Future<bool> updateProfile({
     required String userId,
     required String accountId,
     required String name,
@@ -153,16 +155,17 @@ class _EditProfileBodyState extends State<EditProfileBody> {
         _status = status;
         _area = area;
       });
+
       print(_downloadURL);
       // Display a success message to the user
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cập nhật thông tin thành công.')),
-      );
+      notify.showToast('Cập nhật thông tin thành công');
+      return true;
     } else {
       _isUpdating = false;
       print('Request failed with status: ${response.statusCode}');
       print('Response body: ${response.body}');
     }
+    return false;
   }
 
   Future<void> _pickImage() async {
@@ -176,9 +179,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
 
       if (sizeInMB > 3) {
         // File quá lớn, hiển thị lỗi
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hình ảnh phải nhỏ hơn 3MB')),
-        );
+        notify.showErrorToast('Kích thước hình ảnh phải nhỏ hơn 3MB');
         return;
       }
 
@@ -428,11 +429,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                 await authService.uploadImageToFirebase(
                                     _profileImage!, 'RVOprofile_images/');
                             if (downloadURL == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content:
-                                        Text('Cập nhật không thành công.')),
-                              );
+                              notify.showErrorToast('Có lỗi xảy ra');
                               return; // Exit the function, don't proceed to updateProfile
                             }
                           }
@@ -440,7 +437,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                           String selectedGender = _selectedGenderString ?? '';
                           String formattedBirthdate =
                               DateFormat('yyyy-MM-dd').format(_birthday);
-                          await updateProfile(
+                          bool isSuccess = await updateProfile(
                               area: _area ?? 0,
                               status: _status!,
                               userId: widget.userId,
@@ -452,9 +449,16 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                               sex: selectedGender,
                               downloadURL: downloadURL,
                               updateAt: updatedAtString);
-
+                          if (isSuccess) {
+                            setState(() {
+                              _isUpdating = false;
+                            });
+                          }
                           Navigator.pop(context, true);
                         }
+                        setState(() {
+                          _isUpdating = false;
+                        });
                       },
                       child: Text('Lưu thông tin'),
                     ),

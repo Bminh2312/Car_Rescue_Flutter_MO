@@ -7,12 +7,13 @@ class ServiceCard extends StatefulWidget {
   final Service service;
   final bool isSelected;
   final Function(bool) onSelected;
-
+  final bool isServiceAlreadyExists;
   const ServiceCard({
     Key? key,
     required this.service,
     required this.isSelected,
     required this.onSelected,
+    required this.isServiceAlreadyExists,
   }) : super(key: key);
 
   @override
@@ -39,9 +40,11 @@ class _ServiceCardState extends State<ServiceCard> {
         margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          color: localSelected
-              ? FrontendConfigs.kPrimaryColorCustomer
-              : Colors.white,
+          color: widget.isServiceAlreadyExists
+              ? Colors.grey.withOpacity(0.5)
+              : localSelected
+                  ? FrontendConfigs.kPrimaryColorCustomer
+                  : Colors.white,
           boxShadow: [
             BoxShadow(
               color: const Color.fromARGB(64, 158, 158, 158).withOpacity(0.5),
@@ -65,13 +68,15 @@ class _ServiceCardState extends State<ServiceCard> {
             ),
           ),
           value: localSelected,
-          onChanged: (value) {
-            print("Current isSelected: $value");
-            setState(() {
-              localSelected = value ?? false;
-            });
-            widget.onSelected(localSelected);
-          },
+          onChanged: widget.isServiceAlreadyExists
+              ? null // Disable the checkbox if the service already exists
+              : (value) {
+                  print("Current isSelected: $value");
+                  setState(() {
+                    localSelected = value ?? false;
+                  });
+                  widget.onSelected(localSelected);
+                },
         ),
       ),
     );

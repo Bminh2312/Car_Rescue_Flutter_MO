@@ -1965,6 +1965,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                 border: OutlineInputBorder(),
               ),
               maxLines: 3,
+              maxLength: 1000, // Set the maximum length to 1000 characters
               onTap: () {
                 // Clear the hint text when the user taps on the text field
                 setState(() {

@@ -1,6 +1,8 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
+import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/booking_details_view.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/booking_details/widgets/select_service_card.dart';
 import 'package:CarRescue/src/providers/service_provider.dart';
@@ -46,6 +48,7 @@ class ServiceSelectionScreen extends StatefulWidget {
 
 class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
   String? accessToken = GetStorage().read<String>("accessToken");
+
   @override
   void initState() {
     super.initState();
@@ -53,10 +56,13 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     fetchServiceData(widget.booking.id);
   }
 
+  NotifyMessage notify = NotifyMessage();
   List<Service> selectedServices = [];
   List<Map<String, dynamic>> orderDetails = [];
-  bool _isLoading = true;
+  bool _isLoading = false;
   Future<List<Service>>? availableServices; // Replace with your actual method
+
+  
   Future<List<Service>> loadService() async {
     final serviceProvider = ServiceProvider();
     try {
@@ -133,6 +139,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
       );
 
       if (response.statusCode == 201) {
+        notify.showToast('Cập nhật dịch vụ thành công');
         print('Successfully add the service: ${response.body}');
       } else {
         print('Failed to add the service: ${response.body}');
@@ -258,7 +265,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: customAppBar(context, text: 'Chọn dịch vụ', showText: true),
-      body: buildServiceSelection(context),
+      body: _isLoading ? LoadingState() : buildServiceSelection(context),
     );
   }
 
@@ -283,6 +290,9 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                     itemBuilder: (context, index) {
                       final service = snapshot.data![index];
                       final isSelected = selectedServices.contains(service);
+                      final isServiceAlreadyExists = orderDetails.any(
+                        (order) => order['serviceId'].toString() == service.id,
+                      );
                       return ServiceCard(
                         service: service,
                         onSelected: (isSelected) {
@@ -294,6 +304,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                           }
                         },
                         isSelected: isSelected,
+                        isServiceAlreadyExists: isServiceAlreadyExists,
                       );
                     },
                   );
@@ -324,8 +335,14 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onPressed: () {
-                      _addServices(widget.booking.id, selectedServices);
+                    onPressed: () async {
+                      setState(() {
+                        _isLoading = true;
+                      });
+                      await _addServices(widget.booking.id, selectedServices);
+                      setState(() {
+                        _isLoading = false;
+                      });
                       // Navigator.pushReplacement(
                       //   context,
                       //   MaterialPageRoute(

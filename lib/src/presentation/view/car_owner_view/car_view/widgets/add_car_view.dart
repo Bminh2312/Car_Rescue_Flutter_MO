@@ -87,6 +87,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
     if (_formKey.currentState!.validate() &&
         _carRegistrationFontImage != null &&
         _carRegistrationBackImage != null) {
+      _showAlertDialog(context);
       if (_isFormConfirmed) {
         _formKey.currentState!.save();
         setState(() {
@@ -157,7 +158,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Tạo xe thất bại. Xin hãy tạo lại.',
+                  'Tạo xe không thành công. Có lỗi xảy ra',
                 ),
               ),
             );
@@ -230,6 +231,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                         icon: Icon(Icons.drive_eta),
                                         labelText: 'Hãng xe',
                                       ),
+                                      maxLength: 100,
                                       validator: (value) {
                                         if (value == null ||
                                             value.trim().isEmpty) {
@@ -441,7 +443,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                 .bottomCenter, // Set the alignment to bottom center
                             child: ElevatedButton(
                               onPressed: () async {
-                                _showAlertDialog(context);
+                                // _showAlertDialog(context);
+                                _submitForm();
                               },
                               style: ButtonStyle(
                                 backgroundColor:
@@ -473,7 +476,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Xác nhận'),
-          content: Text('Bạn đã chắc chắc điền đúng thông tin chưa ? '),
+          content: Text('Bạn đã chắc chắc điền đúng thông tin ? '),
           actions: [
             TextButton(
               child: Text(
