@@ -267,6 +267,7 @@ class _ServiceBodyState extends State<ServiceBody>
   void dispose() {
     _pageController.dispose();
     _timer.cancel();
+    _shakeAnimationController.stop();
     super.dispose();
   }
 

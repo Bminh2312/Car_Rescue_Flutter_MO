@@ -9,6 +9,7 @@ class Service {
   late String updatedAt;
   late String status;
   int quantity;
+  bool isSelected; 
   Service(
       {required this.id,
       required this.createdBy,
@@ -19,7 +20,8 @@ class Service {
       required this.createdAt,
       required this.updatedAt,
       required this.status,
-      this.quantity = 1});
+      this.quantity = 1,
+      this.isSelected = false,});
 
   factory Service.fromJson(Map<String, dynamic> json) {
     return Service(

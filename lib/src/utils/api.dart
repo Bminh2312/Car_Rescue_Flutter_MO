@@ -40,6 +40,7 @@ class LoginResult {
   });
 }
 
+
 class ManagerData {
   final String managerID;
   final String deviceToken;
