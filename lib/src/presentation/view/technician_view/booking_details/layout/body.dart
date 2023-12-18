@@ -1553,7 +1553,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _buildSectionTitle("Khách hàng"),
-                          widget.booking.status == 'ASSIGNED' &&
+                          widget.booking.status == 'ASSIGNED' ||
                                   widget.booking.status == 'INPROGRESS'
                               ? InkWell(
                                   onTap: () {

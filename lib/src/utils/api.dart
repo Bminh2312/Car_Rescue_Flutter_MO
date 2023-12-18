@@ -49,7 +49,7 @@ class ManagerData {
 }
 
 // final String apiKey1 = 'AIzaSyAiyZLdDwpp0_dAOPNBMItItXixgLH9ABo';
-final String apiKey1 = 'AIzaSyBbcL4uCmi-FTii8UPJx8CnRhVgyv-1j-M';
+final String apiKey1 = 'AIzaSyChI9DuNbyJd4I5Od1hBrs9n3VB-EYEh2E';
 
 class AuthService {
   String? accessToken = GetStorage().read<String>("accessToken");
