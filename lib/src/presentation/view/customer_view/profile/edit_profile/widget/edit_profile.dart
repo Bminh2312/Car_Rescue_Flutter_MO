@@ -1,4 +1,5 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/customer.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
@@ -23,9 +24,10 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _birthdayController = TextEditingController();
-
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   FirBaseStorageProvider fb = FirBaseStorageProvider();
   CustomerProfileProvider _profileProvider = CustomerProfileProvider();
+  NotifyMessage notify = NotifyMessage();
   String phoneError = ''; // New
   String? accountId;
   String? _selectedGenderString;
@@ -42,6 +44,13 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   void initState() {
     super.initState();
     customerFuture = _loadUserProfileData(widget.userId);
+  }
+
+  @override
+  void dispose() {
+    // Access ancestorWidget safely in dispose
+
+    super.dispose();
   }
 
   Future<Customer> _loadUserProfileData(String userId) async {
@@ -74,6 +83,22 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     }
   }
 
+  void _updateProfile() {
+    if (_formKey.currentState!.validate()) {
+      updateProfile(customer);
+      setState(() {
+        customerFuture = _loadUserProfileData(widget.userId);
+      });
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BottomNavBarView(page: 2),
+        ),
+        (route) => false, // Loại bỏ tất cả các màn hình khỏi ngăn xếp
+      );
+    }
+  }
+
   Future<void> updateProfile(Customer customer) async {
     // Cập nhật thông tin khách hàng với dữ liệu mới
     customer.fullname = _nameController.text;
@@ -96,18 +121,16 @@ class _EditProfileBodyState extends State<EditProfileBody> {
 
     // Gọi hàm cập nhật thông tin khách hàng từ _profileProvider
     bool checkUpdate = await _profileProvider.updateCustomer(customer);
+    if (mounted) {
+      if (checkUpdate) {
+        // Cập nhật thành công, bạn có thể thực hiện các thao tác khác (nếu cần)
+        GetStorage().write('customer', customer.toJson());
 
-    if (checkUpdate) {
-      // Cập nhật thành công, bạn có thể thực hiện các thao tác khác (nếu cần)
-      GetStorage().write('customer', customer.toJson());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Profile updated successfully')),
-      );
-    } else {
-      // Lỗi khi cập nhật
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('The profile update failed')),
-      );
+        notify.showToast('Cập nhật thông tin thành công');
+      } else {
+        // Lỗi khi cập nhật
+        notify.showErrorToast('Có lỗi xảy ra');
+      }
     }
   }
 
@@ -318,22 +341,6 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                         ),
                         GestureDetector(
                             onTap: () async {
-                              // DateTime? selectedDate = await showDatePicker(
-                              //   context: context,
-                              //   initialDate:
-                              //       _selectedBirthday ?? DateTime.now(),
-                              //   firstDate: DateTime(1900),
-                              //   lastDate: DateTime.now(),
-                              // );
-                              // if (selectedDate != null &&
-                              //     selectedDate != _birthday) {
-                              //   setState(() {
-                              //     _birthday = selectedDate;
-                              //     _birthdayController.text =
-                              //         DateFormat('dd-MM-yyyy')
-                              //             .format(_birthday);
-                              //   });
-                              // }
                               _pickDate(context);
                             },
                             child: Container(
@@ -366,23 +373,8 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                             style: ButtonStyle(
                                 backgroundColor: MaterialStatePropertyAll(
                                     FrontendConfigs.kPrimaryColor)),
-                            onPressed: () async {
-                              if (_formKey.currentState!.validate()) {
-                                await updateProfile(customer);
-                                setState(() {
-                                  customerFuture =
-                                      _loadUserProfileData(widget.userId);
-                                });
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        BottomNavBarView(page: 2),
-                                  ),
-                                  (route) =>
-                                      false, // Loại bỏ tất cả các màn hình khỏi ngăn xếp
-                                );
-                              }
+                            onPressed: () {
+                              _updateProfile();
                             },
                             child: Text('Lưu thông tin'),
                           ),

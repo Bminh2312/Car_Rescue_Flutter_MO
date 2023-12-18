@@ -250,15 +250,6 @@ class _TowBodyState extends State<TowBody> {
             ),
             (route) => false, // Loại bỏ tất cả các màn hình khỏi ngăn xếp
           );
-
-          AuthService().sendNotification(
-              deviceId:
-                  'eGwrKYghm6vuhnwlMicYsE:APA91bFR9eNQAPggKuJ1S7fweiTyIWHY8WNhnyFB2ZinOHG0euRkJsLghyCLuRTTEs0qER3ss8OkFlNqoIRArs0XqpCtow9q5PFY2-1HeRc8vCmhlZJqmBHhLA1aErqX2kOGKCg2f8AV',
-              isAndroidDevice: true,
-              title: 'Thông báo từ khách hàng',
-              body: 'Có một đơn hàng kéo xe đã được gởi đến hệ thống',
-              target: '4a30e2d2-149a-4442-817c-9e73ee4e4477',
-              orderId: '');
         } else if (status == 500) {
           notifier.showToast("External error");
         } else if (status == 201) {
@@ -832,8 +823,9 @@ class _TowBodyState extends State<TowBody> {
                                     : Colors.white,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color.fromARGB(64, 158, 158, 158)
-                                        .withOpacity(0.5),
+                                    color:
+                                        const Color.fromARGB(64, 158, 158, 158)
+                                            .withOpacity(0.5),
                                     spreadRadius: 1,
                                     blurRadius: 1,
                                     offset: Offset(0, 2),
@@ -856,7 +848,8 @@ class _TowBodyState extends State<TowBody> {
                                 value: isSelected,
                                 onChanged: (value) {
                                   setState(() {
-                                    _onServiceCardChanged(service, value ?? false);
+                                    _onServiceCardChanged(
+                                        service, value ?? false);
                                   });
                                 },
                               ),
@@ -913,7 +906,6 @@ class _TowBodyState extends State<TowBody> {
       ),
     );
   }
-
 
   void _onServiceCardChanged(Service service, bool isSelected) {
     print("Current isSelected: $isSelected");

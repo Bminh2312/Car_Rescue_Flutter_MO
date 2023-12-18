@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/models/manager.dart';
 import 'package:CarRescue/src/models/rescue_vehicle_owner.dart';
 import 'package:CarRescue/src/models/technician.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
@@ -41,6 +42,22 @@ class _ReportScreenState extends State<ReportScreen> {
   Technician? _tech;
   Vehicle? _vehicle;
   String? accessToken = GetStorage().read<String>("accessToken");
+  String? _managerToken;
+  String? _managerAccountId;
+  Future<void> _loadManagerId(String managerId) async {
+    try {
+      Manager? manager = await AuthService().fetchManagerProfile(managerId);
+      print(manager!.deviceToken);
+      setState(() {
+        _managerToken = manager.deviceToken;
+        _managerAccountId = manager.accountId;
+      });
+    } catch (e) {
+      print('Error loading manager: $e');
+      // Handle the error appropriately
+    }
+  }
+
   Future<void> _getImage(ImageSource source, int imageIndex) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
@@ -143,7 +160,14 @@ class _ReportScreenState extends State<ReportScreen> {
         await createReport(
             widget.orderId, reportText, imageFile!, image2File ?? File(''));
         print('Report created successfully!');
-
+        AuthService().sendNotification(
+            deviceId: _managerToken ?? '',
+            isAndroidDevice: true,
+            title: 'Thông báo từ khách hàng',
+            body:
+                'Có một đơn khiếu nại từ khách hàng của đơn hàng ${widget.orderId}',
+            target: _managerAccountId ?? '',
+            orderId: widget.orderId);
         // Hide loading indicator
         setState(() {
           isSubmitting = false;
@@ -271,34 +295,38 @@ class _ReportScreenState extends State<ReportScreen> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                    if (_vehicle != null) SizedBox(height: 8.0),
-                                    Text(
-                                      _vehicle!.manufacturer,
-                                      style: TextStyle(
-                                        fontSize: 16.0,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
                                     SizedBox(height: 8.0),
-                                    Container(
-                                      padding: EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                          color: Colors.grey.shade300),
-                                      child: Text(
-                                        _vehicle!.licensePlate,
+                                    if (_vehicle != null)
+                                      Text(
+                                        _vehicle!.manufacturer,
                                         style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: FrontendConfigs.kAuthColor),
+                                          fontSize: 16.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
                                     SizedBox(height: 8.0),
-                                    Text(
-                                      _vehicle!.type,
-                                      style: TextStyle(
-                                        fontSize: 16.0,
-                                        fontWeight: FontWeight.bold,
+                                    if (_vehicle != null)
+                                      Container(
+                                        padding: EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                            color: Colors.grey.shade300),
+                                        child: Text(
+                                          _vehicle!.licensePlate,
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color:
+                                                  FrontendConfigs.kAuthColor),
+                                        ),
                                       ),
-                                    ),
+                                    SizedBox(height: 8.0),
+                                    if (_vehicle != null)
+                                      Text(
+                                        _vehicle!.type,
+                                        style: TextStyle(
+                                          fontSize: 16.0,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ],
