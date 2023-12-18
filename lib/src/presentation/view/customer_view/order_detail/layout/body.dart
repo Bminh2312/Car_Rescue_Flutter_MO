@@ -637,7 +637,8 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 _buildSectionTitle("Thông tin kĩ thuật viên"),
-                                order.status == 'INPROGRESS'
+                                order.status == 'INPROGRESS' ||
+                                        order.status == 'ASSIGNED'
                                     ? InkWell(
                                         onTap: () {
                                           Navigator.pushReplacement(

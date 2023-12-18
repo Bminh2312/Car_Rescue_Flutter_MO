@@ -408,7 +408,7 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> setSourceAndDepartureIcons() async {
     final Uint8List icon1 =
-        await getBytesFromAsset('assets/images/tow-truck-top-view.png', 150);
+        await getBytesFromAsset('assets/images/tow-truck-top-view.png', 100);
 
     setState(() {
       techIcon = BitmapDescriptor.fromBytes(icon1);
