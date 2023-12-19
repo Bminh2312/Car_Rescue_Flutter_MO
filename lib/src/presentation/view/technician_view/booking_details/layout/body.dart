@@ -770,7 +770,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
 
               // Otherwise, show an add button
               else if (widget.booking.status.toUpperCase() == 'ASSIGNED' ||
-                  widget.booking.status.toUpperCase() == 'INPROGRESS') {
+                  widget.booking.status.toUpperCase() == 'INPROGRESS' ||
+                  _currentBooking!.status.toUpperCase() == 'WAITING') {
                 return Padding(
                   padding: EdgeInsets.only(right: 16.0),
                   child: InkWell(
@@ -1724,7 +1725,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     SizedBox(height: 8.0),
                     _buildSectionTitle("Ghi chú của kĩ thuật viên"),
                     if (widget.booking.status == "ASSIGNED" ||
-                        widget.booking.status == "INPROGRESS")
+                        widget.booking.status == "INPROGRESS" ||
+                        _currentBooking!.status == "WAITING")
                       _buildNoteRow("Nhập nội dung ghi chú", _formKey),
                     _buildInfoRow(
                         "Nội dung ghi chú",
@@ -1851,7 +1853,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             if (widget.booking.status != "COMPLETED" &&
                 widget.booking.status != "CANCELLED" &&
-                widget.booking.status != "WAITING")
+                _currentBooking!.status != "WAITING")
               Container(
                 color: Colors.white,
                 child: Row(
@@ -1975,7 +1977,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
             ),
             if (widget.booking.status == "INPROGRESS") _slider(false),
             if (widget.booking.status == "ASSIGNED" ||
-                widget.booking.status == "INPROGRESS")
+                widget.booking.status == "INPROGRESS" ||
+                _currentBooking!.status == "WAITING")
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 color: Colors.white,

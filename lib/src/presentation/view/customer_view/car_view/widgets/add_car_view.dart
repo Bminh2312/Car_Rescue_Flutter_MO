@@ -51,82 +51,81 @@ class _AddCarScreenState extends State<AddCarScreen> {
   List<CarBrand> _brands = [];
   String? _selectedBrand;
   String? _selectedType;
+  bool _isFormConfirmed = false;
   String? accessToken = GetStorage().read<String>("accessToken");
   final titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
   final inputDecoration = InputDecoration(
     border: OutlineInputBorder(),
     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
   );
-
   void _submitForm() async {
-    if (vehicleImage == null) {
-      _notify.showToast("Vui lòng chọn ảnh xe.");
-    }
-    if (_formKey.currentState!.validate() && vehicleImage != null) {
-      _formKey.currentState!.save();
-      var uuid = Uuid();
-      String randomId = uuid.v4();
-      _showAlertDialog(context);
+    var uuid = Uuid();
+    String randomId = uuid.v4();
 
-      setState(() {
-        _isLoading = true;
-      });
+    if (_formKey.currentState!.validate()) {
+      await _showAlertDialog(context);
+      if (_isFormConfirmed) {
+        _formKey.currentState!.save();
+        setState(() {
+          _isLoading = true;
+        });
 
-      try {
-        bool isSuccess = await authService.createCarforCustomer(randomId,
-            customerId: widget.userId,
-            licensePlate: _licensePlate,
-            manufacturer: _manufacturer,
-            status: _status,
-            vinNumber: _vinNumber,
-            modelId: _selectedModelId,
-            color: _color,
-            manufacturingYear: _manufacturingYear,
-            vehicleImage: vehicleImage!);
+        try {
+          bool isSuccess = await authService.createCarforCustomer(randomId,
+              customerId: widget.userId,
+              licensePlate: _licensePlate,
+              manufacturer: _manufacturer,
+              status: _status,
+              vinNumber: _vinNumber,
+              modelId: _selectedModelId,
+              color: _color,
+              manufacturingYear: _manufacturingYear,
+              vehicleImage: vehicleImage!);
 
-        if (isSuccess) {
+          if (isSuccess) {
+            setState(() {
+              _isLoading = false;
+              Navigator.pop(context, true);
+            });
+
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('Thành công',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  content: Text(
+                    'Đã lưu thông tin thành công',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text('Đóng'),
+                    ),
+                  ],
+                );
+              },
+            );
+          } else {
+            // Handle unsuccessful API response, e.g., show a snackbar with an error message.
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content:
+                      Text('Failed to create car approval. Please try again.')),
+            );
+          }
+        } catch (error) {
+          Navigator.pop(context, false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('An error occurred. Please try again.')),
+          );
           setState(() {
             _isLoading = false;
-            Navigator.pop(context, true);
           });
-
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text('Thành công',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                content: Text(
-                  'Đã lưu thông tin thành công',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: Text('Đóng'),
-                  ),
-                ],
-              );
-            },
-          );
-        } else {
-          // Handle unsuccessful API response, e.g., show a snackbar with an error message.
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content:
-                    Text('Failed to create car approval. Please try again.')),
-          );
         }
-      } catch (error) {
-        Navigator.pop(context, false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An error occurred. Please try again.')),
-        );
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }
@@ -471,37 +470,45 @@ class _AddCarScreenState extends State<AddCarScreen> {
     ]);
   }
 
-  _showAlertDialog(BuildContext context) {
-    showDialog(
+  Future<void> _showAlertDialog(BuildContext context) async {
+    return showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Xác nhận'),
-          content: Text('Bạn đã chắc chắc điền đúng thông tin chưa ? '),
-          actions: [
-            TextButton(
-              child: Text(
-                'Hủy',
-                style: TextStyle(
-                  color: Colors.red,
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: Text('Xác nhận'),
+              content: Text('Bạn đã chắc chắc điền đúng thông tin?'),
+              actions: [
+                TextButton(
+                  child: Text(
+                    'Hủy',
+                    style: TextStyle(
+                      color: Colors.red,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the AlertDialog
+                  },
                 ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the AlertDialog
-              },
-            ),
-            TextButton(
-              child: Text(
-                'Chắc chắn',
-                style: TextStyle(color: FrontendConfigs.kActiveColor),
-              ),
-              onPressed: () {
-                _submitForm();
-                Navigator.of(context)
-                    .pop(); // Close the AlertDialog after submitting
-              },
-            ),
-          ],
+                TextButton(
+                  child: Text(
+                    'Chắc chắn',
+                    style: TextStyle(color: FrontendConfigs.kActiveColor),
+                  ),
+                  onPressed: () {
+                    // Use the provided setState from StatefulBuilder
+                    setState(() {
+                      _isFormConfirmed = true;
+                    });
+
+                    // Close the AlertDialog
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );

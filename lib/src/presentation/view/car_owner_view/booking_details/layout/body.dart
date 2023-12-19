@@ -100,6 +100,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   int? _quantity;
   String? _managerToken;
   String? _managerAccountId;
+
   Future<void> _loadPayment(String orderId) async {
     try {
       Map<String, dynamic>? paymentInfo =
@@ -288,7 +289,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
     super.initState();
     _currentBooking = widget.booking;
     fetchServiceData(widget.booking.id);
-    // _calculateTotal(widget.booking.id);
+    // print(customerInfo!.accountId);
     _loadCustomerInfo(widget.booking.customerId);
     _loadVehicleInfo(widget.booking.vehicleId ?? '');
     _loadImageUrls();
@@ -350,6 +351,10 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         customerInfo = CustomerInfo.fromJson(userProfile);
       });
     }
+
+    print(customerInfo!.deviceToken);
+    print(customerInfo!.accountId);
+
     _updateLoadingStatus();
   }
 
@@ -1138,6 +1143,14 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                                   widget.booking.id, decision);
 
                               if (isSuccess) {
+                                AuthService().sendNotification(
+                                    deviceId: customerInfo!.deviceToken,
+                                    isAndroidDevice: true,
+                                    title: 'Thông báo từ chủ xe cứu hộ',
+                                    body:
+                                        'Đơn hàng của bạn đã được chấp nhận.\nVui lòng chờ phương tiện cứu hộ đến địa điểm của bạn',
+                                    target: customerInfo!.accountId,
+                                    orderId: widget.booking.id);
                                 setState(() {
                                   _isLoading = false;
                                 });
@@ -1171,6 +1184,14 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                               bool decision = false;
                               await authService.acceptOrder(
                                   widget.booking.id, decision);
+                              AuthService().sendNotification(
+                                  deviceId: customerInfo!.deviceToken,
+                                  isAndroidDevice: true,
+                                  title: 'Thông báo từ chủ xe cứu hộ',
+                                  body:
+                                      'Đơn hàng của bạn đã bị hủy.\nVui lòng chờ hệ thống điều phối phương tiện cứu hộ khác',
+                                  target: customerInfo!.accountId,
+                                  orderId: widget.booking.id);
                             },
                             child: Text(
                               "Hủy",

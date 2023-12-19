@@ -198,107 +198,112 @@ class LocationProvider {
   }
 
   Future<String> getAddressDetail(String latLng) async {
-  final latMatchDeparture = RegExp(r'lat:\s?([\-0-9.]+)').firstMatch(latLng);
-  final longMatchDeparture = RegExp(r'long:\s?([\-0-9.]+)').firstMatch(latLng);
-  final double? latDeparture = double.tryParse(latMatchDeparture?.group(1) ?? '');
-  final double? longDeparture = double.tryParse(longMatchDeparture?.group(1) ?? '');
+    final latMatchDeparture = RegExp(r'lat:\s?([\-0-9.]+)').firstMatch(latLng);
+    final longMatchDeparture =
+        RegExp(r'long:\s?([\-0-9.]+)').firstMatch(latLng);
+    final double? latDeparture =
+        double.tryParse(latMatchDeparture?.group(1) ?? '');
+    final double? longDeparture =
+        double.tryParse(longMatchDeparture?.group(1) ?? '');
 
-  if (latDeparture == null || longDeparture == null) {
-    // Xử lý khi không thể phân tích tọa độ
-    return "Invalid Coordinates";
-  }
+    if (latDeparture == null || longDeparture == null) {
+      // Xử lý khi không thể phân tích tọa độ
+      return "Invalid Coordinates";
+    }
 
-  final String urlDeparture =
-      'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=$key';
-  
-  final responseDeparture = await http.get(Uri.parse(urlDeparture));
+    final String urlDeparture =
+        'https://rsapi.goong.io/Geocode?latlng=$latDeparture,$longDeparture&api_key=267Zysi7kKypsNGSqcIBzWc3wxpz7rkeWguYkiM4';
 
-  if (responseDeparture.statusCode == 200) {
-    final jsonResult = convert.json.decode(responseDeparture.body);
-    if (jsonResult['status'] == 'OK') {
-      // Lấy địa chỉ từ kết quả JSON
-      final results = jsonResult['results'] as List;
-      if (results.isNotEmpty) {
-        final firstResult = results.first;
-        final formattedAddress = firstResult['formatted_address'];
-        return formattedAddress;
+    final responseDeparture = await http.get(Uri.parse(urlDeparture));
+
+    if (responseDeparture.statusCode == 200) {
+      final jsonResult = convert.json.decode(responseDeparture.body);
+      if (jsonResult['status'] == 'OK') {
+        // Lấy địa chỉ từ kết quả JSON
+        final results = jsonResult['results'] as List;
+        if (results.isNotEmpty) {
+          final firstResult = results.first;
+          final formattedAddress = firstResult['formatted_address'];
+          return formattedAddress;
+        } else {
+          return "No Address Found";
+        }
       } else {
         return "No Address Found";
       }
     } else {
-      return "No Address Found";
+      // Xử lý lỗi nếu có lỗi kết nối
+      return "Connection Error";
     }
-  } else {
-    // Xử lý lỗi nếu có lỗi kết nối
-    return "Connection Error";
   }
-}
 
-Future<RouteResponse> fetchRoutes(LatLng latLngDep, LatLng latLngDes) async {
+  Future<RouteResponse> fetchRoutes(LatLng latLngDep, LatLng latLngDes) async {
+    final String apiUrl =
+        'https://routes.googleapis.com/directions/v2:computeRoutes';
 
-  final String apiUrl = 'https://routes.googleapis.com/directions/v2:computeRoutes';
+    DateTime futureTime = DateTime.now().toUtc().add(Duration(hours: 1));
 
-  DateTime futureTime = DateTime.now().toUtc().add(Duration(hours: 1));
-
-  final Map<String, dynamic> requestData = {
-    "origin": {
-      "location": {
-        "latLng": {
-          "latitude": latLngDep.latitude,
-          "longitude": latLngDep.longitude
+    final Map<String, dynamic> requestData = {
+      "origin": {
+        "location": {
+          "latLng": {
+            "latitude": latLngDep.latitude,
+            "longitude": latLngDep.longitude
+          }
         }
-      }
-    },
-    "destination": {
-      "location": {
-        "latLng": {
-          "latitude": latLngDes.latitude,
-          "longitude": latLngDes.longitude
+      },
+      "destination": {
+        "location": {
+          "latLng": {
+            "latitude": latLngDes.latitude,
+            "longitude": latLngDes.longitude
+          }
         }
+      },
+      "travelMode": "DRIVE",
+      "routingPreference": "TRAFFIC_AWARE",
+      "departureTime":
+          DateFormat("yyyy-MM-ddTHH:mm:ss.SSSSSSSSS'Z'").format(futureTime),
+      "computeAlternativeRoutes": false,
+      "routeModifiers": {
+        "avoidTolls": false,
+        "avoidHighways": false,
+        "avoidFerries": false
+      },
+      "languageCode": "en-US",
+      "units": "IMPERIAL"
+    };
+
+    final Map<String, String> headers = {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': key,
+      'X-Goog-FieldMask':
+          'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline',
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: headers,
+        body: convert.jsonEncode(requestData),
+      );
+
+      if (response.statusCode == 200) {
+        // Handle the successful response here
+        final Map<String, dynamic> responseData =
+            convert.jsonDecode(response.body);
+        // Extract and use the relevant data from responseData
+        print(responseData);
+        return RouteResponse.fromJson(responseData);
+      } else {
+        // Handle the error response here
+        print('Error: ${response.statusCode}, ${response.body}');
+        throw Exception('Failed to fetch routes');
       }
-    },
-    "travelMode": "DRIVE",
-    "routingPreference": "TRAFFIC_AWARE",
-    "departureTime": DateFormat("yyyy-MM-ddTHH:mm:ss.SSSSSSSSS'Z'").format(futureTime),
-    "computeAlternativeRoutes": false,
-    "routeModifiers": {
-      "avoidTolls": false,
-      "avoidHighways": false,
-      "avoidFerries": false
-    },
-    "languageCode": "en-US",
-    "units": "IMPERIAL"
-  };
-
-  final Map<String, String> headers = {
-    'Content-Type': 'application/json',
-    'X-Goog-Api-Key': key,
-    'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline',
-  };
-
-  try {
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: headers,
-      body: convert.jsonEncode(requestData),
-    );
-
-    if (response.statusCode == 200) {
-      // Handle the successful response here
-      final Map<String, dynamic> responseData = convert.jsonDecode(response.body);
-      // Extract and use the relevant data from responseData
-      print(responseData);
-      return RouteResponse.fromJson(responseData);
-    } else {
-      // Handle the error response here
-      print('Error: ${response.statusCode}, ${response.body}');
+    } catch (e) {
+      // Handle exceptions here
+      print('Exception: $e');
       throw Exception('Failed to fetch routes');
     }
-  } catch (e) {
-    // Handle exceptions here
-    print('Exception: $e');
-    throw Exception('Failed to fetch routes');
   }
-}
-
 }

@@ -8,6 +8,7 @@ import 'package:CarRescue/src/models/vehicle_item.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
+import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/orders/orders_view.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,12 @@ class ReportScreen extends StatefulWidget {
   final String orderId;
   final Technician? tech;
   final Vehicle? vehicle;
-  ReportScreen({required this.orderId, this.tech, this.vehicle});
+  final String managerId;
+  ReportScreen(
+      {required this.orderId,
+      this.tech,
+      this.vehicle,
+      required this.managerId});
 
   @override
   _ReportScreenState createState() => _ReportScreenState();
@@ -44,14 +50,20 @@ class _ReportScreenState extends State<ReportScreen> {
   String? accessToken = GetStorage().read<String>("accessToken");
   String? _managerToken;
   String? _managerAccountId;
+  String? _managerId;
+
   Future<void> _loadManagerId(String managerId) async {
     try {
       Manager? manager = await AuthService().fetchManagerProfile(managerId);
-      print(manager!.deviceToken);
+
       setState(() {
+        _managerId = manager!.id;
         _managerToken = manager.deviceToken;
         _managerAccountId = manager.accountId;
       });
+      print('a: $_managerId');
+      print(_managerToken);
+      print(_managerAccountId);
     } catch (e) {
       print('Error loading manager: $e');
       // Handle the error appropriately
@@ -160,6 +172,7 @@ class _ReportScreenState extends State<ReportScreen> {
         await createReport(
             widget.orderId, reportText, imageFile!, image2File ?? File(''));
         print('Report created successfully!');
+
         AuthService().sendNotification(
             deviceId: _managerToken ?? '',
             isAndroidDevice: true,
@@ -175,7 +188,11 @@ class _ReportScreenState extends State<ReportScreen> {
 
         // Pop the current screen
         Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: ((context) => OrderView())));
+            context,
+            MaterialPageRoute(
+                builder: ((context) => BottomNavBarView(
+                      page: 1,
+                    ))));
 
         // Show success dialog
         showDialog(
@@ -215,6 +232,7 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   void initState() {
     super.initState();
+    _loadManagerId(widget.managerId);
     if (widget.tech != null) {
       avaTech = widget.tech!.avatar!;
     }

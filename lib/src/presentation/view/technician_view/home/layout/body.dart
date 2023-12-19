@@ -121,20 +121,20 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
     });
   }
 
-  void showNotification() {
-    setState(() {});
-    flutterLocalNotificationsPlugin.show(
-        0,
-        "Testing ",
-        "How you doin ?",
-        NotificationDetails(
-            android: AndroidNotificationDetails(channel.id, channel.name,
-                channelDescription: channel.description,
-                importance: Importance.high,
-                color: Colors.blue,
-                playSound: true,
-                icon: '@mipmap/ic_launcher')));
-  }
+  // void showNotification() {
+  //   setState(() {});
+  //   flutterLocalNotificationsPlugin.show(
+  //       0,
+  //       "Testing ",
+  //       "How you doin ?",
+  //       NotificationDetails(
+  //           android: AndroidNotificationDetails(channel.id, channel.name,
+  //               channelDescription: channel.description,
+  //               importance: Importance.high,
+  //               color: Colors.blue,
+  //               playSound: true,
+  //               icon: '@mipmap/ic_launcher')));
+  // }
 
   Future<void> _loadCreateLocation() async {
     try {
@@ -538,13 +538,13 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
                   );
                 },
               ),
-              QuickAccessButton(
-                label: 'Test',
-                icon: Icons.calendar_today,
-                onPressed: () {
-                  showNotification();
-                },
-              ),
+              // QuickAccessButton(
+              //   label: 'Test',
+              //   icon: Icons.calendar_today,
+              //   onPressed: () {
+              //     showNotification();
+              //   },
+              // ),
 
               // QuickAccessButton(
               //   label: 'Test',

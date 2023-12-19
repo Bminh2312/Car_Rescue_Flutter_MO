@@ -109,7 +109,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
       _isLoading = true;
     });
     final String apiUrl =
-        "https://rescuecapstoneapi.azurewebsites.net/api/Order/ManagerUpdateService"; // Replace with your endpoint URL
+        "https://rescuecapstoneapi.azurewebsites.net/api/Order/UpdateServiceForTowing"; // Replace with your endpoint URL
 
     final response = await http.post(Uri.parse(apiUrl),
         headers: <String, String>{

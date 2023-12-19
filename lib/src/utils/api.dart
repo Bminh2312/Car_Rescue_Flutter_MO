@@ -40,7 +40,6 @@ class LoginResult {
   });
 }
 
-
 class ManagerData {
   final String managerID;
   final String deviceToken;
@@ -741,8 +740,8 @@ class AuthService {
     if (latDeparture != null && longDeparture != null) {
       // Replace with your actual API key
       final String urlDeparture =
-          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=${apiKey1}';
-
+          // 'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=${apiKey1}';
+          'https://rsapi.goong.io/Geocode?latlng=$latDeparture,$longDeparture&api_key=267Zysi7kKypsNGSqcIBzWc3wxpz7rkeWguYkiM4';
       final responseDeparture = await http.get(Uri.parse(urlDeparture));
       print(responseDeparture.statusCode);
       print('Response body: ${responseDeparture.body}');
@@ -754,14 +753,14 @@ class AuthService {
             jsonResponseDeparture['results'].isNotEmpty) {
           var addressComponentsDeparture = jsonResponseDeparture['results'][0]
               ['address_components'] as List<dynamic>;
-          String formattedAddressDeparture =
-              formatStreetAndRoute(addressComponentsDeparture);
-          String formattedSubAddressDeparture =
-              formatSubAddress(addressComponentsDeparture);
+          // String formattedAddressDeparture =
+          //     formatStreetAndRoute(addressComponentsDeparture);
+          // String formattedSubAddressDeparture =
+          //     formatSubAddress(addressComponentsDeparture);
           var addressComponentsDestination1 =
               jsonResponseDeparture['results'][0]['formatted_address'];
           // Update the response map with departure address and sub-address
-          response['address'] = formattedAddressDeparture;
+          response['address'] = addressComponentsDestination1;
           response['subAddress'] = addressComponentsDestination1;
         }
       }
@@ -771,7 +770,8 @@ class AuthService {
     if (latDestination != null && longDestination != null) {
       // Replace with your actual API key
       final String urlDestination =
-          'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=$apiKey1';
+          'https://rsapi.goong.io/Geocode?latlng=$latDestination,$longDestination&api_key=267Zysi7kKypsNGSqcIBzWc3wxpz7rkeWguYkiM4';
+      // 'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=$apiKey1';
       print(apiKey1);
       final responseDestination = await http.get(Uri.parse(urlDestination));
       if (responseDestination.statusCode != 200) {
@@ -785,14 +785,14 @@ class AuthService {
           var addressComponentsDestination1 =
               jsonResponseDestination['results'][0]['formatted_address'];
           print('abczx: $addressComponentsDestination1');
-          String formattedAddressDestination =
-              formatStreetAndRoute(addressComponentsDestination);
+          // String formattedAddressDestination =
+          //     formatStreetAndRoute(addressComponentsDestination);
 
-          String formattedSubAddressDestination =
-              formatSubAddress(addressComponentsDestination);
+          // String formattedSubAddressDestination =
+          //     formatSubAddress(addressComponentsDestination);
 
           // Update the response map with destination address and sub-address
-          response['destinationAddress'] = formattedAddressDestination;
+          response['destinationAddress'] = addressComponentsDestination1;
           response['destinationSubAddress'] = addressComponentsDestination1;
         }
       }
@@ -801,57 +801,57 @@ class AuthService {
     return response;
   }
 
-  String formatStreetAndRoute(List<dynamic> addressComponents) {
-    String pointOfInterest = '';
-    String park = '';
-    String route = '';
-    String street = '';
-    String neighborhood = '';
-    String admin1 = '';
+  // String formatStreetAndRoute(List<dynamic> addressComponents) {
+  //   String pointOfInterest = '';
+  //   String park = '';
+  //   String route = '';
+  //   String street = '';
+  //   String neighborhood = '';
+  //   String admin1 = '';
 
-    for (var component in addressComponents) {
-      if (component['types'].contains('point_of_interest')) {
-        pointOfInterest = component['long_name'];
-      }
-      if (component['types'].contains('park')) {
-        park = component['long_name'];
-      }
-      if (component['types'].contains('route')) {
-        route = component[
-            'short_name']; // You had long_name here, I'm keeping your newer preference for short_name.
-      }
-      if (component['types'].contains('street_number')) {
-        street = component['long_name'];
-      }
-      if (component['types'].contains('neighborhood')) {
-        neighborhood = component['long_name'];
-      }
-      if (component['types'].contains('administrative_area_level_1')) {
-        admin1 = component[
-            'long_name']; // Fixed key from 'administrative_area_level_1' to 'long_name'.
-      }
-    }
+  //   for (var component in addressComponents) {
+  //     if (component['types'].contains('point_of_interest')) {
+  //       pointOfInterest = component['long_name'];
+  //     }
+  //     if (component['types'].contains('park')) {
+  //       park = component['long_name'];
+  //     }
+  //     if (component['types'].contains('route')) {
+  //       route = component[
+  //           'short_name']; // You had long_name here, I'm keeping your newer preference for short_name.
+  //     }
+  //     if (component['types'].contains('street_number')) {
+  //       street = component['long_name'];
+  //     }
+  //     if (component['types'].contains('neighborhood')) {
+  //       neighborhood = component['long_name'];
+  //     }
+  //     if (component['types'].contains('administrative_area_level_1')) {
+  //       admin1 = component[
+  //           'long_name']; // Fixed key from 'administrative_area_level_1' to 'long_name'.
+  //     }
+  //   }
 
-    // Constructing the address based on the presence of different components
-    if (pointOfInterest.isNotEmpty || park.isNotEmpty) {
-      return '$pointOfInterest${park.isNotEmpty ? " $park" : ""}';
-    } else if (street.isNotEmpty && route.isNotEmpty && park.isEmpty) {
-      return '$street $route';
-    } else if (neighborhood.isNotEmpty && street.isEmpty && route.isEmpty) {
-      return neighborhood;
-    } else if (route.isNotEmpty && street.isEmpty && park.isEmpty) {
-      return route;
-    } else if (neighborhood.isNotEmpty &&
-        street.isNotEmpty &&
-        route.isNotEmpty) {
-      return '$neighborhood, $street $route';
-    } else if (admin1.isNotEmpty) {
-      return '${neighborhood.isNotEmpty ? "$neighborhood, " : ""}${pointOfInterest.isNotEmpty ? "$pointOfInterest, " : ""}${street.isNotEmpty ? "$street " : ""}${route.isNotEmpty ? "$route" : ""}'
-          .trim();
-    }
+  //   // Constructing the address based on the presence of different components
+  //   if (pointOfInterest.isNotEmpty || park.isNotEmpty) {
+  //     return '$pointOfInterest${park.isNotEmpty ? " $park" : ""}';
+  //   } else if (street.isNotEmpty && route.isNotEmpty && park.isEmpty) {
+  //     return '$street $route';
+  //   } else if (neighborhood.isNotEmpty && street.isEmpty && route.isEmpty) {
+  //     return neighborhood;
+  //   } else if (route.isNotEmpty && street.isEmpty && park.isEmpty) {
+  //     return route;
+  //   } else if (neighborhood.isNotEmpty &&
+  //       street.isNotEmpty &&
+  //       route.isNotEmpty) {
+  //     return '$neighborhood, $street $route';
+  //   } else if (admin1.isNotEmpty) {
+  //     return '${neighborhood.isNotEmpty ? "$neighborhood, " : ""}${pointOfInterest.isNotEmpty ? "$pointOfInterest, " : ""}${street.isNotEmpty ? "$street " : ""}${route.isNotEmpty ? "$route" : ""}'
+  //         .trim();
+  //   }
 
-    return 'Unknown Address';
-  }
+  //   return 'Unknown Address';
+  // }
 
   String formatSubAddress(List<dynamic> addressComponents) {
     String? route;
@@ -1748,6 +1748,8 @@ class AuthService {
       "isAndroiodDevice": isAndroidDevice,
       "title": title,
       "body": body,
+      "target": target,
+      "orderId": orderId,
     };
     print(payload);
     try {
@@ -1761,7 +1763,7 @@ class AuthService {
       );
       print(response.statusCode);
       if (response.statusCode == 200) {
-        print('Notification sent successfully');
+        print('Gửi thông báo thành công');
       } else {
         print(
             'Failed to send notification. Status code: ${response.statusCode}');
