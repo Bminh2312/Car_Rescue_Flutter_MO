@@ -62,6 +62,7 @@ class _MapScreenState extends State<MapScreen> {
   String? _managerToken;
   String? _managerAccountId;
   String? _managerId;
+  bool isArrived = false;
   @override
   void initState() {
     super.initState();
@@ -189,111 +190,117 @@ class _MapScreenState extends State<MapScreen> {
                 calculateDistance(technicianLocation!, _targetLocation!);
 
             if (distance < 50) {
-              // Stop the timer
-              AuthService().sendNotification(
-                  deviceId: _cus!.deviceToken,
-                  isAndroidDevice: true,
-                  title: 'Thông báo từ hệ thống',
-                  body: 'Kĩ thuật viên đã đến điểm của bạn. ',
-                  target: widget.cus.accountId,
-                  orderId: widget.booking.id);
-              print(
-                  "Technician is close to the target location. Stopping the timer.");
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text("Thông báo từ Kỹ thuật viên"),
-                    content: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        animated.Lottie.asset(
-                            'assets/animations/technician.json',
-                            width: 250,
-                            height: 250,
-                            fit: BoxFit.fill),
-                        Column(
-                          children: [
-                            CustomText(
-                              text: 'Kĩ thuật viên đã đến điểm của bạn',
-                              fontSize: 18,
-                            ),
-                            CustomText(
-                              text: 'Bạn đã thấy kĩ thuật viên chưa?',
-                              fontSize: 18,
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 10),
-                        // Add relevant images or icons here
-                        // For example, you can use Image.asset or Icon widgets
+              if (!isArrived) {
+                AuthService().sendNotification(
+                    deviceId: _cus!.deviceToken,
+                    isAndroidDevice: true,
+                    title: 'Thông báo từ hệ thống',
+                    body: 'Kĩ thuật viên đã đến điểm của bạn. ',
+                    target: widget.cus.accountId,
+                    orderId: widget.booking.id);
+                print(
+                    "Technician is close to the target location. Stopping the timer.");
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text("Thông báo từ Kỹ thuật viên"),
+                      content: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          animated.Lottie.asset(
+                              'assets/animations/technician.json',
+                              width: 250,
+                              height: 250,
+                              fit: BoxFit.fill),
+                          Column(
+                            children: [
+                              CustomText(
+                                text: 'Kĩ thuật viên đã đến điểm của bạn',
+                                fontSize: 18,
+                              ),
+                              CustomText(
+                                text: 'Bạn đã thấy kĩ thuật viên chưa?',
+                                fontSize: 18,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 10),
+                          // Add relevant images or icons here
+                          // For example, you can use Image.asset or Icon widgets
 
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor:
-                                    MaterialStateProperty.resolveWith<Color>(
-                                  (Set<MaterialState> states) {
-                                    if (states
-                                        .contains(MaterialState.pressed)) {
-                                      // The button is in the pressed state
-                                      return Colors.white.withOpacity(
-                                          0.5); // Change the color when pressed
-                                    }
-                                    // The default color when not pressed
-                                    return FrontendConfigs.kActiveColor;
-                                  },
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton(
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.resolveWith<Color>(
+                                    (Set<MaterialState> states) {
+                                      if (states
+                                          .contains(MaterialState.pressed)) {
+                                        // The button is in the pressed state
+                                        return Colors.white.withOpacity(
+                                            0.5); // Change the color when pressed
+                                      }
+                                      // The default color when not pressed
+                                      return FrontendConfigs.kActiveColor;
+                                    },
+                                  ),
+                                ),
+                                onPressed: () {
+                                  // Implement your action for calling the technician
+                                  launchDialPad(
+                                      widget.phone); // Close the dialog
+                                },
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.call),
+                                    SizedBox(width: 8),
+                                    Text("Gọi Kỹ thuật viên"),
+                                  ],
                                 ),
                               ),
-                              onPressed: () {
-                                // Implement your action for calling the technician
-                                launchDialPad(widget.phone); // Close the dialog
-                              },
-                              child: Row(
-                                children: [
-                                  Icon(Icons.call),
-                                  SizedBox(width: 8),
-                                  Text("Gọi Kỹ thuật viên"),
-                                ],
-                              ),
-                            ),
-                            ElevatedButton(
-                              style: ButtonStyle(
-                                backgroundColor:
-                                    MaterialStateProperty.resolveWith<Color>(
-                                  (Set<MaterialState> states) {
-                                    if (states
-                                        .contains(MaterialState.pressed)) {
-                                      // The button is in the pressed state
-                                      return Colors.white.withOpacity(
-                                          0.5); // Change the color when pressed
-                                    }
-                                    // The default color when not pressed
-                                    return FrontendConfigs.kActiveColor;
-                                  },
+                              ElevatedButton(
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      MaterialStateProperty.resolveWith<Color>(
+                                    (Set<MaterialState> states) {
+                                      if (states
+                                          .contains(MaterialState.pressed)) {
+                                        // The button is in the pressed state
+                                        return Colors.white.withOpacity(
+                                            0.5); // Change the color when pressed
+                                      }
+                                      // The default color when not pressed
+                                      return FrontendConfigs.kActiveColor;
+                                    },
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.check),
+                                    SizedBox(width: 8),
+                                    Text("Đã xác nhận"),
+                                  ],
                                 ),
                               ),
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              child: Row(
-                                children: [
-                                  Icon(Icons.check),
-                                  SizedBox(width: 8),
-                                  Text("Đã xác nhận"),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              }
+
+              setState(() {
+                isArrived = true;
+              });
             }
           }
 

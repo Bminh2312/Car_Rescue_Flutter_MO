@@ -286,7 +286,9 @@ class _MapTechScreenState extends State<MapTechScreen> {
 
         print(
             "Technician is close to the target location. Stopping the timer.");
-        if (!isArrived)
+        if (!isArrived) {
+          
+        }
           showDialog(
             context: context,
             builder: (BuildContext context) {
