@@ -77,6 +77,7 @@ class _ProfileBodyState extends State<ProfileBody> {
     _fetchCustomer(customer.id);
     print("Id: ${customer.id}");
     print("AccId: ${customer.accountId}");
+    print("AVT: ${avt}");
     // _handleUpdateProfile();
     super.initState();
   }

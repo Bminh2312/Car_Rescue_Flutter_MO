@@ -22,13 +22,17 @@ class LoginProvider {
 
     final response = await http.post(url, headers: headers, body: encodedBody);
 
-    if (response.statusCode == 200) {
+    var responseData = convert.json.decode(response.body);
+    print("${responseData}");
+
+    if (responseData['status'] == 200) {
       // Xử lý phản hồi ở đây
-      print("POST request thành công!");
+      print("${responseData}");
       final jsonData = convert.jsonDecode(response.body);
       final loginResponse = LoginResponse.fromJson(jsonData);
       return loginResponse;
-    }else if (response.statusCode == 400){
+    }else if (responseData['status'] == 400){
+      print("NULL");
       return null;
     }else {
       print("Lỗi trong quá trình gửi POST request. Mã trạng thái: ${response.statusCode}");

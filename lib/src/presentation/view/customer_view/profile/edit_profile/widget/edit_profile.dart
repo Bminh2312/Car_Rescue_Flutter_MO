@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/customer.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:CarRescue/src/providers/customer_profile_provider.dart';
 import 'package:flutter/material.dart';
@@ -37,8 +40,11 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   String? _createdAt;
   DateTime _updateAt = DateTime.now();
   String? status = 'ACTIVE';
+  String pickedImages = '';
+  bool checkImage = false;
   late Future<Customer> customerFuture;
   late Customer customer;
+
   DateTime _birthday = DateTime(0000, 0, 0);
   @override
   void initState() {
@@ -49,7 +55,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   @override
   void dispose() {
     // Access ancestorWidget safely in dispose
-
+    pickedImages = '';
     super.dispose();
   }
 
@@ -83,9 +89,90 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     }
   }
 
-  void _updateProfile() {
+  Future<void> uploadImage() async {
+    final upload = FirBaseStorageProvider();
+
+    if (pickedImages != '') {
+      print(pickedImages);
+      String? imageUrl =
+          await upload.uploadImageToFirebaseStorage(pickedImages);
+      print(imageUrl);
+      if (imageUrl != null) {
+        setState(() {
+          pickedImages = imageUrl;
+        });
+        print('Image uploaded successfully. URL: $imageUrl');
+      } else {
+        print('Failed to upload image.');
+      }
+    } else {
+      print('No image selected.');
+    }
+  }
+
+  void showCancelOrderDialog(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              title: Text("Chọn ảnh"),
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.photo_library),
+                    onPressed: () {
+                      // Đặt hành động khi chọn ảnh từ thư viện ở đây
+                      _addImageFromGallery();
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.camera_alt),
+                    onPressed: () {
+                      // Đặt hành động khi chọn ảnh từ máy ảnh ở đây
+                      _addImageFromCamera();
+                    },
+                  ),
+                ],
+              ));
+        });
+  }
+
+  void _addImageFromGallery() async {
+    final picker = ImagePicker();
+    final XFile? pickedFile =
+        await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      // Add the file path to your imageUrls list
+      setState(() {
+        pickedImages = pickedFile.path;
+        checkImage = true;
+      });
+    } else {
+      print('No image selected.');
+      checkImage = false;
+    }
+  }
+
+  void _addImageFromCamera() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      // Add the file path to your imageUrls list
+      setState(() {
+        pickedImages = pickedFile.path;
+        checkImage = true;
+      });
+    } else {
+      print('No image selected.');
+      checkImage = false;
+    }
+  }
+
+  void _updateProfile() async {
     if (_formKey.currentState!.validate()) {
-      updateProfile(customer);
+      await updateProfile(customer);
       setState(() {
         customerFuture = _loadUserProfileData(widget.userId);
       });
@@ -100,6 +187,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   }
 
   Future<void> updateProfile(Customer customer) async {
+    await uploadImage();
     // Cập nhật thông tin khách hàng với dữ liệu mới
     customer.fullname = _nameController.text;
     customer.phone = _phoneController.text;
@@ -107,7 +195,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     customer.createAt = _createdAt!;
     customer.updateAt = DateFormat('yyyy-MM-dd HH:mm:ss').format(_updateAt);
     customer.status = status!;
-    customer.avatar = _profileImage!;
+    customer.avatar = pickedImages;
 
     if (_selectedGenderString != null) {
       customer.sex = _selectedGenderString!;
@@ -197,10 +285,20 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                 height: 120,
                               ),
                             ),
+                            if(checkImage == false)
                             CircleAvatar(
                               radius: 60,
                               backgroundImage: _profileImage != null
                                   ? Image.network(_profileImage!).image
+                                  // Sử dụng NetworkImage cho hình ảnh từ mạng
+                                  : AssetImage(
+                                      'assets/images/profile.png'), // Sử dụng AssetImage cho hình ảnh từ tài nguyên cục bộ
+                            ),
+                            if(checkImage == true)
+                            CircleAvatar(
+                              radius: 60,
+                              backgroundImage: pickedImages != ''
+                                  ? Image.file(File(pickedImages)).image
                                   // Sử dụng NetworkImage cho hình ảnh từ mạng
                                   : AssetImage(
                                       'assets/images/profile.png'), // Sử dụng AssetImage cho hình ảnh từ tài nguyên cục bộ
@@ -214,7 +312,9 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                 child: IconButton(
                                   icon: Icon(Icons.camera_alt),
                                   color: Colors.white,
-                                  onPressed: captureImage, // Open image picker
+                                  onPressed: () {
+                                    showCancelOrderDialog(context);
+                                  }, // Open image picker
                                 ),
                               ),
                             ),
