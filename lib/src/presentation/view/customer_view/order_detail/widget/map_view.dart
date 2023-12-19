@@ -7,6 +7,7 @@ import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/booking.dart';
 import 'package:CarRescue/src/models/customer.dart';
 import 'package:CarRescue/src/models/customerInfo.dart';
+import 'package:CarRescue/src/models/manager.dart';
 import 'package:CarRescue/src/models/order.dart';
 import 'package:CarRescue/src/models/technician.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
@@ -57,6 +58,9 @@ class _MapScreenState extends State<MapScreen> {
   Timer? myTimer;
   String? _duration;
   String? _distance;
+  String? _managerToken;
+  String? _managerAccountId;
+  String? _managerId;
   @override
   void initState() {
     super.initState();
@@ -101,6 +105,24 @@ class _MapScreenState extends State<MapScreen> {
     } catch (e) {
       print('Error launching dial pad: $e');
       throw 'Could not launch $uri';
+    }
+  }
+
+  Future<void> _loadManagerId(String managerId) async {
+    try {
+      Manager? manager = await AuthService().fetchManagerProfile(managerId);
+
+      setState(() {
+        _managerId = manager!.id;
+        _managerToken = manager.deviceToken;
+        _managerAccountId = manager.accountId;
+      });
+      print('a: $_managerId');
+      print(_managerToken);
+      print(_managerAccountId);
+    } catch (e) {
+      print('Error loading manager: $e');
+      // Handle the error appropriately
     }
   }
 
@@ -174,7 +196,13 @@ class _MapScreenState extends State<MapScreen> {
 
             if (distance < 50) {
               // Stop the timer
-              myTimer?.cancel();
+              AuthService().sendNotification(
+                  deviceId: _managerToken ?? '',
+                  isAndroidDevice: true,
+                  title: 'Thông báo từ hệ thống',
+                  body: 'Kĩ thuật viên đã đến điểm của bạn. ',
+                  target: _managerAccountId ?? '',
+                  orderId: widget.booking.id);
               print(
                   "Technician is close to the target location. Stopping the timer.");
               showDialog(
