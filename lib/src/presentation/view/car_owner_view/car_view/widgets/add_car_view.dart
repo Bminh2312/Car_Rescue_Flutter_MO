@@ -87,7 +87,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
     if (_formKey.currentState!.validate() &&
         _carRegistrationFontImage != null &&
         _carRegistrationBackImage != null) {
-      _showAlertDialog(context);
+      await _showAlertDialog(context);
       if (_isFormConfirmed) {
         _formKey.currentState!.save();
         setState(() {
@@ -470,39 +470,45 @@ class _AddCarScreenState extends State<AddCarScreen> {
     ]);
   }
 
-  _showAlertDialog(BuildContext context) {
-    showDialog(
+  Future<void> _showAlertDialog(BuildContext context) async {
+    return showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Xác nhận'),
-          content: Text('Bạn đã chắc chắc điền đúng thông tin ? '),
-          actions: [
-            TextButton(
-              child: Text(
-                'Hủy',
-                style: TextStyle(
-                  color: Colors.red,
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: Text('Xác nhận'),
+              content: Text('Bạn đã chắc chắc điền đúng thông tin?'),
+              actions: [
+                TextButton(
+                  child: Text(
+                    'Hủy',
+                    style: TextStyle(
+                      color: Colors.red,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the AlertDialog
+                  },
                 ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the AlertDialog
-              },
-            ),
-            TextButton(
-              child: Text(
-                'Chắc chắn',
-                style: TextStyle(color: FrontendConfigs.kActiveColor),
-              ),
-              onPressed: () {
-                setState(() {
-                  _isFormConfirmed = true;
-                });
-                Navigator.of(context).pop();
-                _submitForm(); // Close the AlertDialog after submitting
-              },
-            ),
-          ],
+                TextButton(
+                  child: Text(
+                    'Chắc chắn',
+                    style: TextStyle(color: FrontendConfigs.kActiveColor),
+                  ),
+                  onPressed: () {
+                    // Use the provided setState from StatefulBuilder
+                    setState(() {
+                      _isFormConfirmed = true;
+                    });
+
+                    // Close the AlertDialog
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );

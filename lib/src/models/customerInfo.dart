@@ -11,19 +11,22 @@ class CustomerInfo {
   final String updateAt;
   final String birthdate;
   final String avatar;
-  CustomerInfo(
-      {required this.id,
-      required this.accountId,
-      required this.fullname,
-      required this.sex,
-      required this.phone,
-      required this.licensePlate,
-      required this.address,
-      required this.status,
-      required this.createAt,
-      required this.updateAt,
-      required this.birthdate,
-      required this.avatar});
+  final String deviceToken;
+  CustomerInfo({
+    required this.id,
+    required this.accountId,
+    required this.fullname,
+    required this.sex,
+    required this.phone,
+    required this.licensePlate,
+    required this.address,
+    required this.status,
+    required this.createAt,
+    required this.updateAt,
+    required this.birthdate,
+    required this.avatar,
+    required this.deviceToken,
+  });
 
   factory CustomerInfo.fromJson(Map<String, dynamic> json) {
     final Map<String, dynamic> data = json['data'] ?? Map<String, dynamic>();
@@ -41,6 +44,7 @@ class CustomerInfo {
       updateAt: data['updateAt'] ?? '',
       birthdate: data['birthdate'] ?? '',
       avatar: data['avatar'] ?? '',
+      deviceToken: data['account']['deviceToken'],
     );
   }
 }

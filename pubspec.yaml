@@ -14,6 +14,7 @@ dependencies:
   country_calling_code_picker: ^2.0.1
   cupertino_icons: ^1.0.2
   diacritic: ^0.1.4
+  dio: ^5.4.0
   dots_indicator: ^3.0.0
   dotted_line: ^3.1.0
   firebase_auth: ^4.7.2
@@ -80,4 +81,3 @@ flutter:
     - family: Quicksand
       fonts:
         - asset: assets/fonts/Quicksand-Regular.ttf
-     

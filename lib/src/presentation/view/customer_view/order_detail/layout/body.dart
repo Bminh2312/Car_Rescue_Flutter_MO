@@ -506,9 +506,9 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => ReportScreen(
-                                    orderId: widget.orderId,
-                                    tech: technicianInfo,
-                                  ),
+                                      orderId: widget.orderId,
+                                      tech: technicianInfo,
+                                      managerId: order.managerId!),
                                 ),
                               );
                             } else {
@@ -516,9 +516,9 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => ReportScreen(
-                                    orderId: widget.orderId,
-                                    vehicle: vehicleInfo,
-                                  ),
+                                      orderId: widget.orderId,
+                                      vehicle: vehicleInfo,
+                                      managerId: order.managerId!),
                                 ),
                               );
                             }
@@ -1162,15 +1162,26 @@ class _OrderDetailBodyState extends State<OrderDetailBody> {
                   }
                   return Column(
                     children: [
-                      _buildInfoRow(
-                        '$name',
-                        Text(
-                          '$formattedTotal',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: FrontendConfigs.kAuthColor),
+                      if (type == "Fixing")
+                        _buildInfoRow(
+                          '$name (Số lượng: $quantity)',
+                          Text(
+                            '$formattedTotal',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: FrontendConfigs.kAuthColor),
+                          ),
                         ),
-                      ),
+                      if (type == "Towing")
+                        _buildInfoRow(
+                          '$name ',
+                          Text(
+                            '$formattedTotal',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: FrontendConfigs.kAuthColor),
+                          ),
+                        ),
                       if (type == "Towing")
                         _buildInfoRow(
                           'Khoảng cách',

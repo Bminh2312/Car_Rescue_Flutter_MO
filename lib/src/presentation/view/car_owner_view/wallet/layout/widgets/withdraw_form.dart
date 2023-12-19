@@ -1,4 +1,5 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
+import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/models/banking_info.dart';
 import 'package:CarRescue/src/models/wallet.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
@@ -31,6 +32,7 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
   String? _dropdownError;
   String? radioGroupValue;
   String? _bankNumber;
+  bool isBalance = true;
   String? accessToken = GetStorage().read<String>("accessToken");
   List<BankingInfo> bankings =
       []; // Make sure to fetch or pass this data as required
@@ -56,7 +58,7 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
     }
   }
 
-  void handleSubmit() {
+  void handleSubmit() async {
     final formState = _formKey.currentState;
 
     if (formState!.validate()) {
@@ -65,9 +67,7 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
       // Use the controller's value directly, ensuring it's formatted correctly
       String amountText = _amountController.text.replaceAll(',', '');
       final numericValue = int.tryParse(amountText) ?? 0;
-
-      // Now numericValue should have the correct value, and you can use it in your create function
-      createWithdrawRequest(
+      await createWithdrawRequest(
         walletId: widget.wallet.id,
         accountInfo: radioGroupValue == 'Momo'
             ? _phoneNumber!
@@ -75,14 +75,18 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
         bank: radioGroupValue == 'Momo' ? 'Momo' : _selectedBanking!,
         amount: numericValue,
       );
-
-      AuthService().sendNotification(
-          deviceId: _deviceToken!,
-          isAndroidDevice: true,
-          title: 'Thông báo từ chủ xe cứu hộ',
-          body: 'Có một đơn rút tiền cần được kiểm duyệt',
-          target: _managerId!,
-          orderId: '');
+      if (isBalance) {
+        Navigator.pop(context, 'success');
+        _showSuccessDialog();
+        AuthService().sendNotification(
+            deviceId: _deviceToken!,
+            isAndroidDevice: true,
+            title: 'Thông báo từ chủ xe cứu hộ',
+            body: 'Có một đơn rút tiền cần được kiểm duyệt',
+            target: _managerId!,
+            orderId: '');
+      }
+      // Now numericValue should have the correct value, and you can use it in your create function
     }
   }
 
@@ -198,9 +202,16 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
         }),
       );
       print(response.statusCode);
-      if (response.statusCode == 200) {
-        // Successfully created the weekly shift
-        print('Withdraw request created successfully.');
+      final responseData = json.decode(response.body);
+      // final int status = responseData['status'];
+      final String message = responseData['message'];
+      print(message);
+      if (message == 'insufficient balance') {
+        setState(() {
+          isBalance = false;
+        });
+        NotifyMessage()
+            .showErrorToast('Không đủ số dư ví\nVui lòng kiểm tra lại ');
       } else {
         // Failed to create the weekly shift
         print('Failed to create the withdraw request: ${response.body}');
@@ -419,6 +430,22 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                               return 'Số điện thoại phải có 10 chữ số';
                             }
 
+                            // Kiểm tra xem số điện thoại có chứa chữ cái không
+                            if (RegExp(r'[a-zA-Z]').hasMatch(value)) {
+                              return 'Số điện thoại không được chứa chữ cái';
+                            }
+
+                            // Kiểm tra xem số điện thoại có chứa khoảng trắng không
+                            if (value.contains(' ')) {
+                              return 'Số điện thoại không được chứa khoảng trắng';
+                            }
+
+                            // Kiểm tra xem số điện thoại có bắt đầu bằng các số nhất định không
+                            // Ví dụ: Số điện thoại không được bắt đầu bằng 0 hoặc 1
+                            if (value.startsWith('1')) {
+                              return 'Số điện thoại không được bắt đầu bằng 0 hoặc 1';
+                            }
+
                             // Các kiểm tra bổ sung khác có thể được thêm vào ở đây
 
                             return null;
@@ -454,7 +481,9 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                             if (value == null || value.isEmpty) {
                               return 'Nhập số tài khoản';
                             }
-                            // Additional validation logic here
+                            if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                              return 'Số tài khoản chỉ được chứa số';
+                            }
                             return null;
                           },
                           decoration: InputDecoration(
@@ -485,12 +514,16 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                       if (radioGroupValue == 'Momo' ||
                           radioGroupValue == 'Ngân hàng')
                         TextFormField(
+                          maxLength: 100,
                           onSaved: (value) => _accountName = value,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Nhập tên tài khoản';
+                              return 'Tên tài khoản không được để trống';
                             }
-                            // Additional validation logic here
+                            if (RegExp(r'[0-9]').hasMatch(value)) {
+                              return 'Tên tài khoản không được chứa số';
+                            }
+
                             return null;
                           },
                           decoration: InputDecoration(
@@ -576,8 +609,6 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
                         try {
                           handleSubmit();
 
-                          Navigator.pop(context, 'success');
-                          _showSuccessDialog();
                           // Handle successful submission, e.g., show confirmation message
                         } catch (e) {
                           // Handle unsuccessful submission, e.g., show error message
