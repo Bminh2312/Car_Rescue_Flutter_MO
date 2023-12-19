@@ -109,6 +109,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
       print('No image selected.');
       setState(() {
         pickedImages = _profileImage!;
+        checkImage = false;
       });
     }
   }
