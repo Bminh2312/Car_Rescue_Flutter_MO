@@ -1,6 +1,7 @@
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
+import 'package:CarRescue/src/providers/firebase_storage_provider.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -54,6 +55,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   String? _selectedGenderString;
   File? _profileImage;
   String? _downloadURL;
+  String? downloadURL;
   int? _area;
   String? _status;
   String? accessToken = GetStorage().read<String>("accessToken");
@@ -65,6 +67,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   bool _profileImageChanged = false;
   bool _isUpdating = false;
   bool _isLoading = false;
+  bool checkImage = false;
   @override
   void initState() {
     super.initState();
@@ -97,7 +100,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
         _nameController.text = data['fullname'] ?? '';
         _phoneController.text = data['phone'] ?? '';
         _addressController.text = data['address'] ?? '';
-        _downloadURL = data['avatar'];
+        downloadURL = data['avatar'];
         _status = data['status'];
         _area = data['area'];
         // Retrieve and set the gender from the profile data
@@ -128,19 +131,18 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     required String updateAt,
     required int area,
     required String status,
-    String? downloadURL, // Optional avatar URL parameter
   }) async {
-    // Check if there are no changes in the values
-    if (name == _nameController.text &&
-        phone == _phoneController.text &&
-        address == _addressController.text &&
-        sex == _selectedGenderString &&
-        downloadURL == _downloadURL &&
-        status == _status &&
-        area == _area) {
-      // No changes, throw an error or handle as needed
-      throw Exception('No changes detected.');
-    }
+    // // Check if there are no changes in the values
+    // if (name == _nameController.text &&
+    //     phone == _phoneController.text &&
+    //     address == _addressController.text &&
+    //     sex == _selectedGenderString &&
+    //     downloadURL == _downloadURL &&
+    //     status == _status &&
+    //     area == _area) {
+    //   // No changes, throw an error or handle as needed
+    //   throw Exception('No changes detected.');
+    // }
 
     final Map<String, dynamic> requestBody = {
       'id': userId,
@@ -150,7 +152,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
       'address': address,
       'sex': sex,
       'birthdate': birthdate,
-      'avatar': downloadURL ?? _downloadURL,
+      'avatar': _downloadURL,
       'updateAt': updateAt,
       'status': status,
       'area': area
@@ -177,7 +179,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
           _addressController.text = address;
           _selectedGenderString = sex;
           _profileImageChanged = false;
-          _downloadURL = downloadURL;
+          // _downloadURL = downloadURL;
           _isUpdating = false;
           updatedAtString = updateAt;
           _status = status;
@@ -210,30 +212,119 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     return false;
   }
 
-  Future<void> _pickImage() async {
-    XFile? pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+  // Future<void> _pickImage() async {
+  //   XFile? pickedFile =
+  //       await ImagePicker().pickImage(source: ImageSource.gallery);
+
+  //   if (pickedFile != null) {
+  //     File file = File(pickedFile.path);
+  //     int sizeInBytes = file.lengthSync();
+  //     double sizeInMB = sizeInBytes / (1024 * 1024);
+
+  //     if (sizeInMB > 3) {
+  //       // File quá lớn, hiển thị lỗi
+  //       if (mounted) {
+  //         showToast('Kích thước hình ảnh phải nhỏ hơn 3MB');
+  //         return;
+  //       }
+  //     }
+
+  //     // File hợp lệ, tiếp tục
+  //     imageCache.clear();
+
+  //     setState(() {
+  //       _profileImage = file;
+  //       _profileImageChanged = true;
+  //     });
+  //   }
+  // }
+
+  Future<void> uploadImage() async {
+    final upload = FirBaseStorageProvider();
+
+    if (_downloadURL != null) {
+      print(_downloadURL);
+      String? imageUrl =
+          await upload.uploadImageToFirebaseStorage(_downloadURL!);
+      print(imageUrl);
+      if (imageUrl != null) {
+        setState(() {
+          _downloadURL = imageUrl;
+          checkImage = false;
+        });
+        print('Image uploaded successfully. URL: $imageUrl');
+      } else {
+        print('Failed to upload image.');
+        setState(() {
+          checkImage = true;
+        });
+      }
+    } else {
+      print('No image selected.');
+      setState(() {
+        _downloadURL = downloadURL;
+        checkImage = false;
+      });
+    }
+  }
+
+  void showCancelOrderDialog(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              title: Text("Chọn ảnh"),
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.photo_library),
+                    onPressed: () {
+                      // Đặt hành động khi chọn ảnh từ thư viện ở đây
+                      _addImageFromGallery();
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.camera_alt),
+                    onPressed: () {
+                      // Đặt hành động khi chọn ảnh từ máy ảnh ở đây
+                      _addImageFromCamera();
+                    },
+                  ),
+                ],
+              ));
+        });
+  }
+
+  void _addImageFromGallery() async {
+    final picker = ImagePicker();
+    final XFile? pickedFile =
+        await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      // Add the file path to your imageUrls list
+      setState(() {
+        _downloadURL = pickedFile.path;
+        checkImage = true;
+      });
+    } else {
+      print('No image selected.');
+      checkImage = false;
+    }
+  }
+
+  void _addImageFromCamera() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
     if (pickedFile != null) {
-      File file = File(pickedFile.path);
-      int sizeInBytes = file.lengthSync();
-      double sizeInMB = sizeInBytes / (1024 * 1024);
-
-      if (sizeInMB > 3) {
-        // File quá lớn, hiển thị lỗi
-        if (mounted) {
-          showToast('Kích thước hình ảnh phải nhỏ hơn 3MB');
-          return;
-        }
-      }
-
-      // File hợp lệ, tiếp tục
-      imageCache.clear();
-
+      // Add the file path to your imageUrls list
       setState(() {
-        _profileImage = file;
-        _profileImageChanged = true;
+        _downloadURL = pickedFile.path;
+        checkImage = true;
       });
+    } else {
+      print('No image selected.');
+      checkImage = false;
     }
   }
 
@@ -274,14 +365,17 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                               ),
                               CircleAvatar(
                                 radius: 60,
-                                backgroundImage: _profileImage != null
-                                    ? FileImage(_profileImage!)
-                                    : (_downloadURL != null &&
-                                            _downloadURL!.isNotEmpty)
-                                        ? NetworkImage(_downloadURL!)
-                                        : NetworkImage(
+                                backgroundImage: checkImage
+                                    ? _downloadURL != ''
+                                        ? Image.file(File(_downloadURL!)).image
+                                        : Image.network(
                                                 'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431')
-                                            as ImageProvider<Object>,
+                                            .image
+                                    : downloadURL != null
+                                        ? Image.network(downloadURL!).image
+                                        : Image.network(
+                                                'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431')
+                                            .image,
                               ),
                               Positioned(
                                 bottom: 60,
@@ -292,7 +386,9 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                   child: IconButton(
                                     icon: Icon(Icons.camera_alt),
                                     color: Colors.white,
-                                    onPressed: _pickImage, // Open image picker
+                                    onPressed: () {
+                                      showCancelOrderDialog(context);
+                                    }, // Open image picker
                                   ),
                                 ),
                               ),
@@ -476,26 +572,26 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                   _isUpdating = true;
                                 });
                                 if (_formKey.currentState!.validate()) {
-                                  String? downloadURL;
-                                  if (_profileImage != null &&
-                                      _profileImageChanged) {
-                                    downloadURL =
-                                        await authService.uploadImageToFirebase(
-                                            _profileImage!,
-                                            'RVOprofile_images/');
-                                    if (downloadURL == null) {
-                                      if (mounted) {
-                                        showToast('Có lỗi xảy ra');
-                                      }
-                                      // Exit the function, don't proceed to updateProfile
-                                    }
-                                  }
+                                  // String? downloadURL;
+                                  // if (_profileImage != null &&
+                                  //     _profileImageChanged) {
+                                  //   downloadURL =
+                                  //       await authService.uploadImageToFirebase(
+                                  //           _profileImage!,
+                                  //           'RVOprofile_images/');
+                                  //   if (downloadURL == null) {
+                                  //     if (mounted) {
+                                  //       showToast('Có lỗi xảy ra');
+                                  //     }
+                                  //     // Exit the function, don't proceed to updateProfile
+                                  //   }
+                                  // }
                                   String selectedGender =
                                       _selectedGenderString ?? '';
                                   String formattedBirthdate =
                                       DateFormat('yyyy-MM-dd')
                                           .format(_birthday);
-
+                                  await uploadImage();
                                   bool isSuccess = await updateProfile(
                                       area: _area ?? 0,
                                       status: _status!,
@@ -506,7 +602,6 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                       address: _addressController.text,
                                       birthdate: formattedBirthdate,
                                       sex: selectedGender,
-                                      downloadURL: downloadURL,
                                       updateAt: updatedAtString);
                                   if (isSuccess) {
                                     setState(() {

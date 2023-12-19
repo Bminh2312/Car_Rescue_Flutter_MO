@@ -50,6 +50,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   String? _selectedGenderString;
   String? _profileImage;
   String? _downloadURL;
+  String? downloadURL;
   int? _area;
   String? _status;
 // Chuyển đổi sang đối tượng DateTime
@@ -77,7 +78,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
         _nameController.text = data['fullname'] ?? '';
         _phoneController.text = data['phone'] ?? '';
         _addressController.text = data['address'] ?? '';
-        _downloadURL = data['avatar'];
+        downloadURL = data['avatar'];
         _status = data['status'];
         _area = data['area'];
         // Retrieve and set the gender from the profile data
@@ -106,7 +107,6 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     required int area,
     required String status,
   }) async {
-    
     final Map<String, dynamic> requestBody = {
       'id': userId,
       'accountId': accountId,
@@ -206,13 +206,21 @@ class _EditProfileBodyState extends State<EditProfileBody> {
       if (imageUrl != null) {
         setState(() {
           _downloadURL = imageUrl;
+          checkImage = false;
         });
         print('Image uploaded successfully. URL: $imageUrl');
       } else {
         print('Failed to upload image.');
+        setState(() {
+          checkImage = true;
+        });
       }
     } else {
       print('No image selected.');
+      setState(() {
+        _downloadURL = downloadURL;
+        checkImage = false;
+      });
     }
   }
 
@@ -307,24 +315,20 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                           height: 120,
                         ),
                       ),
-                      if (checkImage == false)
-                        CircleAvatar(
-                          radius: 60,
-                          backgroundImage: _downloadURL != null
-                              ? Image.network(_downloadURL!).image
-                              // Sử dụng NetworkImage cho hình ảnh từ mạng
-                              : AssetImage(
-                                  'assets/images/profile.png'), // Sử dụng AssetImage cho hình ảnh từ tài nguyên cục bộ
-                        ),
-                      if (checkImage == true)
-                        CircleAvatar(
-                          radius: 60,
-                          backgroundImage: _downloadURL != null
-                              ? Image.file(File(_downloadURL!)).image
-                              // Sử dụng NetworkImage cho hình ảnh từ mạng
-                              : AssetImage(
-                                  'assets/images/profile.png'), // Sử dụng AssetImage cho hình ảnh từ tài nguyên cục bộ
-                        ),
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundImage: checkImage
+                            ? _downloadURL != ''
+                                ? Image.file(File(_downloadURL!)).image
+                                : Image.network(
+                                        'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431')
+                                    .image
+                            : downloadURL != null
+                                ? Image.network(downloadURL!).image
+                                : Image.network(
+                                        'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431')
+                                    .image,
+                      ),
                       Positioned(
                         bottom: 60,
                         right: 120,
@@ -512,9 +516,9 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                               MaterialStatePropertyAll(Colors.white)),
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
-                          // setState(() {
-                          //   _isUpdating = true;
-                          // });
+                          setState(() {
+                            _isUpdating = true;
+                          });
                           // String? downloadURL;
                           // if (_profileImage != null && _profileImageChanged) {
                           //   downloadURL =
