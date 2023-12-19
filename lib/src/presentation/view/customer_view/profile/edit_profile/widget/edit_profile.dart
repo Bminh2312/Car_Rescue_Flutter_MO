@@ -107,6 +107,9 @@ class _EditProfileBodyState extends State<EditProfileBody> {
       }
     } else {
       print('No image selected.');
+      setState(() {
+        pickedImages = _profileImage!;
+      });
     }
   }
 
@@ -187,7 +190,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   }
 
   Future<void> updateProfile(Customer customer) async {
-    await uploadImage();
+      await uploadImage();
     // Cập nhật thông tin khách hàng với dữ liệu mới
     customer.fullname = _nameController.text;
     customer.phone = _phoneController.text;
