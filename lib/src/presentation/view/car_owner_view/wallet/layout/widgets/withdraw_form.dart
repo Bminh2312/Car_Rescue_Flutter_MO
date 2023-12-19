@@ -67,7 +67,7 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
       // Use the controller's value directly, ensuring it's formatted correctly
       String amountText = _amountController.text.replaceAll(',', '');
       final numericValue = int.tryParse(amountText) ?? 0;
-      await createWithdrawRequest(
+      bool isSuccess = await createWithdrawRequest(
         walletId: widget.wallet.id,
         accountInfo: radioGroupValue == 'Momo'
             ? _phoneNumber!
@@ -75,7 +75,7 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
         bank: radioGroupValue == 'Momo' ? 'Momo' : _selectedBanking!,
         amount: numericValue,
       );
-      if (isBalance) {
+      if (isSuccess) {
         Navigator.pop(context, 'success');
         _showSuccessDialog();
         AuthService().sendNotification(
@@ -173,7 +173,7 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
     }
   }
 
-  Future<void> createWithdrawRequest({
+  Future<bool> createWithdrawRequest({
     required String walletId,
     required String bank,
     required String accountInfo,
@@ -203,15 +203,16 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
       );
       print(response.statusCode);
       final responseData = json.decode(response.body);
+      print(responseData);
       // final int status = responseData['status'];
       final String message = responseData['message'];
       print(message);
       if (message == 'insufficient balance') {
-        setState(() {
-          isBalance = false;
-        });
         NotifyMessage()
             .showErrorToast('Không đủ số dư ví\nVui lòng kiểm tra lại ');
+        return false;
+      } else if (message == 'Completed') {
+        return true;
       } else {
         // Failed to create the weekly shift
         print('Failed to create the withdraw request: ${response.body}');
