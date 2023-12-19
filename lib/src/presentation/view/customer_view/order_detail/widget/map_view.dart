@@ -56,6 +56,7 @@ class _MapScreenState extends State<MapScreen> {
   List<LatLng> routeCoordinates = [];
   Set<Polyline> polylines = {};
   Timer? myTimer;
+  CustomerInfo? _cus;
   String? _duration;
   String? _distance;
   String? _managerToken;
@@ -69,7 +70,7 @@ class _MapScreenState extends State<MapScreen> {
     setSourceAndDestinationIcons();
     setSourceAndDepartureIcons();
     setSourceAndDepartureImage();
-    // _loadLocation();
+    _loadCustomerInfo(widget.booking.customerId);
     myTimer = Timer.periodic(Duration(seconds: 5), (Timer timer) {
       _loadLocation();
       _getCurrentLocation();
@@ -108,21 +109,14 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  Future<void> _loadManagerId(String managerId) async {
-    try {
-      Manager? manager = await AuthService().fetchManagerProfile(managerId);
-
+  Future<void> _loadCustomerInfo(String customerId) async {
+    Map<String, dynamic>? userProfile =
+        await AuthService().fetchCustomerInfo(customerId);
+    print(userProfile);
+    if (userProfile != null) {
       setState(() {
-        _managerId = manager!.id;
-        _managerToken = manager.deviceToken;
-        _managerAccountId = manager.accountId;
+        _cus = CustomerInfo.fromJson(userProfile);
       });
-      print('a: $_managerId');
-      print(_managerToken);
-      print(_managerAccountId);
-    } catch (e) {
-      print('Error loading manager: $e');
-      // Handle the error appropriately
     }
   }
 
@@ -197,11 +191,11 @@ class _MapScreenState extends State<MapScreen> {
             if (distance < 50) {
               // Stop the timer
               AuthService().sendNotification(
-                  deviceId: _managerToken ?? '',
+                  deviceId: _cus!.deviceToken,
                   isAndroidDevice: true,
                   title: 'Thông báo từ hệ thống',
                   body: 'Kĩ thuật viên đã đến điểm của bạn. ',
-                  target: _managerAccountId ?? '',
+                  target: widget.cus.accountId,
                   orderId: widget.booking.id);
               print(
                   "Technician is close to the target location. Stopping the timer.");
