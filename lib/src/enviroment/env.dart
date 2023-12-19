@@ -12,7 +12,7 @@ class Environment {
   static GoogleSignIn SIGN_IN = GoogleSignIn(
     scopes: <String>[
       'email',
-      // 'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/userinfo.profile',
     ],
   );
 
