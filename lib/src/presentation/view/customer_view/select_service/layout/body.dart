@@ -57,6 +57,7 @@ class _ServiceBodyState extends State<ServiceBody>
   bool hasInProgressBooking = true;
   int selectedOption = -1;
   int unreadNotificationCount = 0;
+  String status = "ASSIGNED";
   final ShakeAnimationController _shakeAnimationController =
       ShakeAnimationController();
   void _onItemTapped(int index) {
@@ -69,7 +70,6 @@ class _ServiceBodyState extends State<ServiceBody>
   void initState() {
     super.initState();
     checkInfo(context);
-    getAllOrders("NEW");
     _tabController = TabController(length: 3, vsync: this);
     _pageController = PageController(initialPage: 0, viewportFraction: 0.8);
 
@@ -457,16 +457,16 @@ class _ServiceBodyState extends State<ServiceBody>
     return SliderBanner(advertisements: _advertisements);
   }
 
-  Widget buildOrdersTabView() {
+  Widget buildOrdersTabView(String status) {
     return SizedBox(
       height:
           MediaQuery.of(context).size.height * 0.3, // Set your desired height
       child: TabBarView(
         controller: _tabController,
         children: [
-          buildOrders("ASSIGNED"),
-          buildOrders("WAITING"),
-          buildOrders("INPROGRESS"),
+          buildOrders("${status}"),
+          buildOrders("${status}"),
+          buildOrders("${status}"),
         ],
       ),
     );
@@ -753,9 +753,34 @@ class _ServiceBodyState extends State<ServiceBody>
                                     ),
                                   ),
                                 ],
+                                onTap: (index) {
+                                  _tabController.animateTo(index);
+                                  // Now trigger the function based on the selected tab
+                                  
+                                  switch (index) {
+                                    case 0:
+                                      setState(() {
+                                        status = "ASSIGNED";
+                                      });
+
+                                      break;
+                                    case 1:
+                                      setState(() {
+                                        status = "WAITING";
+                                      });
+
+                                      break;
+                                    case 2:
+                                      setState(() {
+                                        status = "INPROGRESS";
+                                      });
+                                      break;
+                                  }
+                                  
+                                },
                               ),
+                              buildOrdersTabView(status),
                               SizedBox(height: 8),
-                              buildOrdersTabView(),
                             ],
                           ),
                         ),

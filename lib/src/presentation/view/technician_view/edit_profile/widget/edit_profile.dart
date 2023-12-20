@@ -57,10 +57,11 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   String updatedAtString = DateFormat('yyyy-MM-dd').format(DateTime.now());
   final ImagePicker imagePicker = ImagePicker();
   AuthService authService = AuthService();
-  DateTime _birthday = DateTime(2000, 1, 1);
+  DateTime? _birthday;
   bool _profileImageChanged = false;
   bool _isUpdating = false;
   bool checkImage = false;
+  bool _isLoading = false;
   String? accessToken = GetStorage().read<String>("accessToken");
   @override
   void initState() {
@@ -69,6 +70,9 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   }
 
   Future<void> _loadUserProfileData(String userId) async {
+    setState(() {
+      _isLoading = true;
+    });
     Map<String, dynamic>? userProfile =
         await authService.fetchTechProfile(userId);
 
@@ -89,10 +93,16 @@ class _EditProfileBodyState extends State<EditProfileBody> {
         String? birthdateString = data['birthdate'];
         if (birthdateString != null) {
           _birthday = DateTime.parse(birthdateString);
-          _birthdayController.text = DateFormat('dd/MM/yyyy').format(_birthday);
+          _birthdayController.text =
+              DateFormat('dd/MM/yyyy').format(_birthday!);
+        } else {
+          _birthday = null;
         }
       });
     }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<bool> updateProfile({
@@ -286,7 +296,9 @@ class _EditProfileBodyState extends State<EditProfileBody> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    return _isLoading
+        ? LoadingState()
+        : SafeArea(
       child: Stack(children: [
         SingleChildScrollView(
           child: Padding(
@@ -465,18 +477,45 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                   ),
                   GestureDetector(
                       onTap: () async {
+                        DateTime currentDate = DateTime.now();
                         DateTime? selectedDate = await showDatePicker(
                           context: context,
-                          initialDate: _birthday,
+                          initialDate: _birthday ?? currentDate,
                           firstDate: DateTime(1900),
-                          lastDate: DateTime.now(),
+                          lastDate: currentDate,
                         );
-                        if (selectedDate != null && selectedDate != _birthday) {
-                          setState(() {
-                            _birthday = selectedDate;
-                            _birthdayController.text =
-                                DateFormat('dd-MM-yyyy').format(_birthday);
-                          });
+
+                        if (selectedDate != null) {
+                          // Kiểm tra xem ngày sinh đã đủ 18 tuổi chưa
+                          if (currentDate.difference(selectedDate).inDays <
+                              365 * 18) {
+                            // Hiển thị thông báo hoặc thực hiện các xử lý khác nếu ngày sinh không đủ 18 tuổi
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text('Thông báo'),
+                                  content: Text(
+                                      'Bạn phải đủ 18 tuổi để sử dụng ứng dụng.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          } else {
+                            setState(() {
+                              _birthday = selectedDate;
+                              _birthdayController.text =
+                                  DateFormat('yyyy-MM-dd').format(_birthday!);
+                            });
+                            print("Ngày sinh: ${_birthdayController.text}");
+                          }
                         }
                       },
                       child: Container(
@@ -488,14 +527,23 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              DateFormat('dd-MM-yyyy').format(_birthday),
-                              style: TextStyle(
-                                fontFamily: 'Montserrat',
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            _birthday != null
+                                ? Text(
+                                    DateFormat('dd-MM-yyyy').format(_birthday!),
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                : Text(
+                                    "Chưa có ngày sinh",
+                                    style: TextStyle(
+                                      fontFamily: 'Montserrat',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ],
                         ),
                       )),
@@ -532,7 +580,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
 
                           String selectedGender = _selectedGenderString ?? '';
                           String formattedBirthdate =
-                              DateFormat('yyyy-MM-dd').format(_birthday);
+                              DateFormat('yyyy-MM-dd').format(_birthday!);
                           await uploadImage();
                           bool isSuccess = await updateProfile(
                               area: _area ?? 0,

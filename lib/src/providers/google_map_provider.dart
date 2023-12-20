@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 
 class LocationProvider {
   final String key = Environment.API_KEY_MAPS;
+  final String keyGoong = Environment.API_KEY_GOONG;
   final String url = Environment.API_URL_PLACES_NEW;
   final String keyPredictions = Environment.API_KEY_PREDICTIONS;
 
@@ -212,7 +213,9 @@ class LocationProvider {
     }
 
     final String urlDeparture =
-        'https://rsapi.goong.io/Geocode?latlng=$latDeparture,$longDeparture&api_key=6qIQMEDCI2nsTWTVoj60zNzQzxu9CRwNFJsTZ9e9';
+
+        'https://rsapi.goong.io/Geocode?latlng=$latDeparture,$longDeparture&api_key=${keyGoong}';
+
 
     final responseDeparture = await http.get(Uri.parse(urlDeparture));
 
