@@ -10,6 +10,7 @@ import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/car_view/car_view.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
@@ -249,7 +250,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
                                         if (!regex
                                             .hasMatch(value.toUpperCase())) {
-                                          return 'Biển số xe không hợp lệ';
+                                          return 'Biển số xe không hợp lệ (Vd:52A-12345)';
                                         }
                                         return null;
                                       },
@@ -383,9 +384,14 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      print(value);
                                       return 'Vui lòng nhập màu sắc';
                                     }
+
+                                    // Kiểm tra xem giá trị có chứa số hay không
+                                    if (RegExp(r'[0-9]').hasMatch(value)) {
+                                      return 'Màu sắc không được chứa số';
+                                    }
+
                                     return null;
                                   },
                                   onSaved: (value) {
@@ -394,43 +400,48 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                 ),
                               ),
                               Container(
-                                width: MediaQuery.of(context).size.width / 2 -
-                                    20, // Giving it half of the screen width minus a small margin
-                                padding: EdgeInsets.only(
-                                    left:
-                                        10), // Padding to add spacing between the two widgets
-                                child: DropdownButtonFormField<int>(
+                                width:
+                                    MediaQuery.of(context).size.width / 2 - 20,
+                                padding: EdgeInsets.only(left: 10),
+                                child: TextFormField(
                                   decoration: inputDecoration.copyWith(
                                     labelText: 'Năm sản xuất',
                                     labelStyle: TextStyle(fontSize: 16),
                                   ),
-                                  dropdownColor: Colors.grey[200],
-                                  items: yearList.map((year) {
-                                    return DropdownMenuItem<int>(
-                                      value: year,
-                                      child: SizedBox(
-                                        width: 60,
-                                        child: Center(
-                                          child: Text(year.toString()),
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
                                   onChanged: (value) {
                                     setState(() {
+                                      // Parse the input value to an integer and set it to _manufacturingYear
                                       _manufacturingYear =
-                                          value ?? DateTime.now().year;
+                                          int.tryParse(value) ??
+                                              DateTime.now().year;
                                     });
                                   },
                                   validator: (value) {
-                                    if (value == null) {
-                                      return 'Vui lòng chọn năm sản xuất';
+                                    if (value == null || value.isEmpty) {
+                                      return 'Vui lòng nhập năm sản xuất';
+                                    }
+                                    // You can add additional validation if needed
+                                    int? inputYear = int.tryParse(value);
+
+                                    if (inputYear == null) {
+                                      return 'Vui lòng nhập một năm hợp lệ';
+                                    }
+
+                                    int currentYear = DateTime.now().year;
+
+                                    if (inputYear > currentYear) {
+                                      return 'Năm sản xuất không được\nquá năm hiện tại';
                                     }
                                     return null;
                                   },
                                   onSaved: (value) {
-                                    _manufacturingYear =
-                                        value ?? DateTime.now().year;
+                                    // Similar to onChanged, parse the input value to an integer and set it to _manufacturingYear
+                                    _manufacturingYear = int.tryParse(value!) ??
+                                        DateTime.now().year;
                                   },
                                 ),
                               ),

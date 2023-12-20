@@ -58,6 +58,7 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
   bool isLoading = true;
   int unreadNotificationCount = 0;
   LatLng? currentLocation;
+  bool _isLoading = false;
   final ShakeAnimationController _shakeAnimationController =
       ShakeAnimationController();
   // Method to show the shift registration popup
@@ -728,181 +729,201 @@ class _TechncianHomePageBodyState extends State<TechncianHomePageBody> {
     );
   }
 
+  Future<void> reloadData() async {
+    _loadInprogressBookings();
+    displayFeedbackForBooking(widget.userId);
+    await fetchTechInfo().then((value) {
+      if (mounted) {
+        // Check if the widget is still in the tree
+        setState(() {
+          _tech = value;
+        });
+      }
+    });
+    loadCurrentWeek();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Container(
-        color: FrontendConfigs.kBackgrColor,
-        child: Stack(
-          children: <Widget>[
-            // Image container
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xffffa585), Color(0xffffeda0)],
+    return RefreshIndicator(
+      onRefresh: () async {
+        await reloadData();
+      },
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        child: Container(
+          color: FrontendConfigs.kBackgrColor,
+          child: Stack(
+            children: <Widget>[
+              // Image container
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xffffa585), Color(0xffffeda0)],
+                  ),
                 ),
+                width: double.infinity,
+                height: 300,
               ),
-              width: double.infinity,
-              height: 300,
-            ),
-            // Content with Padding instead of Transform
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: EdgeInsets.only(
-                    top: 120), // Pushes content up by 150 pixels
-                child: Container(
-                  // color: FrontendConfigs.kIconColor,
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 20,
-                      ),
-                      Container(
-                        margin: EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(
-                              32), // Set the border radius to 10
+              // Content with Padding instead of Transform
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                      top: 120), // Pushes content up by 150 pixels
+                  child: Container(
+                    // color: FrontendConfigs.kIconColor,
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 20,
                         ),
-                        child: Column(
-                          children: [
-                            buildQuickAccessButtons(),
-                            SizedBox(
-                              height: 8,
-                            ),
-                            _buildConditionalWidget(),
-                          ],
-                        ),
-                      ),
-
-                      SizedBox(
-                        height: 20,
-                      ),
-
-                      Container(
+                        Container(
                           margin: EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Colors.transparent,
                             borderRadius: BorderRadius.circular(
-                                16), // Set the border radius to 10
+                                32), // Set the border radius to 10
                           ),
                           child: Column(
                             children: [
-                              buildPerformanceMetrics(),
-                              Divider(thickness: 1, height: 0.5),
-                              buildWeeklyTaskSchedule()
+                              buildQuickAccessButtons(),
+                              SizedBox(
+                                height: 8,
+                              ),
+                              _buildConditionalWidget(),
                             ],
-                          )),
+                          ),
+                        ),
 
-                      // ... Add more widgets as needed
-                    ],
+                        SizedBox(
+                          height: 20,
+                        ),
+
+                        Container(
+                            margin: EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(
+                                  16), // Set the border radius to 10
+                            ),
+                            child: Column(
+                              children: [
+                                buildPerformanceMetrics(),
+                                Divider(thickness: 1, height: 0.5),
+                                buildWeeklyTaskSchedule()
+                              ],
+                            )),
+
+                        // ... Add more widgets as needed
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            // Icon overlay
-            Positioned(
-                top: 65,
-                right: 16,
-                child: GestureDetector(
-                  onTap: () {
-                    // Navigator.push(
-                    //     context,
-                    //     MaterialPageRoute(
-                    //         builder: (context) => BottomNavBarView(
-                    //               userId: widget.userId,
-                    //               accountId: widget.accountId,
-                    //               initialIndex: 2,
-                    //             )));
-                  },
-                  child: Row(
-                    children: [
-                      ShakeAnimationWidget(
-                        shakeAnimationController: _shakeAnimationController,
-                        shakeAnimationType: ShakeAnimationType.RandomShake,
-                        isForward: false,
-                        shakeCount: 0,
-                        shakeRange: 0.2,
-                        child: IconButton(
-                          icon: badges.Badge(
-                            position: badges.BadgePosition.custom(
-                                start: 13, bottom: 10),
-                            badgeContent: Text(
-                              unreadNotificationCount > 0
-                                  ? '$unreadNotificationCount'
-                                  : '',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            child: Image.asset(
-                              'assets/icons/notification.png',
-                              height: 20,
-                              width: 20,
-                            ),
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => NotificationView(
-                                    accountId: _tech!.accountId),
+              // Icon overlay
+              Positioned(
+                  top: 65,
+                  right: 16,
+                  child: GestureDetector(
+                    onTap: () {
+                      // Navigator.push(
+                      //     context,
+                      //     MaterialPageRoute(
+                      //         builder: (context) => BottomNavBarView(
+                      //               userId: widget.userId,
+                      //               accountId: widget.accountId,
+                      //               initialIndex: 2,
+                      //             )));
+                    },
+                    child: Row(
+                      children: [
+                        ShakeAnimationWidget(
+                          shakeAnimationController: _shakeAnimationController,
+                          shakeAnimationType: ShakeAnimationType.RandomShake,
+                          isForward: false,
+                          shakeCount: 0,
+                          shakeRange: 0.2,
+                          child: IconButton(
+                            icon: badges.Badge(
+                              position: badges.BadgePosition.custom(
+                                  start: 13, bottom: 10),
+                              badgeContent: Text(
+                                unreadNotificationCount > 0
+                                    ? '$unreadNotificationCount'
+                                    : '',
+                                style: TextStyle(color: Colors.white),
                               ),
-                            );
-                          },
+                              child: Image.asset(
+                                'assets/icons/notification.png',
+                                height: 20,
+                                width: 20,
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => NotificationView(
+                                      accountId: _tech!.accountId),
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      SizedBox(
-                        width: 6,
-                      ),
-                      CircleAvatar(
-                          backgroundColor: FrontendConfigs.kIconColor,
-                          radius: 25,
-                          child: ClipOval(
-                            child: _tech?.avatar != null &&
-                                    _tech!.avatar!.isNotEmpty
-                                ? Image.network(
-                                    _tech!.avatar!,
-                                    width: 64,
-                                    height: 64,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Icon(Icons.person,
-                                    size:
-                                        64), // Hiển thị biểu tượng mặc định nếu `_tech?.avatar` là null hoặc rỗng
-                          )),
-                    ],
-                  ),
-                )),
-            // Welcome text on top left
-            Positioned(
-              top: 70,
-              left: 18,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Xin chào,',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white60,
-                      fontWeight: FontWeight.bold,
+                        SizedBox(
+                          width: 6,
+                        ),
+                        CircleAvatar(
+                            backgroundColor: FrontendConfigs.kIconColor,
+                            radius: 25,
+                            child: ClipOval(
+                              child: _tech?.avatar != null &&
+                                      _tech!.avatar!.isNotEmpty
+                                  ? Image.network(
+                                      _tech!.avatar!,
+                                      width: 64,
+                                      height: 64,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Icon(Icons.person,
+                                      size:
+                                          64), // Hiển thị biểu tượng mặc định nếu `_tech?.avatar` là null hoặc rỗng
+                            )),
+                      ],
                     ),
-                  ),
-                  Text(
-                    _tech?.fullname ?? '',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                      letterSpacing: 0.5,
-                      color: FrontendConfigs.kAuthColor,
+                  )),
+              // Welcome text on top left
+              Positioned(
+                top: 70,
+                left: 18,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Xin chào,',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white60,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                    Text(
+                      _tech?.fullname ?? '',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                        letterSpacing: 0.5,
+                        color: FrontendConfigs.kAuthColor,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -148,6 +148,38 @@ class _CarListViewState extends State<CarListView> {
     }
   }
 
+  Future<Vehicle> fetchUpdatedCarData(String carId) async {
+    // First, change the status of the car
+    // final String changeStatusUrl =
+    //     'https://rescuecapstoneapi.azurewebsites.net/api/Car/Delete?id=$carId';
+    // await http.get(Uri.parse(
+    //     changeStatusUrl)); // Assuming this is correct for changing status
+
+    // Then, fetch the updated car data
+    final String fetchCarUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Vehicle/Get?id=$carId'; // Replace with your actual API endpoint for fetching car data
+
+    final response =
+        await http.get(Uri.parse(fetchCarUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
+    try {
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = json.decode(response.body);
+        var dataField = data['data'];
+        // Assuming the response data is in the format you need
+        return Vehicle.fromJson(
+            dataField); // Convert the data to a CustomerCar object
+      } else {
+        throw Exception('Failed to load updated car data from API');
+      }
+    } catch (e) {
+      print('Error fetching updated CarModel: $e');
+      throw Exception('Error fetching updated CarModel: $e');
+    }
+  }
+
   List<Vehicle> sortCarsByName(List<Vehicle> cars, bool ascending) {
     return List.from(cars)
       ..sort((a, b) {
@@ -245,78 +277,118 @@ class _CarListViewState extends State<CarListView> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _handleRefresh,
-        child: Column(
-          children: [
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8), // Slightly more rounded
-                border: Border.all(
-                  color:
-                      const Color.fromARGB(255, 154, 180, 225), // Changed color
-                  width: 1,
+        onRefresh: () => _handleRefresh(),
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius:
+                      BorderRadius.circular(8), // Slightly more rounded
+                  border: Border.all(
+                    color: const Color.fromARGB(
+                        255, 154, 180, 225), // Changed color
+                    width: 1,
+                  ),
+                  color: Colors.white, // Added background color
                 ),
-                color: Colors.white, // Added background color
-              ),
-              child: TextField(
-                controller: _controller,
-                onChanged: (query) {
-                  setState(() {
-                    searchQuery = query;
-                  });
-                },
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'Tìm kiếm tên hoặc biển số',
+                child: TextField(
+                  controller: _controller,
+                  onChanged: (query) {
+                    setState(() {
+                      searchQuery = query;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Tìm kiếm tên hoặc biển số',
 
-                  prefixIcon: Icon(Icons.search), // Added search icon
-                  suffixIcon: searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(Icons.clear),
-                          onPressed: () {
-                            setState(() {
-                              _controller.clear();
-                              searchQuery = '';
-                            });
-                          },
-                        )
-                      : null,
-                  hintStyle: TextStyle(color: Colors.grey),
+                    prefixIcon: Icon(Icons.search), // Added search icon
+                    suffixIcon: searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(Icons.clear),
+                            onPressed: () {
+                              setState(() {
+                                _controller.clear();
+                                searchQuery = '';
+                              });
+                            },
+                          )
+                        : null,
+                    hintStyle: TextStyle(color: Colors.grey),
+                  ),
                 ),
               ),
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            Expanded(
-              child: isLoading
+              SizedBox(
+                height: 10,
+              ),
+              isLoading
                   ? LoadingState()
                   : filteredCars.isNotEmpty
                       ? SingleChildScrollView(
                           child: Column(
                             children: filteredCars
-                                .map((vehicle) => CarCard(
-                                      vehicle: vehicle,
-                                      userId: widget.userId,
-                                      accountId: widget.accountId,
+                                .asMap()
+                                .map((index, vehicle) => MapEntry(
+                                      index,
+                                      Dismissible(
+                                        key: Key(vehicle.id),
+                                        direction: DismissDirection.endToStart,
+                                        confirmDismiss: (direction) async {
+                                          // Thêm logic xác nhận tại đây nếu cần
+                                          return true; // Hiện tại luôn cho phép dismiss
+                                        },
+                                        onDismissed: (direction) {
+                                          // Thêm logic xử lý khi dismiss tại đây
+                                          _handleSwipeDismiss(index, context);
+                                        },
+                                        background: Container(
+                                          color: Colors.red,
+                                          child: Align(
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: <Widget>[
+                                                Icon(Icons.delete,
+                                                    color: Colors.white),
+                                                Text('Đổi trạng thái',
+                                                    style: TextStyle(
+                                                        color: Colors.white)),
+                                                SizedBox(width: 20),
+                                              ],
+                                            ),
+                                            alignment: Alignment.centerRight,
+                                          ),
+                                        ),
+                                        child: GestureDetector(
+                                          child: CarCard(
+                                            vehicle: vehicle,
+                                            userId: widget.userId,
+                                            accountId: widget.accountId,
+                                          ),
+                                        ),
+                                      ),
                                     ))
+                                .values
                                 .toList(),
                           ),
                         )
                       : Center(
                           child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.car_crash, size: 60),
-                            Text(
-                              'Danh sách xe đang trống.',
-                              style: TextStyle(fontSize: 20),
-                            ),
-                          ],
-                        )), // Show this when filteredCars is empty
-            ),
-          ],
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.car_crash, size: 60),
+                              Text(
+                                'Danh sách xe đang trống.',
+                                style: TextStyle(fontSize: 20),
+                              ),
+                            ],
+                          ),
+                        )
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -338,6 +410,47 @@ class _CarListViewState extends State<CarListView> {
         child: Icon(Icons.add),
       ),
     );
+  }
+
+  Future<void> changeStatusRescueVehicle(String id) async {
+    final String apiUrl =
+        'https://rescuecapstoneapi.azurewebsites.net/api/Vehicle/Delete?id=$id';
+
+    final response =
+        await http.post(Uri.parse(apiUrl), headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $accessToken'
+    });
+
+    try {
+      if (response.statusCode == 200) {
+        print('Change status successfuly');
+      } else {
+        throw Exception('Failed to load data from API');
+      }
+    } catch (e) {
+      print('Delete not ok: $e');
+      // Handle the error appropriately
+    }
+  }
+
+  void _handleSwipeDismiss(int index, BuildContext context) async {
+    final customerId = carData[index].id;
+
+    // Change the status of the car
+    await changeStatusRescueVehicle(customerId);
+
+    // Remove the dismissed item from the list
+    setState(() {
+      carData.removeAt(index);
+    });
+
+    // Optionally, fetch updated car data and add it to your list
+    final updatedCarData = await fetchUpdatedCarData(customerId);
+    setState(() {
+      carData.insert(index,
+          updatedCarData); // Re-insert at the same position with updated data
+    });
   }
 
   Future<void> _handleRefresh() async {

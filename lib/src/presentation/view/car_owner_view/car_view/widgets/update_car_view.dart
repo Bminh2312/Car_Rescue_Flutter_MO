@@ -2,12 +2,14 @@ import 'dart:convert';
 
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
+import 'package:CarRescue/src/presentation/elements/car_brand.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/car_view/car_view.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
@@ -51,11 +53,13 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
   int _manufacturingYear = 0;
   bool _isLoading = false;
   bool _isValidate = false;
+  List<CarBrand> _brands = [];
   final titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
   final inputDecoration = InputDecoration(
     border: OutlineInputBorder(),
     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
   );
+
   Future<bool> updateCarApproval({
     required String id,
     required String rvoid,
@@ -103,10 +107,11 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
     // Make the API call
     var response = await http.put(
       Uri.parse(
-          'https://rescuecapstoneapi.azurewebsites.net/api/Vehicle/UpdateApproval'),headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $accessToken'
-        },
+          'https://rescuecapstoneapi.azurewebsites.net/api/Vehicle/UpdateApproval'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $accessToken'
+      },
       body: jsonEncode(payload),
     );
 
@@ -189,6 +194,33 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
     }
   }
 
+  Future<List<CarBrand>> fetchVehicleBrands() async {
+    const String apiUrl =
+        'https://carapi.app/api/makes'; // Replace with actual API URL
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      Map<String, dynamic> responseBody = json.decode(response.body);
+      List<dynamic> brandsJson =
+          responseBody['data']; // Access the 'data' field
+
+      return brandsJson.map((json) => CarBrand.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load vehicle brands');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchVehicleBrands().then((brands) {
+      setState(() {
+        _brands = brands;
+        _isLoading = false;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(children: [
@@ -222,27 +254,47 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
                                       onSaved: (value) {
                                         _licensePlate = value!;
                                       },
-                                    ),
-                                    SizedBox(height: 12),
-                                    TextFormField(
-                                      initialValue:
-                                          widget.vehicle?.manufacturer,
-                                      decoration: inputDecoration.copyWith(
-                                        icon: Icon(Icons.drive_eta),
-                                        labelText: 'Hãng xe',
-                                      ),
                                       validator: (value) {
-                                        if (value == null ||
-                                            value.trim().isEmpty) {
-                                          return 'Vui lòng nhập hãng xe';
+                                        if (value == null || value.isEmpty) {
+                                          print(value);
+                                          return 'Vui lòng nhập biển số xe';
                                         }
-                                        _isValidate = true;
+                                        RegExp regex = RegExp(
+                                            r'^([1-9][1-9][A-Z]-\d{4,5})$');
+
+                                        if (!regex
+                                            .hasMatch(value.toUpperCase())) {
+                                          return 'Biển số xe không hợp lệ';
+                                        }
                                         return null;
                                       },
-                                      onSaved: (value) {
-                                        _manufacturer = value!;
-                                      },
                                     ),
+                                    SizedBox(height: 12),
+                                    DropdownButtonFormField<String>(
+                                      value: widget.vehicle!.manufacturer,
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Vui lòng chọn hãng xe';
+                                        }
+                                        return null;
+                                      },
+                                      onChanged: (newValue) {
+                                        setState(() {
+                                          _manufacturer = newValue!;
+                                        });
+                                      },
+                                      items: _brands
+                                          .map<DropdownMenuItem<String>>(
+                                              (CarBrand brand) {
+                                        return DropdownMenuItem<String>(
+                                          value: brand.name,
+                                          child: Text(brand.name),
+                                        );
+                                      }).toList(),
+                                      decoration: InputDecoration(
+                                        labelText: 'Chọn hãng xe',
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -348,6 +400,9 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
                                       print(value);
                                       return 'Vui lòng nhập màu sắc';
                                     }
+                                    if (RegExp(r'[0-9]').hasMatch(value)) {
+                                      return 'Màu sắc không được chứa số';
+                                    }
                                     return null;
                                   },
                                   onSaved: (value) {
@@ -356,44 +411,51 @@ class _UpdateCarScreenState extends State<UpdateCarScreen> {
                                 ),
                               ),
                               Container(
-                                width: MediaQuery.of(context).size.width / 2 -
-                                    20, // Giving it half of the screen width minus a small margin
-                                padding: EdgeInsets.only(
-                                    left:
-                                        10), // Padding to add spacing between the two widgets
-                                child: DropdownButtonFormField<int>(
-                                  value: widget.vehicle!.manufacturingYear,
+                                width:
+                                    MediaQuery.of(context).size.width / 2 - 20,
+                                padding: EdgeInsets.only(left: 10),
+                                child: TextFormField(
+                                  initialValue: widget
+                                      .vehicle?.manufacturingYear
+                                      .toString(),
                                   decoration: inputDecoration.copyWith(
                                     labelText: 'Năm sản xuất',
                                     labelStyle: TextStyle(fontSize: 16),
                                   ),
-                                  dropdownColor: Colors.grey[200],
-                                  items: yearList.map((year) {
-                                    return DropdownMenuItem<int>(
-                                      value: year,
-                                      child: SizedBox(
-                                        width: 60,
-                                        child: Center(
-                                          child: Text(year.toString()),
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
                                   onChanged: (value) {
                                     setState(() {
+                                      // Parse the input value to an integer and set it to _manufacturingYear
                                       _manufacturingYear =
-                                          value ?? DateTime.now().year;
+                                          int.tryParse(value) ??
+                                              DateTime.now().year;
                                     });
                                   },
                                   validator: (value) {
-                                    if (value == null) {
-                                      return 'Vui lòng chọn năm sản xuất';
+                                    if (value == null || value.isEmpty) {
+                                      return 'Vui lòng nhập năm sản xuất';
+                                    }
+                                    // You can add additional validation if needed
+                                    int? inputYear = int.tryParse(value);
+
+                                    if (inputYear == null) {
+                                      return 'Vui lòng nhập một năm hợp lệ';
+                                    }
+
+                                    int currentYear = DateTime.now().year;
+
+                                    if (inputYear > currentYear) {
+                                      return 'Năm sản xuất không được\nquá năm hiện tại';
                                     }
                                     return null;
                                   },
                                   onSaved: (value) {
-                                    _manufacturingYear =
-                                        value ?? DateTime.now().year;
+                                    // Similar to onChanged, parse the input value to an integer and set it to _manufacturingYear
+                                    _manufacturingYear = int.tryParse(value!) ??
+                                        DateTime.now().year;
                                   },
                                 ),
                               ),

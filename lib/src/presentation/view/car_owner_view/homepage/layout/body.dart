@@ -71,6 +71,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   String? deviceToken;
   int unreadNotificationCount = 0;
+  bool isLoading = false;
   final ShakeAnimationController _shakeAnimationController =
       ShakeAnimationController();
   @override
@@ -224,10 +225,6 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
     final owner = RescueVehicleOwner.fromJson(json!);
     print(owner);
     return owner;
-  }
-
-  void reloadData() {
-    displayFeedbackForBooking(widget.userId);
   }
 
   Future<void> displayFeedbackForBooking(String userId) async {
@@ -641,7 +638,7 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
                       builder: (context) => BookingListView(
                           userId: widget.userId, accountId: widget.accountId),
                     ),
-                  ).then((value) => {reloadData()});
+                  ).then((value) => {_handleRefresh()});
                 },
               ),
               QuickAccessButton(
@@ -750,195 +747,232 @@ class _CarOwnerHomePageBodyState extends State<CarOwnerHomePageBody>
     );
   }
 
+  Future<void> _handleRefresh() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      setState(() {
+        loadWalletInfo(widget.userId);
+        displayFeedbackForBooking(widget.userId);
+        loadCurrentWeek();
+        fetchRVOInfo().then((value) {
+          if (mounted) {
+            // Check if the widget is still in the tree
+            setState(() {
+              _owner = value;
+            });
+          }
+        });
+      });
+    } catch (e) {
+      print("Error during refresh: $e");
+      // Optionally show a message to the user
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
+
   @override
   //   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Container(
-        color: Color.fromARGB(34, 158, 158, 158),
-        child: Stack(
-          children: <Widget>[
-            // Image container
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xffffa585), Color(0xffffeda0)],
-                ),
-              ),
-              width: double.infinity,
-              height: 300,
-            ),
-            // Content with Padding instead of Transform
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: EdgeInsets.only(
-                    top: 110), // Pushes content up by 150 pixels
-                child: Container(
-                  // color: FrontendConfigs.kIconColor,
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 20,
-                      ),
-                      Container(
-                        margin: EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(
-                              16), // Set the border radius to 10
-                        ),
-                        child: Column(
-                          children: [
-                            buildQuickAccessButtons(),
-                            Divider(thickness: 1, height: 0.5),
-                            buildQuickRegister(),
-
-                            // Divider(
-                            //   thickness: 1,
-                            //   height: 0.5,
-                            // ),
-                          ],
+    return RefreshIndicator(
+      onRefresh: () async {
+        _handleRefresh();
+      },
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        child: isLoading
+            ? LoadingState()
+            : Container(
+                color: Color.fromARGB(34, 158, 158, 158),
+                child: Stack(
+                  children: <Widget>[
+                    // Image container
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xffffa585), Color(0xffffeda0)],
                         ),
                       ),
-                      SizedBox(
-                        height: 35,
-                      ),
-                      Container(
-                        margin: EdgeInsets.symmetric(horizontal: 16),
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: buildWallet(),
-                      ),
-                      SizedBox(
-                        height: 15,
-                      ),
-                      Container(
-                          margin: EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                                16), // Set the border radius to 10
-                          ),
+                      width: double.infinity,
+                      height: 300,
+                    ),
+                    // Content with Padding instead of Transform
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                            top: 110), // Pushes content up by 150 pixels
+                        child: Container(
+                          // color: FrontendConfigs.kIconColor,
                           child: Column(
                             children: [
-                              buildPerformanceMetrics(),
-                              Divider(thickness: 1, height: 0.5),
-                              buildWeeklyTaskSchedule(),
-                            ],
-                          )),
+                              SizedBox(
+                                height: 20,
+                              ),
+                              Container(
+                                margin: EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(
+                                      16), // Set the border radius to 10
+                                ),
+                                child: Column(
+                                  children: [
+                                    buildQuickAccessButtons(),
+                                    Divider(thickness: 1, height: 0.5),
+                                    buildQuickRegister(),
 
-                      // ... Add more widgets as needed
-                    ],
-                  ),
+                                    // Divider(
+                                    //   thickness: 1,
+                                    //   height: 0.5,
+                                    // ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                height: 35,
+                              ),
+                              Container(
+                                margin: EdgeInsets.symmetric(horizontal: 16),
+                                padding: EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: buildWallet(),
+                              ),
+                              SizedBox(
+                                height: 15,
+                              ),
+                              Container(
+                                  margin: EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(
+                                        16), // Set the border radius to 10
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      buildPerformanceMetrics(),
+                                      Divider(thickness: 1, height: 0.5),
+                                      buildWeeklyTaskSchedule(),
+                                    ],
+                                  )),
+
+                              // ... Add more widgets as needed
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Icon overlay
+                    Positioned(
+                        top: 65,
+                        right: 16,
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => BottomNavBarCarView(
+                                          userId: widget.userId,
+                                          accountId: widget.accountId,
+                                          initialIndex: 2,
+                                        )));
+                          },
+                          child: Row(
+                            children: [
+                              ShakeAnimationWidget(
+                                shakeAnimationController:
+                                    _shakeAnimationController,
+                                shakeAnimationType:
+                                    ShakeAnimationType.RandomShake,
+                                isForward: false,
+                                shakeCount: 0,
+                                shakeRange: 0.2,
+                                child: IconButton(
+                                  icon: badges.Badge(
+                                    position: badges.BadgePosition.custom(
+                                        start: 13, bottom: 10),
+                                    badgeContent: Text(
+                                      unreadNotificationCount > 0
+                                          ? '$unreadNotificationCount'
+                                          : '',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                    child: Image.asset(
+                                      'assets/icons/notification.png',
+                                      height: 20,
+                                      width: 20,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => NotificationView(
+                                            accountId: _owner!.accountId),
+                                      ),
+                                    ).then((value) => {_handleRefresh()});
+                                  },
+                                ),
+                              ),
+                              SizedBox(
+                                width: 6,
+                              ),
+                              CircleAvatar(
+                                backgroundColor: FrontendConfigs.kIconColor,
+                                radius: 25,
+                                child: ClipOval(
+                                  child: Image(
+                                    image: NetworkImage(
+                                      _owner?.avatar ??
+                                          'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431',
+                                    ),
+                                    width: 64, // double the radius
+                                    height: 64, // double the radius
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+                    // Welcome text on top left
+                    Positioned(
+                      top: 70,
+                      left: 18,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Xin chào,',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.white60,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            _owner?.fullname ?? '',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                              letterSpacing: 0.5,
+                              color: FrontendConfigs.kAuthColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            // Icon overlay
-            Positioned(
-                top: 65,
-                right: 16,
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => BottomNavBarCarView(
-                                  userId: widget.userId,
-                                  accountId: widget.accountId,
-                                  initialIndex: 2,
-                                )));
-                  },
-                  child: Row(
-                    children: [
-                      ShakeAnimationWidget(
-                        shakeAnimationController: _shakeAnimationController,
-                        shakeAnimationType: ShakeAnimationType.RandomShake,
-                        isForward: false,
-                        shakeCount: 0,
-                        shakeRange: 0.2,
-                        child: IconButton(
-                          icon: badges.Badge(
-                            position: badges.BadgePosition.custom(
-                                start: 13, bottom: 10),
-                            badgeContent: Text(
-                              unreadNotificationCount > 0
-                                  ? '$unreadNotificationCount'
-                                  : '',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            child: Image.asset(
-                              'assets/icons/notification.png',
-                              height: 20,
-                              width: 20,
-                            ),
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => NotificationView(
-                                    accountId: _owner!.accountId),
-                              ),
-                            ).then((value) => {reloadData()});
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        width: 6,
-                      ),
-                      CircleAvatar(
-                        backgroundColor: FrontendConfigs.kIconColor,
-                        radius: 25,
-                        child: ClipOval(
-                          child: Image(
-                            image: NetworkImage(
-                              _owner?.avatar ??
-                                  'https://firebasestorage.googleapis.com/v0/b/car-rescue-399511.appspot.com/o/profile_images%2Fdefaultava.jpg?alt=media&token=72b870e8-a42d-418c-af41-9ff4acd41431',
-                            ),
-                            width: 64, // double the radius
-                            height: 64, // double the radius
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
-            // Welcome text on top left
-            Positioned(
-              top: 70,
-              left: 18,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Xin chào,',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white60,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    _owner?.fullname ?? '',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                      letterSpacing: 0.5,
-                      color: FrontendConfigs.kAuthColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

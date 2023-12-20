@@ -279,80 +279,95 @@ class _CarListViewState extends State<CarListView> {
           Expanded(
               child: isLoading
                   ? LoadingState()
-                  : SingleChildScrollView(
-                      child: Column(
-                      children: filteredCars
-                          .asMap()
-                          .map((index, customerCar) => MapEntry(
-                                index,
-                                Dismissible(
-                                  key: Key(customerCar.id),
-                                  direction: DismissDirection.endToStart,
-                                  confirmDismiss: (direction) async {
-                                    if (customerCar.status.toLowerCase() ==
-                                        'active') {
-                                      return await showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: Text('Xác nhận'),
-                                            content: Text(
-                                                'Bạn có chắc chắn muốn đổi trạng thái của xe này không?'),
-                                            actions: <Widget>[
-                                              TextButton(
-                                                child: Text('Hủy bỏ'),
-                                                onPressed: () {
-                                                  Navigator.of(context).pop(
-                                                      false); // Dismiss the dialog and don't dismiss the item
-                                                },
-                                              ),
-                                              TextButton(
-                                                child: Text('Xác nhận'),
-                                                onPressed: () {
-                                                  Navigator.of(context).pop(
-                                                      true); // Dismiss the dialog and proceed with item dismissal
-                                                },
-                                              ),
-                                            ],
-                                          );
+                  : filteredCars.isNotEmpty
+                      ? SingleChildScrollView(
+                          child: Column(
+                            children: filteredCars
+                                .asMap()
+                                .map((index, customerCar) => MapEntry(
+                                      index,
+                                      Dismissible(
+                                        key: Key(customerCar.id),
+                                        direction: DismissDirection.endToStart,
+                                        confirmDismiss: (direction) async {
+                                          if (customerCar.status
+                                                  .toLowerCase() ==
+                                              'active') {
+                                            return await showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  title: Text('Xác nhận'),
+                                                  content: Text(
+                                                      'Bạn có chắc chắn muốn đổi trạng thái của xe này không?'),
+                                                  actions: <Widget>[
+                                                    TextButton(
+                                                      child: Text('Hủy bỏ'),
+                                                      onPressed: () {
+                                                        Navigator.of(context).pop(
+                                                            false); // Dismiss the dialog and don't dismiss the item
+                                                      },
+                                                    ),
+                                                    TextButton(
+                                                      child: Text('Xác nhận'),
+                                                      onPressed: () {
+                                                        Navigator.of(context).pop(
+                                                            true); // Dismiss the dialog and proceed with item dismissal
+                                                      },
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          }
+                                          return false; // Don't allow dismissal if the status is not 'inactive'
                                         },
-                                      );
-                                    }
-                                    return false; // Don't allow dismissal if the status is not 'inactive'
-                                  },
-                                  onDismissed: (direction) {
-                                    _handleSwipeDismiss(index, context);
-                                  },
-                                  background: Container(
-                                    color: Colors.red,
-                                    child: Align(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        children: <Widget>[
-                                          Icon(Icons.delete,
-                                              color: Colors.white),
-                                          Text('Đổi trạng thái',
-                                              style: TextStyle(
-                                                  color: Colors.white)),
-                                          SizedBox(width: 20),
-                                        ],
+                                        onDismissed: (direction) {
+                                          _handleSwipeDismiss(index, context);
+                                        },
+                                        background: Container(
+                                          color: Colors.red,
+                                          child: Align(
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: <Widget>[
+                                                Icon(Icons.delete,
+                                                    color: Colors.white),
+                                                Text('Đổi trạng thái',
+                                                    style: TextStyle(
+                                                        color: Colors.white)),
+                                                SizedBox(width: 20),
+                                              ],
+                                            ),
+                                            alignment: Alignment.centerRight,
+                                          ),
+                                        ),
+                                        child: GestureDetector(
+                                          child: CarCard(
+                                            accountId: widget.accountId,
+                                            customerCar: customerCar,
+                                            userId: widget.userId,
+                                          ),
+                                        ),
                                       ),
-                                      alignment: Alignment.centerRight,
-                                    ),
-                                  ),
-                                  child: GestureDetector(
-                                    child: CarCard(
-                                      accountId: widget.accountId,
-                                      customerCar: customerCar,
-                                      userId: widget.userId,
-                                    ),
-                                  ),
-                                ),
-                              ))
-                          .values
-                          .toList(),
-                    )))
+                                    ))
+                                .values
+                                .toList(),
+                          ),
+                        )
+                      : Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.car_crash, size: 60),
+                              Text(
+                                'Danh sách xe đang trống.',
+                                style: TextStyle(fontSize: 20),
+                              ),
+                            ],
+                          ),
+                        ))
         ],
       ),
       floatingActionButton: FloatingActionButton(

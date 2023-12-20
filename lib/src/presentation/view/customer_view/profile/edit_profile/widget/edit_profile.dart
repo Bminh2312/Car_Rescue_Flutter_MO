@@ -217,7 +217,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
       String defaultDate = DateFormat('yyyy-MM-dd').format(_birthday);
       customer.birthdate = defaultDate;
     }
-
+    
     // Gọi hàm cập nhật thông tin khách hàng từ _profileProvider
     bool checkUpdate = await _profileProvider.updateCustomer(customer);
     if (mounted) {
