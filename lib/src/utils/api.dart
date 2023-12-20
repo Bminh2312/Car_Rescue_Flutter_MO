@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:CarRescue/src/enviroment/env.dart';
 import 'package:CarRescue/src/models/car_model.dart';
 import 'package:CarRescue/src/models/current_week.dart';
 import 'package:CarRescue/src/models/feedback.dart';
@@ -49,7 +50,7 @@ class ManagerData {
 
 // final String apiKey1 = 'AIzaSyAiyZLdDwpp0_dAOPNBMItItXixgLH9ABo';
 final String apiKey1 = 'AIzaSyDbkEOpLXI8iXrgd_0qwMul8bVjjKTNcLs';
-
+final String keyGoong = Environment.API_KEY_GOONG;
 class AuthService {
   String? accessToken = GetStorage().read<String>("accessToken");
 
@@ -741,7 +742,7 @@ class AuthService {
       // Replace with your actual API key
       final String urlDeparture =
           // 'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=${apiKey1}';
-          'https://rsapi.goong.io/Geocode?latlng=$latDeparture,$longDeparture&api_key=267Zysi7kKypsNGSqcIBzWc3wxpz7rkeWguYkiM4';
+          'https://rsapi.goong.io/Geocode?latlng=$latDeparture,$longDeparture&api_key=${keyGoong}';
       final responseDeparture = await http.get(Uri.parse(urlDeparture));
       print(responseDeparture.statusCode);
       print('Response body: ${responseDeparture.body}');
@@ -770,7 +771,7 @@ class AuthService {
     if (latDestination != null && longDestination != null) {
       // Replace with your actual API key
       final String urlDestination =
-          'https://rsapi.goong.io/Geocode?latlng=$latDestination,$longDestination&api_key=267Zysi7kKypsNGSqcIBzWc3wxpz7rkeWguYkiM4';
+          'https://rsapi.goong.io/Geocode?latlng=$latDestination,$longDestination&api_key=${keyGoong}';
       // 'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=$apiKey1';
       print(apiKey1);
       final responseDestination = await http.get(Uri.parse(urlDestination));

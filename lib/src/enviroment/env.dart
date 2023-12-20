@@ -9,6 +9,9 @@ class Environment {
   static const String API_KEY_PREDICTIONS =
       "AIzaSyBZmPE0cCErk-nZtza3mDsXwIKLhS2s8Jg";
 
+  static const String API_KEY_GOONG =
+      "uYO7jxleAR8KO17JgxrimjEvKQy0M7EOSc21T9Xr";
+
   static GoogleSignIn SIGN_IN = GoogleSignIn(
     scopes: <String>[
       'email',
