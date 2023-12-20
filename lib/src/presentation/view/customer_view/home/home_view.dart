@@ -7,6 +7,7 @@ import 'package:CarRescue/src/models/location_info.dart';
 import 'package:CarRescue/src/models/vehicle_item.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
+import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 
 import 'package:CarRescue/src/presentation/view/customer_view/service_details/layout/order_view.dart';
 import 'package:CarRescue/src/providers/google_map_provider.dart';
@@ -57,6 +58,7 @@ class HomeViewState extends State<HomeView> {
   int _distance = 0;
   bool _isMounted = false;
   bool isPickingPickupLocation = false;
+  bool isLoading = false;
   late Future<List<LocationInfo>> predictions;
   late Future<PlacesAutocompleteResponse> predictionsPlaces;
   String? _errorDistance;
@@ -100,9 +102,11 @@ class HomeViewState extends State<HomeView> {
         .asUint8List();
   }
 
+  
+
   Future setSourceAndDepartureIcons() async {
     final Uint8List icon1 =
-        await getBytesFromAsset('assets/images/driver_marker.png', 150);
+        await getBytesFromAsset('assets/images/person.png', 150);
 
     departureIcon = BitmapDescriptor.fromBytes(icon1);
   }
@@ -174,6 +178,9 @@ class HomeViewState extends State<HomeView> {
   }
 
   void getCurrentLocation() async {
+    // setState(() {
+    //   isLoading = true;
+    // });
     Position? currentPosition;
     try {
       currentPosition = await Geolocator.getCurrentPosition(
@@ -204,6 +211,9 @@ class HomeViewState extends State<HomeView> {
         _latLng = LatLng(position!.latitude, position!.longitude);
       });
       updateMarker(_latLng, true);
+      // setState(() {
+      //   isLoading = false;
+      // });
     }
   }
 
@@ -289,7 +299,9 @@ class HomeViewState extends State<HomeView> {
         showText: true,
       ),
       key: homeScaffoldKey,
-      body: Stack(
+      body: isLoading
+        ? LoadingState()
+        : Stack(
         children: [
           GoogleMap(
             zoomControlsEnabled: false,

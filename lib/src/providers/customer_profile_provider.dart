@@ -34,6 +34,7 @@ String? accessToken = GetStorage().read<String>("accessToken");
   }
 
   Future<bool> updateCustomer(Customer customer) async {
+  try {
     final url = Uri.parse(
         'https://rescuecapstoneapi.azurewebsites.net/api/Customer/Update');
 
@@ -65,7 +66,14 @@ String? accessToken = GetStorage().read<String>("accessToken");
       print('Customer updated successfully');
       return true;
     } else {
-      throw Exception('Failed to update customer');
+      print('Failed to update customer. Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      return false;
     }
+  } catch (error) {
+    print('Error updating customer: $error');
+    return false;
   }
+}
+
 }
