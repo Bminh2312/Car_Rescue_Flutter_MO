@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 
 class LocationProvider {
   final String key = Environment.API_KEY_MAPS;
+  final String keyGoong = Environment.API_KEY_GOONG;
   final String url = Environment.API_URL_PLACES_NEW;
   final String keyPredictions = Environment.API_KEY_PREDICTIONS;
 

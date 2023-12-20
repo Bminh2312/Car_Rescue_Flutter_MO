@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:CarRescue/src/enviroment/env.dart';
 import 'package:CarRescue/src/models/car_model.dart';
 import 'package:CarRescue/src/models/current_week.dart';
 import 'package:CarRescue/src/models/feedback.dart';
@@ -49,6 +50,7 @@ class ManagerData {
 
 // final String apiKey1 = 'AIzaSyAiyZLdDwpp0_dAOPNBMItItXixgLH9ABo';
 final String apiKey1 = 'AIzaSyDbkEOpLXI8iXrgd_0qwMul8bVjjKTNcLs';
+final String keyGoong = Environment.API_KEY_GOONG;
 
 class AuthService {
   String? accessToken = GetStorage().read<String>("accessToken");
