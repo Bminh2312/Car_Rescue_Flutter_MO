@@ -47,7 +47,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   late Future<Customer> customerFuture;
   late Customer customer;
 
-  DateTime _birthday = DateTime(0000, 0, 0);
+  DateTime? _birthday;
   @override
   void initState() {
     super.initState();
@@ -83,7 +83,10 @@ class _EditProfileBodyState extends State<EditProfileBody> {
         }
         if (userProfile.birthdate != '') {
           _birthday = DateTime.parse(userProfile.birthdate);
-          _birthdayController.text = DateFormat('dd/MM/yyyy').format(_birthday);
+          _birthdayController.text =
+              DateFormat('dd/MM/yyyy').format(_birthday!);
+        } else {
+          _birthday = null;
         }
       });
       return userProfile;
@@ -198,6 +201,13 @@ class _EditProfileBodyState extends State<EditProfileBody> {
   }
 
   Future<bool> updateProfile(Customer customer) async {
+    if (_birthday != null) {
+      customer.birthdate = _birthdayController.text;
+    } else {
+      notify.showErrorToast('Hãy chọn ngày sinh hợp lí');
+      _isUpdating = false;
+      return false;
+    }
     await uploadImage();
     // Cập nhật thông tin khách hàng với dữ liệu mới
     customer.fullname = _nameController.text;
@@ -210,12 +220,6 @@ class _EditProfileBodyState extends State<EditProfileBody> {
 
     if (_selectedGenderString != null) {
       customer.sex = _selectedGenderString!;
-    }
-    if (_selectedBirthday != null) {
-      customer.birthdate = _birthdayController.text;
-    } else {
-      String defaultDate = DateFormat('yyyy-MM-dd').format(_birthday);
-      customer.birthdate = defaultDate;
     }
 
     // Gọi hàm cập nhật thông tin khách hàng từ _profileProvider
@@ -274,7 +278,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-              child: CircularProgressIndicator(),
+              child: LoadingState(),
             );
           } else if (snapshot.hasError) {
             // Xử lý lỗi nếu có
@@ -462,7 +466,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                           ),
                           GestureDetector(
                               onTap: () async {
-                                _pickDate(context);
+                                _pickDate1(context);
                               },
                               child: Container(
                                 decoration: BoxDecoration(
@@ -474,15 +478,24 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      DateFormat('dd-MM-yyyy')
-                                          .format(_birthday),
-                                      style: TextStyle(
-                                        fontFamily: 'Montserrat',
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                                    _birthday != null
+                                        ? Text(
+                                            DateFormat('dd-MM-yyyy')
+                                                .format(_birthday!),
+                                            style: TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          )
+                                        : Text(
+                                            "Chưa có ngày sinh",
+                                            style: TextStyle(
+                                              fontFamily: 'Montserrat',
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                   ],
                                 ),
                               )),
@@ -545,9 +558,50 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     if (selectedDate != null && selectedDate != _birthday) {
       setState(() {
         _birthday = selectedDate;
-        _birthdayController.text = DateFormat('dd-MM-yyyy').format(_birthday);
+        _birthdayController.text = DateFormat('dd-MM-yyyy').format(_birthday!);
       });
       print("date: ${_birthdayController.text}");
+    }
+  }
+
+  Future<void> _pickDate1(BuildContext context) async {
+    DateTime currentDate = DateTime.now();
+    DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: _birthday ?? currentDate,
+      firstDate: DateTime(1900),
+      lastDate: currentDate,
+    );
+
+    if (selectedDate != null) {
+      // Kiểm tra xem ngày sinh đã đủ 18 tuổi chưa
+      if (currentDate.difference(selectedDate).inDays < 365 * 18) {
+        // Hiển thị thông báo hoặc thực hiện các xử lý khác nếu ngày sinh không đủ 18 tuổi
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('Thông báo'),
+              content: Text('Bạn phải đủ 18 tuổi để sử dụng ứng dụng.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        setState(() {
+          _birthday = selectedDate;
+          _birthdayController.text =
+              DateFormat('yyyy-MM-dd').format(_birthday!);
+        });
+        print("Ngày sinh: ${_birthdayController.text}");
+      }
     }
   }
 }
