@@ -213,7 +213,9 @@ class LocationProvider {
     }
 
     final String urlDeparture =
+
         'https://rsapi.goong.io/Geocode?latlng=$latDeparture,$longDeparture&api_key=${keyGoong}';
+
 
     final responseDeparture = await http.get(Uri.parse(urlDeparture));
 

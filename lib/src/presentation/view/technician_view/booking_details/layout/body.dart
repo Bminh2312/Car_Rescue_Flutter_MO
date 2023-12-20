@@ -1749,6 +1749,19 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildSectionTitle("Thời gian"),
+                    _buildItemRow(
+                      "Được tạo lúc",
+                      Text(
+                        DateFormat('dd-MM-yyyy | HH:mm').format(widget
+                            .booking.createdAt!
+                            .toUtc()
+                            .add(Duration(hours: 14))),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: FrontendConfigs.kAuthColor,
+                            fontSize: 15),
+                      ),
+                    ),
                     if (widget.booking.status != "ASSIGNED" &&
                         widget.booking.startTime != null)
                       _buildItemRow(
@@ -1779,19 +1792,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                               fontSize: 15),
                         ),
                       ),
-                    _buildItemRow(
-                      "Được tạo lúc",
-                      Text(
-                        DateFormat('dd-MM-yyyy | HH:mm').format(widget
-                            .booking.createdAt!
-                            .toUtc()
-                            .add(Duration(hours: 14))),
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: FrontendConfigs.kAuthColor,
-                            fontSize: 15),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -1852,8 +1852,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
         bottomNavigationBar: Container(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             if (widget.booking.status != "COMPLETED" &&
-                widget.booking.status != "CANCELLED" &&
-                _currentBooking!.status != "WAITING")
+                widget.booking.status != "CANCELLED")
               Container(
                 color: Colors.white,
                 child: Row(

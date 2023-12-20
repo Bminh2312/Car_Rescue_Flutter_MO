@@ -443,9 +443,7 @@ class _WithdrawFormScreenState extends State<WithdrawFormScreen> {
 
                             // Kiểm tra xem số điện thoại có bắt đầu bằng các số nhất định không
                             // Ví dụ: Số điện thoại không được bắt đầu bằng 0 hoặc 1
-                            if (value.startsWith('1')) {
-                              return 'Số điện thoại không được bắt đầu bằng 0 hoặc 1';
-                            }
+                           
 
                             // Các kiểm tra bổ sung khác có thể được thêm vào ở đây
 

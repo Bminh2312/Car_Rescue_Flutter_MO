@@ -419,9 +419,10 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                 return 'Hãy nhập họ tên đầy đủ';
                               }
 
-                              // Check if the input contains any numeric characters
-                              if (RegExp(r'[0-9]').hasMatch(value)) {
-                                return 'Tên không được chứa số';
+                              // Kiểm tra xem tên có chứa số hay ký tự đặc biệt không
+                              if (RegExp(r'[0-9!@#%^&*(),.?":{}|<>]/')
+                                  .hasMatch(value)) {
+                                return 'Tên không được chứa số hoặc ký tự đặc biệt';
                               }
 
                               return null;
@@ -447,6 +448,9 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                               // Check if the input contains any alphabetic characters
                               if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
                                 return 'Số điện thoại chỉ được chứa các chữ số.';
+                              }
+                              if (value.contains(' ')) {
+                                return 'Số điện thoại không được chứa khoảng trắng';
                               }
 
                               return null;

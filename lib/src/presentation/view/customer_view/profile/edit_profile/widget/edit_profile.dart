@@ -221,7 +221,6 @@ class _EditProfileBodyState extends State<EditProfileBody> {
     if (_selectedGenderString != null) {
       customer.sex = _selectedGenderString!;
     }
-
     // Gọi hàm cập nhật thông tin khách hàng từ _profileProvider
     bool checkUpdate = await _profileProvider.updateCustomer(customer);
     if (mounted) {

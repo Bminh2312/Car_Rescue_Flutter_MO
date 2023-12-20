@@ -287,8 +287,6 @@ class _MapTechScreenState extends State<MapTechScreen> {
         print(
             "Technician is close to the target location. Stopping the timer.");
         if (!isArrived) {
-          
-        }
           showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -379,6 +377,8 @@ class _MapTechScreenState extends State<MapTechScreen> {
               );
             },
           );
+        }
+
         setState(() {
           isArrived = true;
         });

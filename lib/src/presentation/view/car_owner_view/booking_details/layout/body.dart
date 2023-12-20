@@ -352,9 +352,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
       });
     }
 
-    print(customerInfo!.deviceToken);
-    print(customerInfo!.accountId);
-
     _updateLoadingStatus();
   }
 
@@ -499,7 +496,7 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
   @override
   Widget build(BuildContext context) {
     // Image URLs (replace with your actual image URLs)
-
+    print(customerInfo?.fullname);
     if (_isLoading) {
       return LoadingState();
     }
@@ -772,6 +769,16 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildSectionTitle('Thời gian'),
+                      _buildItemRow(
+                        "Được tạo lúc",
+                        Text(
+                          DateFormat('dd-MM-yyyy | HH:mm').format(widget
+                              .booking.createdAt!
+                              .toUtc()
+                              .add(Duration(hours: 14))),
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
                       widget.booking.startTime != null
                           ? _buildItemRow(
                               "Bắt đầu",
@@ -797,16 +804,6 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                               ),
                             )
                           : Container(),
-                      _buildItemRow(
-                        "Được tạo lúc",
-                        Text(
-                          DateFormat('dd-MM-yyyy | HH:mm').format(widget
-                              .booking.createdAt!
-                              .toUtc()
-                              .add(Duration(hours: 14))),
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
                     ],
                   ),
                 ),

@@ -334,15 +334,11 @@ class _HistoryCardState extends State<HistoryCard>
                           Row(
                             children: [
                               Container(
-                                padding: EdgeInsets.all(1),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.black,
-                                    width: 2.0,
-                                  ),
-                                ),
+                                padding: EdgeInsets.all(4),
+                                decoration:
+                                    BoxDecoration(color: Colors.grey.shade300),
                                 child: Text(
-                                  '${booking.vehicleInfo!.licensePlate}',
+                                  '${booking.vehicleInfo?.licensePlate ?? ''}',
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: FrontendConfigs.kAuthColor),

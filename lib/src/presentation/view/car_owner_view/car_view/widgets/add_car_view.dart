@@ -1,13 +1,18 @@
+import 'dart:convert';
+
 import 'package:CarRescue/src/configuration/frontend_configs.dart';
 import 'package:CarRescue/src/configuration/show_toast_notify.dart';
+import 'package:CarRescue/src/presentation/elements/car_brand.dart';
 import 'package:CarRescue/src/presentation/elements/custom_appbar.dart';
 import 'package:CarRescue/src/presentation/elements/loading_state.dart';
 import 'package:CarRescue/src/presentation/view/car_owner_view/car_view/car_view.dart';
 import 'package:CarRescue/src/utils/api.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 
 class ManagerData {
   final String managerID;
@@ -43,6 +48,7 @@ class _AddCarScreenState extends State<AddCarScreen> {
   String _selectedType = '';
   String _color = '';
   int _manufacturingYear = 0;
+  String? _selectedBrand;
   bool _isLoading = false;
   bool _isValidate = false;
   final titleStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
@@ -53,11 +59,33 @@ class _AddCarScreenState extends State<AddCarScreen> {
   bool _isFormConfirmed = false;
   String? _deviceToken;
   String? _managerId;
+  List<CarBrand> _brands = [];
   @override
   void initState() {
     super.initState();
     _loadManager(widget.userId);
     print(widget.userId);
+    fetchVehicleBrands().then((brands) {
+      setState(() {
+        _brands = brands;
+      });
+    });
+  }
+
+  Future<List<CarBrand>> fetchVehicleBrands() async {
+    const String apiUrl =
+        'https://carapi.app/api/makes'; // Replace with actual API URL
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      Map<String, dynamic> responseBody = json.decode(response.body);
+      List<dynamic> brandsJson =
+          responseBody['data']; // Access the 'data' field
+
+      return brandsJson.map((json) => CarBrand.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load vehicle brands');
+    }
   }
 
   Future<Map<String, String>> _loadManager(String userId) async {
@@ -219,31 +247,39 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
                                         if (!regex
                                             .hasMatch(value.toUpperCase())) {
-                                          return 'Biển số xe không hợp lệ';
+                                          return 'Biển số xe không hợp lệ\n(Vd:52A-12345)';
                                         }
                                         _isValidate = true;
                                         return null;
                                       },
                                     ),
                                     SizedBox(height: 12),
-                                    TextFormField(
-                                      decoration: inputDecoration.copyWith(
-                                        icon: Icon(Icons.drive_eta),
-                                        labelText: 'Hãng xe',
-                                      ),
-                                      maxLength: 100,
+                                    DropdownButtonFormField<String>(
+                                      value: _selectedBrand,
                                       validator: (value) {
-                                        if (value == null ||
-                                            value.trim().isEmpty) {
-                                          return 'Vui lòng nhập hãng xe';
+                                        if (value == null || value.isEmpty) {
+                                          print(value);
+                                          return 'Vui lòng chọn hãng xe';
                                         }
-                                        _isValidate = true;
                                         return null;
                                       },
-                                      onSaved: (value) {
-                                        _manufacturer = value!;
+                                      onChanged: (newValue) {
+                                        setState(() {
+                                          _manufacturer = newValue!;
+                                        });
                                       },
-                                    ),
+                                      items: _brands
+                                          .map<DropdownMenuItem<String>>(
+                                              (CarBrand brand) {
+                                        return DropdownMenuItem<String>(
+                                          value: brand.name,
+                                          child: Text(brand.name),
+                                        );
+                                      }).toList(),
+                                      decoration: InputDecoration(
+                                        labelText: 'Chọn hãng xe',
+                                      ),
+                                    )
                                   ],
                                 ),
                               ),
@@ -342,9 +378,14 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      print(value);
                                       return 'Vui lòng nhập màu sắc';
                                     }
+
+                                    // Kiểm tra xem giá trị có chứa số hay không
+                                    if (RegExp(r'[0-9]').hasMatch(value)) {
+                                      return 'Không được nhập số';
+                                    }
+
                                     return null;
                                   },
                                   onSaved: (value) {
@@ -353,43 +394,49 @@ class _AddCarScreenState extends State<AddCarScreen> {
                                 ),
                               ),
                               Container(
-                                width: MediaQuery.of(context).size.width / 2 -
-                                    20, // Giving it half of the screen width minus a small margin
-                                padding: EdgeInsets.only(
-                                    left:
-                                        10), // Padding to add spacing between the two widgets
-                                child: DropdownButtonFormField<int>(
+                                width:
+                                    MediaQuery.of(context).size.width / 2 - 20,
+                                padding: EdgeInsets.only(left: 10),
+                                child: TextFormField(
                                   decoration: inputDecoration.copyWith(
                                     labelText: 'Năm sản xuất',
                                     labelStyle: TextStyle(fontSize: 16),
                                   ),
-                                  dropdownColor: Colors.grey[200],
-                                  items: yearList.map((year) {
-                                    return DropdownMenuItem<int>(
-                                      value: year,
-                                      child: SizedBox(
-                                        width: 60,
-                                        child: Center(
-                                          child: Text(year.toString()),
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
                                   onChanged: (value) {
                                     setState(() {
+                                      // Parse the input value to an integer and set it to _manufacturingYear
                                       _manufacturingYear =
-                                          value ?? DateTime.now().year;
+                                          int.tryParse(value) ??
+                                              DateTime.now().year;
                                     });
                                   },
                                   validator: (value) {
-                                    if (value == null) {
-                                      return 'Vui lòng chọn năm sản xuất';
+                                    if (value == null || value.isEmpty) {
+                                      return 'Vui lòng nhập năm sản xuất';
                                     }
+
+                                    int? inputYear = int.tryParse(value);
+
+                                    if (inputYear == null) {
+                                      return 'Vui lòng nhập một năm hợp lệ';
+                                    }
+
+                                    int currentYear = DateTime.now().year;
+
+                                    if (inputYear > currentYear) {
+                                      return 'Năm sản xuất không được\nquá năm hiện tại';
+                                    }
+
                                     return null;
                                   },
                                   onSaved: (value) {
-                                    _manufacturingYear =
-                                        value ?? DateTime.now().year;
+                                    // Similar to onChanged, parse the input value to an integer and set it to _manufacturingYear
+                                    _manufacturingYear = int.tryParse(value!) ??
+                                        DateTime.now().year;
                                   },
                                 ),
                               ),

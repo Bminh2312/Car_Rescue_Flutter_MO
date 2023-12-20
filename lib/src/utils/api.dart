@@ -742,7 +742,9 @@ class AuthService {
       // Replace with your actual API key
       final String urlDeparture =
           // 'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDeparture,$longDeparture&key=${apiKey1}';
+
           'https://rsapi.goong.io/Geocode?latlng=$latDeparture,$longDeparture&api_key=${keyGoong}';
+
       final responseDeparture = await http.get(Uri.parse(urlDeparture));
       print(responseDeparture.statusCode);
       print('Response body: ${responseDeparture.body}');
@@ -771,7 +773,9 @@ class AuthService {
     if (latDestination != null && longDestination != null) {
       // Replace with your actual API key
       final String urlDestination =
+
           'https://rsapi.goong.io/Geocode?latlng=$latDestination,$longDestination&api_key=${keyGoong}';
+
       // 'https://maps.googleapis.com/maps/api/geocode/json?latlng=$latDestination,$longDestination&key=$apiKey1';
       print(apiKey1);
       final responseDestination = await http.get(Uri.parse(urlDestination));

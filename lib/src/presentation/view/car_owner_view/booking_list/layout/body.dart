@@ -436,7 +436,8 @@ class _BookingListBodyState extends State<BookingListBody>
                       ? LoadingState()
                       : isAssiginingEmpty
                           ? EmptyState()
-                          : _buildOtherListView(assiginingBookings),
+                          : SingleChildScrollView(
+                              child: _buildOtherListView(assiginingBookings)),
                   !isDataLoaded
                       ? LoadingState()
                       : isAssiginedEmpty
@@ -465,10 +466,10 @@ class _BookingListBodyState extends State<BookingListBody>
   Future<void> _handleRefresh() async {
     // Call setState to reload the screen or perform other refresh logic
     setState(() {
-      separateBookings();
+      loadAssigningBookings();
+      loadAssignedBookings();
     });
     // Wait for a short delay to simulate network refresh
-    await Future.delayed(Duration(seconds: 6));
   }
 
   Widget _buildBookingListView(List<Booking> bookings) {

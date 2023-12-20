@@ -44,7 +44,7 @@ class CustomerInfo {
       updateAt: data['updateAt'] ?? '',
       birthdate: data['birthdate'] ?? '',
       avatar: data['avatar'] ?? '',
-      deviceToken: data['account']['deviceToken'],
+      deviceToken: data['account']['deviceToken'] ?? '',
     );
   }
 }
