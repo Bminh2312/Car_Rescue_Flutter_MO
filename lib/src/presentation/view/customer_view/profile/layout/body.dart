@@ -1,6 +1,7 @@
 import 'package:CarRescue/src/models/customer.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/profile/edit_profile/edit_profile_view.dart';
 import 'package:CarRescue/src/presentation/view/select_city/select_city_view.dart';
+import 'package:CarRescue/src/presentation/view/select_mode/select_mode_view.dart';
 import 'package:CarRescue/src/providers/customer_profile_provider.dart';
 
 import 'package:CarRescue/src/providers/gmail_provider.dart';
@@ -48,7 +49,7 @@ class _ProfileBodyState extends State<ProfileBody> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (context) => SelectCityView(),
+        builder: (context) => SelectModeView(),
       ),
       (route) => false, // Loại bỏ tất cả các màn hình khỏi ngăn xếp
     );

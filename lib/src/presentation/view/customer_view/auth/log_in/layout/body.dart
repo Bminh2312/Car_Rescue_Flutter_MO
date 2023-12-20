@@ -48,7 +48,7 @@ class _LogInBodyState extends State<LogInBody> {
     super.initState();
   }
 
-  void _handleSignInWithGmail() async {
+  Future<void> _handleSignInWithGmail() async {
     setState(() {
       isLoading =
           true; // Set loading state to true when starting the login process
@@ -131,9 +131,9 @@ class _LogInBodyState extends State<LogInBody> {
                 height: 50,
               ),
               InkWell(
-                onTap: () {
+                onTap: () async {
                   if (!isLoading) {
-                    _handleSignInWithGmail();
+                    await _handleSignInWithGmail();
                   }
                 },
                 child: Container(

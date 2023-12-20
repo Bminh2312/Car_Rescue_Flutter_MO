@@ -331,7 +331,7 @@ class _EditProfileBodyState extends State<EditProfileBody> {
                                   backgroundColor: Colors.blue,
                                   radius: 20,
                                   child: IconButton(
-                                    icon: Icon(Icons.add_a_photo),
+                                    icon: Icon(Icons.camera_alt),
                                     color: Colors.white,
                                     onPressed: () {
                                       showCancelOrderDialog(context);

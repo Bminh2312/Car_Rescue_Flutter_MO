@@ -304,7 +304,7 @@ class HomeViewState extends State<HomeView> {
           ),
           if (position != null)
             Positioned(
-              bottom: widget.rescueType == 'Fixing' ? 270 : 400,
+              bottom: widget.rescueType == 'Fixing' ? 350 : 400,
               right: 16,
               child: FloatingActionButton(
                 backgroundColor: FrontendConfigs.kPrimaryColor,
@@ -325,7 +325,7 @@ class HomeViewState extends State<HomeView> {
           SlidingUpPanel(
             controller: _pc,
             minHeight: widget.rescueType == 'Fixing' ? 200 : 350,
-            maxHeight: widget.rescueType == 'Fixing' ? 250 : 400,
+            maxHeight: widget.rescueType == 'Fixing' ? 350 : 400,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(12),
               topRight: Radius.circular(12),

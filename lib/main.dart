@@ -4,6 +4,7 @@ import 'package:CarRescue/src/presentation/view/car_owner_view/bottom_nav_bar/bo
 import 'package:CarRescue/src/presentation/view/customer_view/auth/log_in/log_in_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/presentation/view/customer_view/notify/notify_view.dart';
+import 'package:CarRescue/src/presentation/view/select_mode/select_mode_view.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/auth/log_in/log_in_view.dart';
 import 'package:CarRescue/src/presentation/view/technician_view/bottom_nav_bar/bottom_nav_bar_view.dart';
 import 'package:CarRescue/src/providers/firebase_message_provider.dart';
@@ -70,7 +71,7 @@ Future<void> main() async {
     navigatorKey: navigatorKey,
     initialRoute: determineInitialRoute(),
     routes: {
-      "/splash": (context) => SplashView(),
+      "/selectModeView": (context) => SelectModeView(),
       "/customer/home": (context) => BottomNavBarView(page: 0),
       "/technician/home": (context) =>
           BottomNavBarTechView(userId: userId!, accountId: accountId!),
@@ -92,6 +93,6 @@ String determineInitialRoute() {
       return '/roles';
     }
   } else {
-    return '/splash';
+    return '/selectModeView';
   }
 }

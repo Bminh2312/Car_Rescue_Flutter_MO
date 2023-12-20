@@ -75,7 +75,7 @@ class SelectModeBody extends StatelessWidget {
               ),
               CustomText(
                 text:
-                    "Your automotive guardian. Proactive alerts, a vast support network, and peace of mind on the road. Drive confidently with us.",
+                    "Người cứu hộ ô tô của bạn. Cứu trợ kịp thời, mạng lưới hỗ trợ rộng lớn và là sự an tâm khi gặp sự cố.",
                 color: Colors.white,
               ),
               const SizedBox(
