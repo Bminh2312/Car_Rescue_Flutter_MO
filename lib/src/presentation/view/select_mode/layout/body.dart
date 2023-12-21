@@ -67,7 +67,7 @@ class _SelectModeBodyState extends State<SelectModeBody> {
                 height: 40,
               ),
               Container(
-                width: 110,
+                 width: MediaQuery.of(context).size.width * 0.3,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                       backgroundColor: FrontendConfigs.kActiveColor),
