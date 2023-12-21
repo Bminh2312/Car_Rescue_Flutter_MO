@@ -751,7 +751,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
                         SizedBox(height: 8.0),
                         _buildSectionTitle("Ghi chú của nhân viên"),
                         if (widget.booking.status != 'COMPLETED' &&
-                            widget.booking.status != 'CANCELLED')
+                            widget.booking.status != 'CANCELLED' &&
+                            widget.booking.status != 'ASSIGNED')
                           _buildNoteRow('Nhập nội dung ghi chú', _formKey),
                         _buildInfoRow(
                             "Nội dung",
@@ -1360,7 +1361,8 @@ class _BookingDetailsBodyState extends State<BookingDetailsBody> {
               }
 
               if (widget.booking.status != 'COMPLETED' &&
-                  widget.booking.status != 'CANCELLED') {
+                  widget.booking.status != 'CANCELLED' &&
+                  widget.booking.status != 'ASSIGNED') {
                 return Padding(
                   padding: EdgeInsets.only(right: 16.0),
                   child: InkWell(
