@@ -62,7 +62,7 @@ class HomeViewState extends State<HomeView> {
   late Future<List<LocationInfo>> predictions;
   late Future<PlacesAutocompleteResponse> predictionsPlaces;
   String? _errorDistance;
-  double? distanceKm;
+  int? distanceKm;
   // bool _showPlaceDirection = false;
   static const CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(10.762622, 106.660172),
@@ -371,8 +371,8 @@ class HomeViewState extends State<HomeView> {
                         } else {
                           if (snapshot.hasData) {
                             double distance = _distance / 1000;
-                            distanceKm = distance;
-                            formattedDistance = distance.toStringAsFixed(1);
+                            distanceKm = distance.round();
+                            formattedDistance = distanceKm.toString();
                             return Column(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
