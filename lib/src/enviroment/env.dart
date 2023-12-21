@@ -4,13 +4,13 @@ class Environment {
   static const String API_URL_PLACES_NEW =
       "https://places.googleapis.com/v1/places:searchText";
 
-  static const String API_KEY_MAPS = "AIzaSyAi5WnYjSGtYS_L7nudU2i0d4aFY_3jPVo";
+  static const String API_KEY_MAPS = "AIzaSyDqTrh7n2zzLpdeMqOXIhVdYXYG6840zlI";
 
   static const String API_KEY_PREDICTIONS =
       "AIzaSyBZmPE0cCErk-nZtza3mDsXwIKLhS2s8Jg";
 
   static const String API_KEY_GOONG =
-      "uYO7jxleAR8KO17JgxrimjEvKQy0M7EOSc21T9Xr";
+      "n1JVCHKGKWlEcAGvi5tbYYyp2yaWvsMkQqkiOPGp";
 
   static GoogleSignIn SIGN_IN = GoogleSignIn(
     scopes: <String>[

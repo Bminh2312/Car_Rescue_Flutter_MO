@@ -43,7 +43,7 @@ class MapScreen extends StatefulWidget {
   _MapScreenState createState() => _MapScreenState();
 }
 
-final String apiKey = "AIzaSyAi5WnYjSGtYS_L7nudU2i0d4aFY_3jPVo";
+final String apiKey = "AIzaSyDqTrh7n2zzLpdeMqOXIhVdYXYG6840zlI";
 
 class _MapScreenState extends State<MapScreen> {
   GoogleMapController? mapController;
