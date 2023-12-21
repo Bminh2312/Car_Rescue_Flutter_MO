@@ -8,9 +8,30 @@ import 'package:CarRescue/src/presentation/elements/app_button.dart';
 import 'package:CarRescue/src/presentation/elements/custom_text.dart';
 
 import 'package:CarRescue/src/presentation/view/customer_view/auth/log_in/log_in_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class SelectModeBody extends StatelessWidget {
+class SelectModeBody extends StatefulWidget {
   const SelectModeBody({Key? key}) : super(key: key);
+
+  @override
+  State<SelectModeBody> createState() => _SelectModeBodyState();
+}
+
+class _SelectModeBodyState extends State<SelectModeBody> {
+  void launchDialPad(String phoneNumber) async {
+    String uri = 'tel:$phoneNumber';
+
+    try {
+      if (await canLaunch(uri)) {
+        await launch(uri);
+      } else {
+        throw 'Could not launch $uri';
+      }
+    } catch (e) {
+      print('Error launching dial pad: $e');
+      throw 'Could not launch $uri';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +61,32 @@ class SelectModeBody extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.all(18.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              SizedBox(
+                height: 40,
+              ),
+              Container(
+                width: 110,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: FrontendConfigs.kActiveColor),
+                  onPressed: () => launchDialPad("0363235421"),
+                  child: Container(
+                    child: Row(
+                      children: [
+                        CustomText(
+                          text: 'Hotline',
+                          fontSize: 20,
+                          color: Colors.white,
+                        ),
+                        Icon(Icons.phone_android),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Spacer(),
               Center(
                 child: Image.asset(
                   "assets/images/logo-no-background.png",
