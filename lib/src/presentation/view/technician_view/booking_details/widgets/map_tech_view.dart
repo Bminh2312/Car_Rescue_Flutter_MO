@@ -280,7 +280,7 @@ class _MapTechScreenState extends State<MapTechScreen> {
     if (currentLocation != null && _targetLocation != null) {
       double distance = calculateDistance(currentLocation!, _targetLocation!);
 
-      if (distance < 80) {
+      if (distance < 100) {
         // Stop the timer
         // myTimer?.cancel();
 

@@ -189,7 +189,7 @@ class _MapScreenState extends State<MapScreen> {
             double distance =
                 calculateDistance(technicianLocation!, _targetLocation!);
 
-            if (distance < 50) {
+            if (distance < 100) {
               if (!isArrived) {
                 AuthService().sendNotification(
                     deviceId: _cus!.deviceToken,
